@@ -1,8 +1,11 @@
 # SE104.Q21.DoAn
+<p align="center">
+  <a href="https://www.uit.edu.vn/">
+    <img src="https://i.imgur.com/WmMnSRt.png" alt="UIT" width="400"/>
+  </a>
+</p>
 
-![description](https://i.imgur.com/WmMnSRt.png)
-
-## NHẬP MÔN CÔNG NGHỆ PHẦN MỀM
+<h2 align="center">NHẬP MÔN CÔNG NGHỆ PHẦN MỀM</h2>
 
 ---
 
