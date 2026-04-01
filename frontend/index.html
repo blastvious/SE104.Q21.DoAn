@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>QLHS - Quản Lý Học Sinh</title>
+
+<link rel="stylesheet" href="assets/css/layout.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- LEFT PANEL -->
+    <aside class="sidebar">
+
+        <h2>QLHS</h2>
+
+        <ul>
+            <li onclick="loadPage('dashboard.html')">Trang chủ</li>
+            <li onclick="loadPage('students.html')">Tiếp nhận học sinh</li>
+            <li onclick="loadPage('subjects.html')">Môn học</li>
+            <li onclick="loadPage('scores.html')">Bảng điểm</li>
+            <li onclick="loadPage('report-semester.html')">Báo cáo học kỳ</li>
+            <li onclick="loadPage('report-year.html')">Báo cáo năm</li>
+        </ul>
+
+    </aside>
+
+
+    <div class="content-area">
+
+        <!-- HEADER -->
+        <header class="header">
+            <h1>Hệ Thống Quản Lý Học Sinh</h1>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content">
+
+            <h2>Các nội dung hiển thị ở đây nhé</h2>
+            <p>Chọn chức năng bên trái.</p>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>SE104 - Software Engineering Project</p>
+        </footer>
+
+    </div>
+
+</div>
+
+<script src="assets/js/router.js"></script>
+
+</body>
+</html>
