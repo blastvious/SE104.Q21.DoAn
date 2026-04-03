@@ -1,19 +1,46 @@
 <h2>Tiếp nhận học sinh</h2>
 
-<form>
+<form id="studentForm">
 
-Tên học sinh
-<input type="text">
+<label>Tên học sinh</label>
+<input type="text" id="name" required>
 
-Ngày sinh
-<input type="date">
+<br><br>
 
-Giới tính
-<select>
-<option>Nam</option>
-<option>Nữ</option>
+<label>Ngày sinh</label>
+<input type="date" id="birth" required>
+
+<br><br>
+
+<label>Giới tính</label>
+<select id="gender">
+<option value="Nam">Nam</option>
+<option value="Nữ">Nữ</option>
 </select>
 
-<button>Lưu</button>
+<br><br>
+
+<button type="submit">Lưu</button>
 
 </form>
+
+<p id="msg"></p>
+
+<hr>
+
+<h3>Danh sách học sinh</h3>
+
+<table border="1">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Tên</th>
+<th>Ngày sinh</th>
+<th>Giới tính</th>
+</tr>
+</thead>
+
+<tbody id="studentTable"></tbody>
+
+</table>
