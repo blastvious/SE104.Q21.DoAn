@@ -12,14 +12,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.6", 
+    "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "joi": "^18.1.2",
     "msnodesqlv8": "^5.1.5",
-    "mssql": "^12.2.1"
+    "mssql": "^12.2.1",
+    "sequelize": "^6.37.8",
+    "tedious": "^19.2.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
   }
-  
 }

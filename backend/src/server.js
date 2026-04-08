@@ -1,13 +1,12 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import studenRoute from "../routes/student.routes.js"
-import sql from "mssql";
-import { connectDB } from '../libs/db.js';
+import express from 'express';
+import dotenv from 'dotenv';
+import { connectDB } from '../libs/db.js'; 
+import studentRoute from '../routes/student.Route.js'
+
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5001;
-
-//middlewares
 
 app.use(express.json());
 
@@ -15,13 +14,10 @@ app.use(express.json());
 
 //private route
 
-app.use("/api/school", studenRoute);
+app.use("/api/school", studentRoute);
 
-
-connectDB();
-
-
-app.listen(PORT, () =>{
-    console.log(`Server is running at ${PORT}`);
+app.listen(PORT, async () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
     
-})
+    await connectDB();
+});

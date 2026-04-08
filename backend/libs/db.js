@@ -1,24 +1,49 @@
-import sql from "mssql";
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
+import Usertmodel from '../models/User.Models.js';
+import Studentmodel from '../models/Student.Models.js';
+
+dotenv.config();
+
+// Khởi tạo instance Sequelize
+const sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PWD,
+    {
+        host: process.env.DB_HOST || 'localhost', 
+        dialect: 'mssql',
+        logging: false, 
+        dialectOptions: {
+            options: {
+                encrypt: true,
+                trustServerCertificate: true,
+            }
+        }
+    }
+);
+
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+// Khởi tạo Model (Lưu ý: Truyền cả sequelize và Sequelize)
+db.PHANQUYEN = Usertmodel(sequelize);
+
+db.STUDENT = Studentmodel(sequelize);
 
 export const connectDB = async () => {
-    const config = {
-        user: process.env.DB_USER, 
-        password: process.env.DB_PWD,
-        server: "localhost",
-        database: process.env.DB_NAME,
-        options: {
-            encrypt: false,
-            trustServerCertificate: true 
-        }
-    };
-
     try {
-        console.log("Kết nối với user:", config.user); 
+        await sequelize.authenticate();
+        console.log('Connect Database QLHS successfully (MSSQL).');
         
-        await sql.connect(config);
-        console.log("Database is connected successfully");
+        
+        await sequelize.sync(); 
+        console.log('All the table has been synchronized and is now clean.');
     } catch (error) {
-        console.log("Error occur when trying connect Database", error.message);
-        process.exit(1);
+        console.error('Database connection failed', error.message);
+        process.exit(1); 
     }
-}
+};
+
+export default db;

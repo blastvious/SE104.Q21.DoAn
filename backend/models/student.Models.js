@@ -1,21 +1,31 @@
 
-import sql from "mssql"
+import { DataTypes } from "sequelize";
+const Studentmodel = (sequelize) => {
 
-export const getAllStudent = async () =>{
-    try {
-        const result = await sql.query`SELECT * FROM Student`
-        return result.recordset;
-    } catch (error) {
-        console.log(error);
-        
-    }
-}
+     
+     return sequelize.define("STUDENT", {
+          Id: {
+               type: DataTypes.INTEGER,
+               allowNull: false,
+               primaryKey: true,
+               autoIncrement: true
+          },
+          Name: {
+               type: DataTypes.STRING(100),
+               allowNull: false
+          },
+          Email: {
+               type: DataTypes.STRING(100),
+               allowNull: false,
+          },
+          Phone: {
+               type: DataTypes.STRING(20),
+               allowNull: false
+          }
+     }, {
+          freezeTableName: true,
+          timestamps: false,
+     });
+};
 
-//To do: Thêm một method về thêm học sinh vào cơ sở dữ liệu.
-
-export const addStudent = async () =>{
-    // Mở 1 khối try catch và bắt đầu code logic như trên. không gửi json hay status vì đó là nhiệm vụ của controllers.
-
-}
-
-//Todo: 
+export default Studentmodel;
