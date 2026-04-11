@@ -2,17 +2,29 @@ import Joi from 'joi';
 
 export const studentSchema = Joi.object({
     
-    Name: Joi.string()
+    HoTen: Joi.string()
         .min(2)
         .max(100)
         .required(),
-
+    GioiTinh: Joi.string()
+        .valid("Nam", "Nu")
+        .required(),
+    NgaySinh: Joi.date()
+        .less("now")
+        .required(),
+    
+    DiaChi: Joi.string()
+        .max(200)
+        .allow(null, "")
+        .required(),
+    
     Email: Joi.string()
         .email() 
         .max(100)
+        .allow(null, "")
         .required(),
 
-    Phone: Joi.string()
+    SoDienThoai: Joi.string()
         .pattern(/^(0[3|5|7|8|9])([0-9]{8})$/) // Regex kiểm tra SĐT Việt Nam
         .message('Số điện thoại không đúng định dạng VN')
         .required()
@@ -35,7 +47,7 @@ export const validateStudent = (req, res, next) => {
 };
 
 export const validateStudentUpdate = (req, res, next) => {
-    const updateSchema = studentSchema.fork(['Name', 'Email', 'Phone'], (s) => s.optional());
+    const updateSchema = studentSchema.fork(["HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"], (s) => s.optional());
     
     const { error } = updateSchema.validate(req.body, { abortEarly: false });
 

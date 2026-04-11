@@ -30,7 +30,7 @@ db.sequelize = sequelize;
 // Khởi tạo Model (Lưu ý: Truyền cả sequelize và Sequelize)
 db.PHANQUYEN = Usertmodel(sequelize);
 
-db.STUDENT = Studentmodel(sequelize);
+db.HOCSINH = Studentmodel(sequelize);
 
 export const connectDB = async () => {
     try {

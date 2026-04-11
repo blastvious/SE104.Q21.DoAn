@@ -4,9 +4,9 @@ const Usertmodel = (sequelize) => {
 
     return sequelize.define("PHANQUYEN", {
         Id: {
-            type: DataTypes.UUID,
-            defaultValue: DataTypes.UUIDV4,
-            primaryKey: true,
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
         },
         Username: {
             type: DataTypes.STRING(50), 
@@ -18,7 +18,9 @@ const Usertmodel = (sequelize) => {
             allowNull: false,
         },
         RoleName: {
-            type: DataTypes.STRING(20), 
+            type: DataTypes.ENUM({
+                values: ['Admin', 'Manager', 'User' ]
+            }), 
             allowNull: false,
             defaultValue: 'User'
         }

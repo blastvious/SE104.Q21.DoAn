@@ -13,7 +13,7 @@ export const userSchema = Joi.object({
         .required(),
 
     RoleName: Joi.string()
-        .valid('Admin', 'Manager', 'Staff', 'User') 
+        .valid('Admin', 'Manager', 'User') 
 });
 
 

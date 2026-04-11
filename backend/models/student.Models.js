@@ -3,24 +3,37 @@ import { DataTypes } from "sequelize";
 const Studentmodel = (sequelize) => {
 
      
-     return sequelize.define("STUDENT", {
-          Id: {
-               type: DataTypes.INTEGER,
+     return sequelize.define("HOCSINH", {
+          MaHS: {
+               type: DataTypes.STRING(8),
                allowNull: false,
                primaryKey: true,
-               autoIncrement: true
           },
-          Name: {
+          HoTen: {
                type: DataTypes.STRING(100),
                allowNull: false
+          },
+          GioiTinh: {
+               type: DataTypes.STRING(5),
+               allowNull: false,
+          },
+
+          NgaySinh: {
+               type: DataTypes.DATEONLY,
+               allowNull: false,
+          },
+          DiaChi: {
+               type: DataTypes.STRING(200),
+               allowNull: false,
           },
           Email: {
                type: DataTypes.STRING(100),
                allowNull: false,
           },
-          Phone: {
+          SoDienThoai: {
                type: DataTypes.STRING(20),
-               allowNull: false
+               allowNull: false,
+               unique: true
           }
      }, {
           freezeTableName: true,
