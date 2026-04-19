@@ -5,12 +5,12 @@ const Studentmodel = (sequelize) => {
      
      return sequelize.define("HOCSINH", {
           MaHS: {
-               type: DataTypes.STRING(8),
+               type: DataTypes.STRING(10),
                allowNull: false,
                primaryKey: true,
           },
           HoTen: {
-               type: DataTypes.STRING(100),
+               type: DataTypes.STRING(50),
                allowNull: false
           },
           GioiTinh: {

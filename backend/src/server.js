@@ -1,14 +1,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from '../libs/db.js'; 
-import studentRoute from '../routes/student.Route.js'
-import authRoute from '../routes/auth.Route.js'
-
+import studentRoute from '../routes/student.route.js'
+import authRoute from '../routes/auth.route.js'
+import helmet from 'helmet'
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-
+app.use(helmet());
 app.use(express.json());
 
 //public route

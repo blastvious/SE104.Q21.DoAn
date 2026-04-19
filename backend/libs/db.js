@@ -1,7 +1,18 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
-import Usertmodel from '../models/User.Models.js';
-import Studentmodel from '../models/Student.Models.js';
+import Usertmodel from '../models/User.models.js';
+import Studentmodel from '../models/Student.models.js';
+import Classmodel from '../models/Class.models.js';
+import Grademodel from '../models/Grade.models.js';
+import Semestermodel from '../models/Semester.models.js';
+import Yearmodel from '../models/Year.models.js';
+import TypeofTestmodel from '../models/TypeTest.models.js';
+import StudyProcessModel from '../models/professional_requirements/StudyProcess.models.js';
+import Subjectmodel from '../models/Subject.models.js';
+import Scoremodel from '../models/professional_requirements/Score.models.js';
+import ScoreDetailmodel from '../models/professional_requirements/ScoreDetail.models.js';
+import TypeTestDetailmodels from '../models/professional_requirements/TypeTestDetail.models.js';
+
 
 dotenv.config();
 
@@ -30,8 +41,32 @@ db.sequelize = sequelize;
 // Khởi tạo Model (Lưu ý: Truyền cả sequelize và Sequelize)
 db.PHANQUYEN = Usertmodel(sequelize);
 
+//========== Model - Core  =============
 db.HOCSINH = Studentmodel(sequelize);
+db.LOP = Classmodel(sequelize);
+db.KHOILOP = Grademodel(sequelize);
+db.HOCKY = Semestermodel(sequelize);
+db.NAMHOC = Yearmodel(sequelize);
+db.LOAIHINHKT = TypeofTestmodel(sequelize);
+db.MONHOC = Subjectmodel(sequelize);
 
+//==============professional_requirements =============
+db.QUATRINHHOC = StudyProcessModel(sequelize);
+db.BANGDIEMMON = Scoremodel(sequelize);
+db.CT_BANGDIEMMON_HS = ScoreDetailmodel(sequelize);
+db.CT_BANGDIEMMON_LHKT = TypeTestDetailmodels(sequelize);
+//Khởi tạo các mối quan hệ
+
+
+
+
+
+
+
+
+
+
+//=============== Kết nối database sql server================
 export const connectDB = async () => {
     try {
         await sequelize.authenticate();
