@@ -57,14 +57,36 @@ db.CT_BANGDIEMMON_HS = ScoreDetailmodel(sequelize);
 db.CT_BANGDIEMMON_LHKT = TypeTestDetailmodels(sequelize);
 //Khởi tạo các mối quan hệ
 
+db.NAMHOC.hasMany(db.LOP, { foreignKey: 'TenNamHoc' });
+db.LOP.belongsTo(db.NAMHOC, { foreignKey: 'TenNamHoc' });
+
+db.KHOILOP.hasMany(db.LOP, { foreignKey: 'MaKhoiLop' });
+db.LOP.belongsTo(db.KHOILOP, { foreignKey: 'MaKhoiLop' });
 
 
 
 
+db.HOCSINH.hasMany(db.QUATRINHHOC, { foreignKey: 'MaHS' });
+db.QUATRINHHOC.belongsTo(db.HOCSINH, { foreignKey: 'MaHS' });
+
+db.LOP.hasMany(db.QUATRINHHOC, { foreignKey: 'MaLop' });
+db.QUATRINHHOC.belongsTo(db.LOP, { foreignKey: 'MaLop' });
+
+db.HOCKY.hasMany(db.QUATRINHHOC, { foreignKey: 'MaHocKy' });
+db.QUATRINHHOC.belongsTo(db.HOCKY, { foreignKey: 'MaHocKy' });
+
+db.BANGDIEMMON.hasMany(db.CT_BANGDIEMMON_HS, { foreignKey: 'MaBangDiemMon' });
+db.CT_BANGDIEMMON_HS.belongsTo(db.BANGDIEMMON, { foreignKey: 'MaBangDiemMon' });
+
+db.HOCSINH.hasMany(db.CT_BANGDIEMMON_HS, { foreignKey: 'MaHS' });
+db.CT_BANGDIEMMON_HS.belongsTo(db.HOCSINH, { foreignKey: 'MaHS' });
 
 
+db.CT_BANGDIEMMON_HS.hasMany(db.CT_BANGDIEMMON_LHKT, { foreignKey: 'MaCTBDMHS' });
+db.CT_BANGDIEMMON_LHKT.belongsTo(db.CT_BANGDIEMMON_HS, { foreignKey: 'MaCTBDMHS' });
 
-
+db.LOAIHINHKT.hasMany(db.CT_BANGDIEMMON_LHKT, { foreignKey: 'MaLoaiHinhKT' });
+db.CT_BANGDIEMMON_LHKT.belongsTo(db.LOAIHINHKT, { foreignKey: 'MaLoaiHinhKT' });
 
 //=============== Kết nối database sql server================
 export const connectDB = async () => {

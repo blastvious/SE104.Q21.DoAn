@@ -7,7 +7,7 @@ export const studentSchema = Joi.object({
         .max(100)
         .required(),
     GioiTinh: Joi.string()
-        .valid("Nam", "Nu")
+        .valid("Nam", "Nữ")
         .required(),
     NgaySinh: Joi.date()
         .less("now")

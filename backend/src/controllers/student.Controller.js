@@ -67,3 +67,5 @@ export const createStudent = async (req, res) => {
         });
     }
 };
+
+

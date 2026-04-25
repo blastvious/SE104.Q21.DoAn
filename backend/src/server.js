@@ -4,11 +4,13 @@ import { connectDB } from '../libs/db.js';
 import studentRoute from '../routes/student.route.js'
 import authRoute from '../routes/auth.route.js'
 import helmet from 'helmet'
+
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-app.use(helmet());
+app.use(cors());
 app.use(express.json());
 
 //public route

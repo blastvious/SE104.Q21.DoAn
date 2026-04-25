@@ -21,6 +21,7 @@ const Studentmodel = (sequelize) => {
           NgaySinh: {
                type: DataTypes.DATEONLY,
                allowNull: false,
+               validate: {isDate: true}
           },
           DiaChi: {
                type: DataTypes.STRING(200),

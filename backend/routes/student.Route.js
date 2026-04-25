@@ -8,6 +8,7 @@ router.get("/student", getAllStudent);
 
 //To do: Thêm route cho thêm học sinh vào cơ sở dữ liệu.
 // routes/student.Route.js
+
 router.post("/student", validateStudent, createStudent);
 
 export default router;
