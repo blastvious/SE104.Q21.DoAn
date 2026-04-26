@@ -6,10 +6,29 @@ import { Op } from "sequelize"
 // Năm học
 export const createYear = async (req, res) =>{
     try {
-        // Todo: từ db gọi đến NAMHOC và tạo năm học.
-        // Đọc từ req.body
-        // Tạo đối tượng 
-        // Thêm vào database
+        const {
+            TenNamHoc,
+            NgayBatDau,
+            NgayKetThuc
+        } = req.body;
+
+        if (!TenNamHoc || !NgayBatDau || !NgayKetThuc) {
+            return res.status(400).json({message: "Missing required fields"});
+        }
+
+        const existingYear = await db.NAMHOC.findByPk(TenNamHoc);
+
+        if (existingYear) {
+            return res.status(409).json({message: "Year already exists"});
+        }
+
+        const newYear = await db.NAMHOC.create({
+            TenNamHoc,
+            NgayBatDau,
+            NgayKetThuc
+        });
+
+        res.status(201).json(newYear);
     } catch (error) {
         console.log(error);
         res.status(500).json({message: "Error from server"});
@@ -18,7 +37,8 @@ export const createYear = async (req, res) =>{
 
 export const getAllYear = async(req, res) =>{
     try {
-        // Todo: Tham Khảo student.controller.js
+        const year = await db.NAMHOC.findAll();
+        res.json(year);
     } catch (error) {
         console.log(error);
         res.status(500).json({message: "Error from server"});
