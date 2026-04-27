@@ -3,6 +3,25 @@ import { Op } from "sequelize"
 
 // Thứ tự nên có là Nam học, học kỳ, khối lớp rồi mới đến lớp nha.
 
+const parseDateOnly = (dateValue) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return null;
+    }
+
+    const [year, month, day] = dateValue.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
+    ) {
+        return null;
+    }
+
+    return date;
+}
+
 // Năm học
 export const createYear = async (req, res) => {
     try {
@@ -14,6 +33,37 @@ export const createYear = async (req, res) => {
 
         if (!TenNamHoc || !NgayBatDau || !NgayKetThuc) {
             return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const yearMatch = TenNamHoc.match(/^(\d{4})-(\d{4})$/);
+
+        if (!yearMatch) {
+            return res.status(400).json({ message: "School year must use format YYYY-YYYY" });
+        }
+
+        const schoolStartYear = Number(yearMatch[1]);
+        const schoolEndYear = Number(yearMatch[2]);
+
+        if (schoolEndYear !== schoolStartYear + 1) {
+            return res.status(400).json({ message: "School year must be consecutive years" });
+        }
+
+        const startDate = parseDateOnly(NgayBatDau);
+        const endDate = parseDateOnly(NgayKetThuc);
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: "Invalid date format" });
+        }
+
+        if (startDate >= endDate) {
+            return res.status(400).json({ message: "Start date must be before end date" });
+        }
+
+        if (
+            startDate.getUTCFullYear() !== schoolStartYear ||
+            endDate.getUTCFullYear() !== schoolEndYear
+        ) {
+            return res.status(400).json({ message: "Date range must match school year" });
         }
 
         const existingYear = await db.NAMHOC.findByPk(TenNamHoc);
