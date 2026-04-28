@@ -243,10 +243,15 @@ export const createClass = async (req, res) => {
         if (!grade) {
             return res.status(404).json({ message: "Grade not found" });
         }
-        const khoiCode = `K${match[0]}`;
+        const khoiDigits = String(grade.MaKhoiLop).replace(/\D/g, "");
+        const khoiCode = `K${khoiDigits.padStart(2, "0")}`;
 
         // Tách năm học
-        const [startYear, endYear] = TenNamHoc.split("-");
+        const yearParts = String(TenNamHoc).split("-");
+        if (yearParts.length !== 2 || yearParts[0].length !== 4 || yearParts[1].length !== 4) {
+            return res.status(400).json({ message: "School year must use format YYYY-YYYY" });
+        }
+        const [startYear, endYear] = yearParts;
         const yearCode = startYear.slice(2) + endYear.slice(2);
 
         // Đếm số lớp theo năm + khối
