@@ -8,23 +8,12 @@ const router = express.Router();
 
 //Router cho năm học
 
-router.get();
-router.post;
-
-//Router cho học kỳ.
-
-router.get();
-router.post;
-
-
-//Router cho khối lớp.
-
-router.get();
-router.post;
+router.get("/year", classController.getAllYear);
+router.post("/year", classController.createYear);
 
 //Router cho lớp.
-router.get();
-router.post;
+router.get("/class", classController.getAllClass);
+router.post("/class", classController.createClass);
 
 
 export default router;

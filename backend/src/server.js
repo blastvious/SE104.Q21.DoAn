@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { connectDB } from '../libs/db.js'; 
 import studentRoute from '../routes/student.route.js'
 import authRoute from '../routes/auth.route.js'
+import classRoute from '../routes/class.router.js'
 import semesterRoute from '../routes/semester.route.js'
 import helmet from 'helmet'
 
@@ -21,7 +22,6 @@ app.use("/api/school", authRoute);
 //private route
 
 app.use("/api/school", studentRoute);
-app.use('/api/school', semesterRoute);
 
 app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
