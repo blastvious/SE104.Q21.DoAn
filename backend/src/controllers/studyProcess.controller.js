@@ -1,0 +1,1 @@
+//Các bảng liên quan: QUATRINHHOC, HOCSINH, LOP.
