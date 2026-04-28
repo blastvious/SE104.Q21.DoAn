@@ -222,16 +222,46 @@ export const createClass = async (req, res) => {
 
         // Đọc từ req.body
         const {
-            MaLop,
             TenLop,
             MaKhoiLop,
             TenNamHoc,
             SiSo
         } = req.body;
 
-        if (!MaLop || !TenLop || !MaKhoiLop || !TenNamHoc) {
+        if (!TenLop || !MaKhoiLop || !TenNamHoc) {
             return res.status(400).json({ message: "Missing required fields" });
         }
+
+        if (SiSo && SiSo < 0)
+        {
+            return res.status(400).json({ message: "Invalid SiSo" });
+        }
+       
+        // lay khoi lop tu db 
+        const grade = await db.KHOILOP.findByPk(MaKhoiLop);
+
+        if (!grade) {
+            return res.status(404).json({ message: "Grade not found" });
+        }
+        const khoiCode = `K${match[0]}`;
+
+        // Tách năm học
+        const [startYear, endYear] = TenNamHoc.split("-");
+        const yearCode = startYear.slice(2) + endYear.slice(2);
+
+        // Đếm số lớp theo năm + khối
+        const count = await db.LOP.count({
+            where: {
+                MaKhoiLop,
+                TenNamHoc
+            }
+        });
+
+        // STT: 001, 002,...
+        const stt = String(count + 1).padStart(3, '0');
+
+        // Mã lớp
+        const MaLop = `${yearCode}${khoiCode}${stt}`;
 
         const existingClass = await db.LOP.findByPk(MaLop);
 
