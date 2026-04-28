@@ -337,6 +337,17 @@ export const createClass = async (req, res) => {
         if (error?.statusCode) {
             return res.status(error.statusCode).json({ message: error.message });
         }
+
+        if (
+            error?.name === "SequelizeUniqueConstraintError" ||
+            error?.original?.number === 2601 ||
+            error?.original?.number === 2627
+        ) {
+            return res.status(409).json({
+                message: "Class already exists for this grade and school year"
+            });
+        }
+
         console.log(error);
         res.status(500).json({ message: "Error from server" });
     }
