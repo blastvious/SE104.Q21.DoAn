@@ -98,10 +98,42 @@ export const getAllYear = async (req, res) => {
 // Học Kỳ 
 export const createSemester = async (req, res) => {
     try {
-        // Todo: từ db gọi đến HOCKY và tạo các học kỳ.
-        // Đọc từ req.body
-        // Tạo đối tượng 
-        // Thêm vào database
+        const {
+                    TenHocKy
+                } = req.body;
+        
+                // ============== check trùng tên học kỳ ===============
+                const existing = await db.HOCKY.findOne({
+                    where: { TenHocKy }
+                });
+        
+                if (existing) {
+                    return res.status(400).json({
+                        status: "Error",
+                        message: "Học kỳ đã tồn tại"
+                    });
+                }
+        
+                // ============= tạo MaHocKy ==========================
+                const lastSemester = await db.HOCKY.findOne({
+                    where: {
+                        MaHocKy: {[Op.like]: 'HK%'}
+                    },
+                    order: [["MaHocKy", "DESC"]]
+                });
+        
+                let stt = 1;
+                if(lastSemester){
+                    const lastNumber = parseInt(lastSemester.MaHocKy.slice(2))
+                    stt = lastNumber + 1
+                }
+        
+                const MaHocKy = `HK${String(stt).padStart(3, '0')}`;
+                const newSemester = await db.HOCKY.create({
+                    MaHocKy,
+                    TenHocKy
+                });
+                res.status(201).json(newSemester);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error from server" });
@@ -110,7 +142,8 @@ export const createSemester = async (req, res) => {
 
 export const getAllSemester = async (req, res) => {
     try {
-        // Todo: Tham Khảo student.controller.js
+        const semester = await db.HOCKY.findAll();
+        res.json(semester);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error from server" });

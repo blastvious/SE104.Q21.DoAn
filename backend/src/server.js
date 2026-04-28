@@ -4,7 +4,6 @@ import { connectDB } from '../libs/db.js';
 import studentRoute from '../routes/student.route.js'
 import authRoute from '../routes/auth.route.js'
 import classRoute from '../routes/class.router.js'
-import semesterRoute from '../routes/semester.route.js'
 import helmet from 'helmet'
 
 import cors from 'cors';
@@ -22,7 +21,6 @@ app.use("/api/school", authRoute);
 //private route
 
 app.use("/api/school", studentRoute);
-app.use('/api/school', semesterRoute);
 app.use('/api/school', classRoute);
 
 app.listen(PORT, async () => {
