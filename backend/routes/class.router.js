@@ -8,23 +8,23 @@ const router = express.Router();
 
 //Router cho năm học
 
-router.get();
-router.post;
+// router.get();
+// router.post;
 
-//Router cho học kỳ.
+// //Router cho học kỳ.
 
-router.get();
-router.post;
+// router.get();
+// router.post;
 
 
-//Router cho khối lớp.
+// //Router cho khối lớp.
 
-router.get();
-router.post;
+router.get('/grades', classController.getAllGrade);
+router.post('/grades', classController.createGrade);
 
-//Router cho lớp.
-router.get();
-router.post;
+// //Router cho lớp.
+// router.get();
+// router.post;
 
 
 export default router;
