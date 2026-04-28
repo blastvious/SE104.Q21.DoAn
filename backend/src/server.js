@@ -22,6 +22,8 @@ app.use("/api/school", authRoute);
 //private route
 
 app.use("/api/school", studentRoute);
+app.use('/api/school', semesterRoute);
+app.use('/api/school', classRoute);
 
 app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
