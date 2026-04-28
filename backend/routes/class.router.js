@@ -7,24 +7,20 @@ const router = express.Router();
     Lưu ý là endpoint là một danh từ, đây là quy tác chung*/
 
 //Router cho năm học
-
-// router.get();
-// router.post;
+router.get("/year", classController.getAllYear);
+router.post("/year", classController.createYear);
 
 // //Router cho học kỳ.
-
-// router.get();
-// router.post;
-
+router.get("/semester", classController.getAllSemester);
+router.post("/semester", classController.createSemester);
 
 // //Router cho khối lớp.
-
 router.get('/grades', classController.getAllGrade);
 router.post('/grades', classController.createGrade);
 
-// //Router cho lớp.
-// router.get();
-// router.post;
+//Router cho lớp.
+router.get("/class", classController.getAllClass);
+router.post("/class", classController.createClass);
 
 
 export default router;
