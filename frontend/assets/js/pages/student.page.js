@@ -1,5 +1,5 @@
 // 1. Luôn để Import ở trên cùng
-import { createStudent, getAllStudents } from "../service/student.service.js";
+import { createStudent, getAllStudents, bulkCreateStudents } from "../service/student.service.js";
 
 // 2. Để hàm helper ở ngoài hoặc ở đầu để init() có thể thấy nó
 function formatToDateOnly(dateStr) {
@@ -14,13 +14,47 @@ export async function init() {
     const form = document.getElementById("studentForm");
     const tableBody = document.getElementById("studentTable");
 
+    const btnUpload = document.getElementById("btnUploadExcel");
+    const fileInput = document.getElementById("excelFile");
+    btnUpload.addEventListener("click", async () => {
+        const file = fileInput.files[0];
+        if (!file) {
+            alert("Vui lòng chọn một file Excel!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Lấy sheet đầu tiên
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Chuyển thành JSON
+            // Lưu ý: Tên cột trong Excel phải khớp với tên field trong DB (HoTen, NgaySinh, ...)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            try {
+                const result = await bulkCreateStudents(jsonData);
+                alert(result.message);
+                await renderTable(); // Load lại bảng
+                fileInput.value = ""; // Reset file input
+            } catch (error) {
+                alert("Lỗi khi import: " + error.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
     if (!form) return;
 
     // Định nghĩa renderTable bên trong init để dùng được getAllStudents đã import
     async function renderTable() {
         try {
             console.log("Đang tải danh sách học sinh...");
-            const students = await getAllStudents(); // Bây giờ sẽ không còn lỗi undefined
+            const students = await getAllStudents(); 
             
             if (!tableBody) return;
             tableBody.innerHTML = "";
@@ -72,6 +106,11 @@ export async function init() {
         } catch (error) {
             alert("Lỗi: " + error.message);
         }
+
+        
+
+
+        
     });
 
     // Chạy tải bảng lần đầu

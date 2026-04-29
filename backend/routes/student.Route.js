@@ -1,6 +1,6 @@
 import express from "express"
-import {createStudent, getAllStudent} from '../src/controllers/student.controller.js'
-import { validateStudent } from "../middlewares/student.validation.js";
+import {createStudent, getAllStudent, bulkCreateStudents} from '../src/controllers/student.controller.js'
+import { validateStudent, validateBulkStudents } from "../middlewares/student.validation.js";
 
 const router = express.Router();
 
@@ -10,5 +10,7 @@ router.get("/student", getAllStudent);
 // routes/student.Route.js
 
 router.post("/student", validateStudent, createStudent);
+router.post("/student/bulk", validateBulkStudents, bulkCreateStudents);
+
 
 export default router;

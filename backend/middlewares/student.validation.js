@@ -60,3 +60,19 @@ export const validateStudentUpdate = (req, res, next) => {
     }
     next();
 };
+
+export const validateBulkStudents = (req, res, next) => {
+    // Tạo schema cho một danh sách (mảng các học sinh)
+    const bulkSchema = Joi.array().items(studentSchema);
+
+    const { error } = bulkSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+        return res.status(400).json({
+            status: 'Error',
+            message: 'Dữ liệu file Excel không hợp lệ',
+            details: error.details.map(d => d.message)
+        });
+    }
+    next();
+};

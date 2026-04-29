@@ -75,7 +75,7 @@ export const bulkCreateStudents = async (req, res) => {
 
         // Lấy học sinh cuối cùng trong database để làm mốc cho việc thêm học sinh mới.
         const lastStudent = await db.HOCSINH.findOne({
-            where: {MaHS: {[Op.like]: `${khoa}`}},
+            where: {MaHS: {[Op.like]: `${khoa}%`}},
             order: [["MaHS", "DESC"]]
         });
 
