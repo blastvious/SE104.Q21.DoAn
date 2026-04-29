@@ -35,7 +35,14 @@ const  Classmodel = (sequelize) =>{
 
     },{
         tableName: 'LOP',
-        timestamps: false
+        timestamps: false,
+        indexes: [
+            {
+                unique: true,
+                fields: ["TenLop", "MaKhoiLop", "TenNamHoc"],
+                name: "uq_lop_name_grade_year"
+            }
+        ]
     });
 };
 

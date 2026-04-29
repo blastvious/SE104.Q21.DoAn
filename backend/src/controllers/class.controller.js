@@ -22,6 +22,10 @@ const parseDateOnly = (dateValue) => {
     return date;
 }
 
+const normalizeText = (value) => {
+    return typeof value === "string" ? value.trim() : "";
+}
+
 // Năm học
 export const createYear = async (req, res) => {
     try {
@@ -222,34 +226,128 @@ export const createClass = async (req, res) => {
 
         // Đọc từ req.body
         const {
-            MaLop,
             TenLop,
             MaKhoiLop,
             TenNamHoc,
             SiSo
         } = req.body;
 
-        if (!MaLop || !TenLop || !MaKhoiLop || !TenNamHoc) {
+        const className = normalizeText(TenLop);
+        const gradeId = normalizeText(MaKhoiLop);
+        const schoolYear = normalizeText(TenNamHoc);
+
+        if (!className || !gradeId || !schoolYear) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        const existingClass = await db.LOP.findByPk(MaLop);
-
-        if (existingClass) {
-            return res.status(409).json({ message: "Class already exists" });
+        if (className.length > 15) {
+            return res.status(400).json({ message: "Class name must not exceed 15 characters" });
         }
 
-        // Tạo đối tượng 
-        // Thêm vào database
-        const newClass = await db.LOP.create({
-            MaLop,
-            TenLop,
-            MaKhoiLop,
-            TenNamHoc,
-            SiSo
+        if (gradeId.length > 10) {
+            return res.status(400).json({ message: "Grade id must not exceed 10 characters" });
+        }
+
+        if (schoolYear.length > 10) {
+            return res.status(400).json({ message: "School year must not exceed 10 characters" });
+        }
+
+        const yearMatch = schoolYear.match(/^(\d{4})-(\d{4})$/);
+
+        if (!yearMatch) {
+            return res.status(400).json({ message: "School year must use format YYYY-YYYY" });
+        }
+
+        const parsedSiSo = SiSo === undefined ? 0 : Number(SiSo);
+
+        if (!Number.isInteger(parsedSiSo) || parsedSiSo < 0) {
+            return res.status(400).json({ message: "Invalid SiSo" });
+        }
+
+        const newClass = await db.sequelize.transaction(async (t) => {
+            const existingYear = await db.NAMHOC.findByPk(schoolYear, { transaction: t, lock: t.LOCK.UPDATE });
+
+            if (!existingYear) {
+                const error = new Error("School year not found");
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const grade = await db.KHOILOP.findByPk(gradeId, { transaction: t, lock: t.LOCK.UPDATE });
+
+            if (!grade) {
+                const error = new Error("Grade not found");
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const duplicateClass = await db.LOP.findOne({
+                where: {
+                    TenLop: className,
+                    MaKhoiLop: gradeId,
+                    TenNamHoc: schoolYear
+                },
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            if (duplicateClass) {
+                const error = new Error("Class already exists for this grade and school year");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            const khoiDigits = String(grade.MaKhoiLop).replace(/\D/g, "");
+            const khoiCode = `K${khoiDigits.padStart(2, "0")}`;
+            const [, startYear, endYear] = yearMatch;
+            const yearCode = startYear.slice(2) + endYear.slice(2);
+
+            const lastClass = await db.LOP.findOne({
+                where: {
+                    MaKhoiLop: gradeId,
+                    TenNamHoc: schoolYear
+                },
+                order: [["MaLop", "DESC"]],
+                transaction: t,
+                lock: t.LOCK.UPDATE
+            });
+
+            const nextSequence = lastClass ? Number(lastClass.MaLop.slice(-3)) + 1 : 1;
+            const MaLop = `${yearCode}${khoiCode}${String(nextSequence).padStart(3, "0")}`;
+
+            const existingByCode = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+
+            if (existingByCode) {
+                const error = new Error("Class code already exists");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            return await db.LOP.create({
+                MaLop,
+                TenLop: className,
+                MaKhoiLop: gradeId,
+                TenNamHoc: schoolYear,
+                SiSo: parsedSiSo
+            }, { transaction: t });
         });
+
         res.status(201).json(newClass);
     } catch (error) {
+        if (error?.statusCode) {
+            return res.status(error.statusCode).json({ message: error.message });
+        }
+
+        if (
+            error?.name === "SequelizeUniqueConstraintError" ||
+            error?.original?.number === 2601 ||
+            error?.original?.number === 2627
+        ) {
+            return res.status(409).json({
+                message: "Class already exists for this grade and school year"
+            });
+        }
+
         console.log(error);
         res.status(500).json({ message: "Error from server" });
     }
