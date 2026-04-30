@@ -80,13 +80,32 @@ db.CT_BANGDIEMMON_HS.belongsTo(db.BANGDIEMMON, { foreignKey: 'MaBangDiemMon' });
 
 db.HOCSINH.hasMany(db.CT_BANGDIEMMON_HS, { foreignKey: 'MaHS' });
 db.CT_BANGDIEMMON_HS.belongsTo(db.HOCSINH, { foreignKey: 'MaHS' });
+//==========Update=====================
+// Bảng điểm môn phải thuộc về một Lớp
+db.LOP.hasMany(db.BANGDIEMMON, { foreignKey: 'MaLop' });
+db.BANGDIEMMON.belongsTo(db.LOP, { foreignKey: 'MaLop' });
 
+// Bảng điểm môn phải thuộc về một Môn học
+db.MONHOC.hasMany(db.BANGDIEMMON, { foreignKey: 'MaMonHoc' });
+db.BANGDIEMMON.belongsTo(db.MONHOC, { foreignKey: 'MaMonHoc' });
+
+// Bảng điểm môn phải thuộc về một Học kỳ
+db.HOCKY.hasMany(db.BANGDIEMMON, { foreignKey: 'MaHocKy' });
+db.BANGDIEMMON.belongsTo(db.HOCKY, { foreignKey: 'MaHocKy' });
+// Giúp từ QUATRINHHOC có thể truy vấn nhanh ra tất cả các môn học của học sinh đó
+db.QUATRINHHOC.hasMany(db.CT_BANGDIEMMON_HS, { 
+    foreignKey: 'MaHS', 
+    sourceKey: 'MaHS' 
+});
+//================================================================
 
 db.CT_BANGDIEMMON_HS.hasMany(db.CT_BANGDIEMMON_LHKT, { foreignKey: 'MaCTBDMHS' });
 db.CT_BANGDIEMMON_LHKT.belongsTo(db.CT_BANGDIEMMON_HS, { foreignKey: 'MaCTBDMHS' });
 
 db.LOAIHINHKT.hasMany(db.CT_BANGDIEMMON_LHKT, { foreignKey: 'MaLoaiHinhKT' });
 db.CT_BANGDIEMMON_LHKT.belongsTo(db.LOAIHINHKT, { foreignKey: 'MaLoaiHinhKT' });
+
+
 
 //=============== Kết nối database sql server================
 export const connectDB = async () => {
@@ -95,7 +114,7 @@ export const connectDB = async () => {
         console.log('Connect Database QLHS successfully (MSSQL).');
         
         
-        await sequelize.sync(); 
+        await sequelize.sync({ force: true }); 
         console.log('All the table has been synchronized and is now clean.');
     } catch (error) {
         console.error('Database connection failed', error.message);
