@@ -1,1 +1,3 @@
+import db from "../../libs/db.js"
 // Các bảng được dùng: BANGDIEMMON, CT_BANGDIEMMON_HS, CT_BANGDIEMMON_LHKT 
+
