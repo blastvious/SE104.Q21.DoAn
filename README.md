@@ -14,7 +14,7 @@
 | STT | MSSV | Họ và Tên | Chức vụ | Github | Email |
 |-----|------|-----------|--------|--------|-------|
 | 1 | 24520212 | ĐÀO THỊ MAI CHI | Nhóm trưởng | [maichidao](https://github.com/maichidao) | 24520212@gm.uit.edu.vn |
-| 2 | 24520109 | NGUYỄN NGỌC LAN ANH | Thành viên | [displayname](link profile git) | 24520212@gm.uit.edu.vn |
+| 2 | 24520109 | NGUYỄN NGỌC LAN ANH | Thành viên | [ngnlananh](https://github.com/ngnlananh) | 24520212@gm.uit.edu.vn |
 | 3 | 24520071 | PHẠM THỊ THÁI AN | Thành viên | [HufaCung](https://github.com/HufaCung) | 24520212@gm.uit.edu.vn |
 | 4 | 23521717 | NGUYỄN ANH TUẤN | Thành viên | [blastvious](https://github.com/blastvious) | 23521717@gm.uit.edu.vn |
 

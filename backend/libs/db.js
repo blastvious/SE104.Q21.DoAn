@@ -114,7 +114,7 @@ export const connectDB = async () => {
         console.log('Connect Database QLHS successfully (MSSQL).');
         
         
-        await sequelize.sync({ force: true }); 
+        await sequelize.sync(); 
         console.log('All the table has been synchronized and is now clean.');
     } catch (error) {
         console.error('Database connection failed', error.message);
