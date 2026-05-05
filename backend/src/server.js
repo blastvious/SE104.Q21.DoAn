@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import { connectDB } from '../libs/db.js'; 
 import studentRoute from '../routes/student.route.js'
 import classRoute from "../routes/class.router.js"
+import studyProcessRoute from '../routes/studyProcess.router.js'
 import authRoute from '../routes/auth.route.js'
-import helmet from 'helmet'
 
 import cors from 'cors';
 dotenv.config();
@@ -22,6 +22,7 @@ app.use("/api/school", authRoute);
 
 app.use("/api/school", studentRoute);
 app.use("/api/school", classRoute);
+app.use("/api/school", studyProcessRoute);
 
 
 app.listen(PORT, async () => {
