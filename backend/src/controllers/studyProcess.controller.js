@@ -31,12 +31,15 @@ export const enrollStudent = async (req, res) => {
             const classRecord = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
             if (!classRecord) throwHttp("Class not found", 404);
 
-            const enrolled = await db.QUATRINHHOC.findOne({ where: { MaHS, MaHocKy }, transaction: t });
+            const enrolled = await db.QUATRINHHOC.findOne({ where: { MaHS, MaHocKy }, transaction: t, lock: t.LOCK.UPDATE });
             if (enrolled) {
-                const msg = enrolled.MaLop === MaLop
-                    ? "Student is already enrolled in this class for this semester"
-                    : "Student is already enrolled in another class this semester";
-                throwHttp(msg, enrolled.MaLop === MaLop ? 409 : 400);
+                const sameClass = enrolled.MaLop === MaLop;
+                throwHttp(
+                    sameClass
+                        ? "Student is already enrolled in this class for this semester"
+                        : "Student is already enrolled in another class this semester",
+                    sameClass ? 409 : 400
+                );
             }
 
             const count = await db.QUATRINHHOC.count({ where: { MaLop }, transaction: t });
@@ -120,8 +123,8 @@ export const semesterSummary = async (req, res) => {
             })
         ]);
 
-        if (!records.length) return res.status(404).json({ message: "No students found for this class and semester" });
-        if (!bangDiemMonList.length) return res.status(404).json({ message: "No score sheets found for this class and semester" });
+        if (!records.length) throwHttp("No students found for this class and semester", 404);
+        if (!bangDiemMonList.length) throwHttp("No score sheets found for this class and semester", 404);
 
         const maHSList = records.map(r => r.MaHS);
         const maBangDiemMonList = bangDiemMonList.map(b => b.MaBangDiemMon);
@@ -131,7 +134,7 @@ export const semesterSummary = async (req, res) => {
         });
 
         const scoreMap = new Map(allScores.map(s => [`${s.MaBangDiemMon}_${s.MaHS}`, s]));
-        const heSoMap = new Map(bangDiemMonList.map(b => [b.MaBangDiemMon, b.MONHOC.HeSo || 1]));
+        const heSoMap = new Map(bangDiemMonList.map(b => [b.MaBangDiemMon, b.MONHOC.HeSo ?? 1]));
 
         const results = records.map(record => {
             let totalScore = 0;
@@ -150,18 +153,19 @@ export const semesterSummary = async (req, res) => {
             return { MaHS: record.MaHS, MaLop, MaHocKy, DiemTBHocKy: diemTB };
         });
 
-        await Promise.all(
-            results.map(r =>
-                db.QUATRINHHOC.update(
-                    { DiemTBHocKy: r.DiemTBHocKy },
-                    { where: { MaHS: r.MaHS, MaLop, MaHocKy } }
+        await db.sequelize.transaction(async (t) => {
+            await Promise.all(
+                results.map(r =>
+                    db.QUATRINHHOC.update(
+                        { DiemTBHocKy: r.DiemTBHocKy },
+                        { where: { MaHS: r.MaHS, MaLop, MaHocKy }, transaction: t }
+                    )
                 )
-            )
-        );
+            );
+        });
 
         res.json({ message: "Semester summary completed", data: results });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error from server" });
+        handleCatch(res, error);
     }
 };

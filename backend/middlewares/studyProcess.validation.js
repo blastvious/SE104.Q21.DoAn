@@ -38,7 +38,7 @@ export const classListQuerySchema = Joi.object({
 });
 
 export const validate = (schema) => (req, res, next) => {
-    const target = req.query && Object.keys(req.query).length > 0 ? req.query : req.body;
+    const target = req.method === 'GET' ? req.query : req.body;
     const { error } = schema.validate(target, { abortEarly: false });
 
     if (error) {
