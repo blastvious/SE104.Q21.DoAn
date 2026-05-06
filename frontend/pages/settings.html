@@ -1,0 +1,114 @@
+<div class="settings-page">
+    <div class="page-header">
+        <h2>⚙️ Cấu Hình Hệ Thống Học Tập</h2>
+        <p>Thiết lập thông số nền tảng cho quản lý học sinh</p>
+    </div>
+
+    <div class="settings-grid">
+        <section class="config-card">
+            <div class="card-title">📅 Năm Học</div>
+            <form id="form-year" class="modern-form">
+                <input type="text" id="TenNamHoc" placeholder="Tên năm học (2025-2026)" required>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label style="font-size: 0.8rem; color: #666;">Ngày bắt đầu</label>
+                        <input type="text" id="NgayBatDau" placeholder="DD/MM/YYYY" required>
+                    </div>
+                    <div class="input-group">
+                        <label style="font-size: 0.8rem; color: #666;">Ngày kết thúc</label>
+                        <input type="text" id="NgayKetThuc" placeholder="DD/MM/YYYY" required>
+                    </div>
+                </div>
+                <small style="color: #888; display: block; margin-top: 5px; margin-bottom: 10px;">
+                    Định dạng: Ngày/Tháng/Năm (Ví dụ: 05/09/2025)
+                </small>
+
+                <button type="submit" class="btn-add">Thêm Năm Học</button>
+            </form>
+
+            <div class="table-scroll">
+                <table id="table-year">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>Bắt đầu</th>
+                            <th>Kết thúc</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="config-card">
+            <div class="card-title">🌓 Học Kỳ</div>
+            <form id="form-semester" class="modern-form">
+                <select id="TenHocKy" required>
+                    <option value="" disabled selected>Chọn học kỳ...</option>
+                    <option value="Học kỳ I">Học kỳ I</option>
+                    <option value="Học kỳ II">Học kỳ II</option>
+                </select>
+                <button type="submit" class="btn-add">Thêm Học Kỳ</button>
+            </form>
+            <div class="table-scroll">
+                <table id="table-semester">
+                    <thead>
+                        <tr>
+                            <th>Mã HK</th>
+                            <th>Tên Học Kỳ</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="config-card">
+            <div class="card-title">📚 Khối Lớp</div>
+            <form id="form-grade" class="modern-form">
+                <input type="text" id="TenKhoiLop" placeholder="Tên khối (VD: 10, 11, 12)" required>
+                <button type="submit" class="btn-add">Thêm Khối</button>
+            </form>
+            <div class="table-scroll">
+                <table id="table-grade">
+                    <thead>
+                        <tr>
+                            <th>Mã Khối</th>
+                            <th>Tên Khối</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="config-card">
+            <div class="card-title">🏫 Lớp Học</div>
+            <form id="form-class" class="modern-form">
+                <input type="text" id="TenLop" placeholder="Tên lớp (VD: 10A1)" required>
+                <div class="row">
+                    <select id="SelectNamHoc" required>
+                        <option value="">Chọn năm...</option>
+                    </select>
+                    <select id="SelectKhoi" required>
+                        <option value="">Chọn khối...</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add">Thêm Lớp</button>
+            </form>
+            <div class="table-scroll">
+                <table id="table-class">
+                    <thead>
+                        <tr>
+                            <th>Tên Lớp</th>
+                            <th>Khối</th>
+                            <th>Năm Học</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>

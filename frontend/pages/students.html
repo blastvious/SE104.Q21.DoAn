@@ -1,48 +1,117 @@
-<h2>Tiếp nhận học sinh</h2>
-<form id="studentForm">
-    <label>Tên học sinh:</label>
-    <input type="text" id="HoTen" required>
-
-    <label>Ngày sinh (Ví dụ: 15/05/2008):</label>
-    <input type="text" id="NgaySinh" placeholder="DD/MM/YYYY" required>
-
-    <label>Giới tính:</label>
-    <select id="GioiTinh">
-        <option value="Nam">Nam</option>
-        <option value="Nữ">Nữ</option>
-    </select>
-
-    <label>Địa chỉ:</label>
-    <input type="text" id="DiaChi" required>
-
-    <label>Email:</label>
-    <input type="email" id="Email" required>
-
-    <label>Số điện thoại:</label>
-    <input type="tel" id="SoDienThoai" required>
-
-    <button type="submit">Lưu học sinh</button>
-    <div class="excel-import-area">
-        <h3>Hoặc nhập từ File Excel</h3>
-        <input type="file" id="excelFile" accept=".xlsx, .xls" />
-        <button type="button" id="btnUploadExcel">Tải lên Excel</button>
+<div class="qlsv-content-wrapper">
+    <div class="qlsv-page-header">
+        <h1 class="qlsv-title">Tiếp Nhận Học Sinh</h1>
     </div>
-</form>
 
-<p id="msg"></p>
-<hr>
-<h3>Danh sách học sinh</h3>
-<table border="1" width="100%">
-    <thead>
-        <tr>
-            <th>Mã HS</th>
-            <th>Họ Tên</th>
-            <th>Ngày Sinh</th>
-            <th>Giới Tính</th>
-            <th>Địa Chỉ</th>
-            <th>Email</th>
-            <th>SĐT</th>
-        </tr>
-    </thead>
-    <tbody id="studentTable"></tbody>
-</table>
+    <div class="qlsv-toolbar">
+        <div class="qlsv-toolbar-left">
+    <button class="qlsv-btn qlsv-btn--primary" id="openModalBtn">
+        <span class="icon">➕</span> Thêm học sinh mới
+    </button>
+
+    <div class="filter-group">
+        <div class="filter-item">
+            <label for="filterKhoi">Khối:</label>
+            <select id="filterKhoi" class="qlsv-select">
+                <option value="">-- Chọn Khối --</option>
+                <option value="10">Khối 10</option>
+                <option value="11">Khối 11</option>
+                <option value="12">Khối 12</option>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label for="filterLop">Lớp:</label>
+            <select id="filterLop" class="qlsv-select" disabled>
+                <option value="">-- Chọn Lớp --</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+        
+        <div class="qlsv-toolbar-right">
+            <div class="excel-controls">
+                <input type="file" id="excelFile" accept=".xlsx, .xls" hidden />
+                <button type="button" class="qlsv-btn qlsv-btn--outline"
+                    onclick="document.getElementById('excelFile').click()">
+                    <span class="icon">📁</span> Chọn File Excel
+                </button>
+                <button type="button" class="qlsv-btn qlsv-btn--blue" id="btnUploadExcel">
+                    <span class="icon">📤</span> Tải lên Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="qlsv-table-card">
+        <div class="table-responsive">
+            <table class="qlsv-table">
+                <thead>
+                    <tr>
+                        <th>Mã HS</th>
+                        <th>Họ Tên</th>
+                        <th>Ngày Sinh</th>
+                        <th>Giới Tính</th>
+                        <th>Địa Chỉ</th>
+                        <th>Email</th>
+                        <th>SĐT</th>
+                        <th style="text-align: center;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="studentModal" class="qlsv-modal">
+        <div class="qlsv-modal-content">
+            <div class="modal-header">
+                <h3>Thêm Học Sinh Mới</h3>
+                <span class="close-modal" id="closeModalBtn">&times;</span>
+            </div>
+            <form id="studentForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Họ và tên</label>
+                        <input type="text" id="HoTen" placeholder="Nguyễn Văn A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Giới tính</label>
+                        <select id="GioiTinh">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ngày sinh</label>
+                        <input type="text" id="NgaySinh" placeholder="DD/MM/YYYY" required>
+                        <small style="color: #888; font-size: 0.75rem;">Ví dụ: 15/05/2008</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="SoDienThoai" placeholder="090..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="Email" placeholder="example@gmail.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input type="text" id="DiaChi" placeholder="Địa chỉ thường trú" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancelBtn">Hủy</button>
+                    <button type="submit" class="qlsv-btn qlsv-btn--primary">Lưu học sinh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

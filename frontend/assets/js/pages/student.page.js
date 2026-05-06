@@ -1,7 +1,5 @@
-// 1. Luôn để Import ở trên cùng
 import { createStudent, getAllStudents, bulkCreateStudents } from "../service/student.service.js";
 
-// 2. Để hàm helper ở ngoài hoặc ở đầu để init() có thể thấy nó
 function formatToDateOnly(dateStr) {
     if (dateStr.includes('/')) {
         const [day, month, year] = dateStr.split('/');
@@ -13,49 +11,51 @@ function formatToDateOnly(dateStr) {
 export async function init() {
     const form = document.getElementById("studentForm");
     const tableBody = document.getElementById("studentTable");
-
+    const studentModal = document.getElementById("studentModal");
+    
     const btnUpload = document.getElementById("btnUploadExcel");
     const fileInput = document.getElementById("excelFile");
+
+    // --- XỬ LÝ IMPORT EXCEL ---
     btnUpload.addEventListener("click", async () => {
         const file = fileInput.files[0];
         if (!file) {
-            alert("Vui lòng chọn một file Excel!");
+            alert("⚠️ Vui lòng chọn một file Excel trước khi tải lên!");
             return;
         }
 
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            
-            // Lấy sheet đầu tiên
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            
-            // Chuyển thành JSON
-            // Lưu ý: Tên cột trong Excel phải khớp với tên field trong DB (HoTen, NgaySinh, ...)
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
             try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData.length === 0) {
+                    throw new Error("File Excel rỗng hoặc không đúng định dạng!");
+                }
+
+                // Gọi API bulk create
                 const result = await bulkCreateStudents(jsonData);
-                alert(result.message);
-                await renderTable(); // Load lại bảng
-                fileInput.value = ""; // Reset file input
+                alert("✅ " + result.message);
+                
+                await renderTable(); 
+                fileInput.value = ""; 
             } catch (error) {
-                alert("Lỗi khi import: " + error.message);
+                // Hiển thị thông báo lỗi chi tiết từ Server (ví dụ lỗi Joi validation)
+                console.error("Import Error:", error);
+                alert("❌ Lỗi Import: " + error.message);
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    if (!form) return;
-
-    // Định nghĩa renderTable bên trong init để dùng được getAllStudents đã import
+    // --- XỬ LÝ RENDER BẢNG ---
     async function renderTable() {
         try {
-            console.log("Đang tải danh sách học sinh...");
             const students = await getAllStudents(); 
-            
             if (!tableBody) return;
             tableBody.innerHTML = "";
             
@@ -69,50 +69,57 @@ export async function init() {
                         <td>${s.DiaChi}</td>
                         <td>${s.Email}</td>
                         <td>${s.SoDienThoai}</td>
+                        <td style="text-align:center">
+                            <button class="btn-edit">✏️</button>
+                        </td>
                     </tr>
                 `;
                 tableBody.insertAdjacentHTML("beforeend", row);
             });
         } catch (error) {
-            console.error("Lỗi khi tải danh sách:", error);
+            console.error("Lỗi tải bảng:", error);
         }
     }
 
-    // Đăng ký sự kiện
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        console.log("Đã nhấn nút Lưu - Đang xử lý...");
+    // --- XỬ LÝ FORM THÊM MỚI (MODAL) ---
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
 
-        const rawDate = document.getElementById("NgaySinh").value;
-        const formattedDate = formatToDateOnly(rawDate); // Đã định nghĩa ở trên nên sẽ chạy được
+            const rawDate = document.getElementById("NgaySinh").value;
+            const formattedDate = formatToDateOnly(rawDate);
 
-        const student = {
-            HoTen: document.getElementById("HoTen").value,
-            NgaySinh: formattedDate,
-            GioiTinh: document.getElementById("GioiTinh").value,
-            DiaChi: document.getElementById("DiaChi").value,
-            Email: document.getElementById("Email").value,
-            SoDienThoai: document.getElementById("SoDienThoai").value
-        };
+            const student = {
+                HoTen: document.getElementById("HoTen").value,
+                NgaySinh: formattedDate,
+                GioiTinh: document.getElementById("GioiTinh").value,
+                DiaChi: document.getElementById("DiaChi").value,
+                Email: document.getElementById("Email").value,
+                SoDienThoai: document.getElementById("SoDienThoai").value
+            };
 
-        try {
-            const result = await createStudent(student);
-            if (result) {
-                alert("Tiếp nhận học sinh thành công!");
-                form.reset();
-                document.getElementById("HoTen").focus();
-                await renderTable(); 
+            try {
+                const result = await createStudent(student);
+                if (result) {
+                    alert("🎉 Tiếp nhận học sinh thành công!");
+                    
+                    // 1. Reset form
+                    form.reset();
+                    
+                    // 2. Đóng Modal
+                    if (studentModal) {
+                        studentModal.style.display = "none";
+                    }
+                    
+                    // 3. Cập nhật lại bảng dữ liệu
+                    await renderTable(); 
+                }
+            } catch (error) {
+                alert("❌ Lỗi: " + error.message);
             }
-        } catch (error) {
-            alert("Lỗi: " + error.message);
-        }
+        });
+    }
 
-        
-
-
-        
-    });
-
-    // Chạy tải bảng lần đầu
+    // Tải bảng lần đầu khi vào trang
     await renderTable();
 }

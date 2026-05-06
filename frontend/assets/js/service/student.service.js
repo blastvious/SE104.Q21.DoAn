@@ -22,17 +22,24 @@ export const createStudent = async (studentData) => {
 
 // student.service.js
 export const bulkCreateStudents = async (dataArray) => {
-    const response = await fetch(`${API_URL}/bulk`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataArray)
-    });
+    try {
+        const response = await fetch(`${API_URL}/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataArray)
+        });
 
-    const result = await response.json();
-    if (!response.ok) {
-        // Trả về chi tiết lỗi từ Joi nếu có
-        const errorMsg = result.details ? result.details.join(", ") : result.message;
-        throw new Error(errorMsg || "Lỗi khi import file");
+        const result = await response.json();
+
+        if (!response.ok) {
+            // Nếu server trả về mảng details (lỗi Joi), ta nối chúng lại
+            const errorMsg = result.details ? result.details.join("\n") : result.message;
+            throw new Error(errorMsg || "Dữ liệu file Excel không hợp lệ!");
+        }
+
+        return result;
+    } catch (error) {
+        // Ném lỗi ra ngoài để hàm init() bắt được và alert()
+        throw error;
     }
-    return result;
 };

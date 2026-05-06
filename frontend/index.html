@@ -1,59 +1,76 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>QLHS - Quản Lý Học Sinh</title>
-
-<link rel="stylesheet" href="assets/css/layout.css">
-
+    <meta charset="UTF-8">
+    <title>QLHS - Quản Lý Học Sinh</title>
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
-
 <body>
 
 <div class="container">
-
-    <!-- LEFT PANEL -->
-    <aside class="sidebar">
-
-        <h2>QLHS</h2>
-
-        <ul>
-            <li data-page="dashboard.html">Trang chủ</li>
-            <li data-page="students.html">Tiếp nhận học sinh</li>
-            <li data-page="subjects.html">Môn học</li>
-            <li data-page="scores.html">Bảng điểm</li>
-            <li data-page="report-semester.html">Báo cáo học kỳ</li>
-            <li data-page="report-year.html">Báo cáo năm</li>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <h2>QLHS</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active" data-page="dashboard.html">🏠 Trang chủ</li>
+            <li data-page="students.html">👥 Tiếp nhận học sinh</li>
+            <li data-page="settings.html">⚙️ Thiết lập hệ thống</li>
+            <li data-page="subjects.html">📚 Môn học</li>
+            <li data-page="scores.html">📝 Bảng điểm</li>
+            <li data-page="report-semester.html">📊 Báo cáo học kỳ</li>
+            <li data-page="report-year.html">📈 Báo cáo năm</li>
         </ul>
-
     </aside>
 
-
     <div class="content-area">
-
-        <!-- HEADER -->
         <header class="header">
+            <button id="toggle-btn" class="hamburger">☰</button>
             <h1>Hệ Thống Quản Lý Học Sinh</h1>
         </header>
 
-        <!-- MAIN CONTENT -->
         <main id="main-content">
-
-            <h2>Các nội dung hiển thị ở đây nhé</h2>
-            <p>Chọn chức năng bên trái.</p>
-
+            <div class="welcome-box">
+                <h2>Chào mừng bạn quay trở lại!</h2>
+                <p>Hãy chọn một chức năng ở thanh menu bên trái.</p>
+            </div>
         </main>
 
-        <!-- FOOTER -->
         <footer class="footer">
-            <p>SE104 - Software Engineering Project</p>
+            <p>SE104 - Software Engineering Project | 2026</p>
         </footer>
-
     </div>
-
 </div>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script type="module" src="assets/js/router.js"></script>
 
+<script>
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-btn');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+    });
+    document.addEventListener('click', function (event) {
+    const modal = document.getElementById("studentModal");
+
+    // 1. Nếu bấm vào nút "Thêm học sinh mới"
+    if (event.target.id === 'openModalBtn' || event.target.closest('#openModalBtn')) {
+        if (modal) modal.style.display = "block";
+    }
+
+    // 2. Nếu bấm vào nút X hoặc nút Hủy
+    if (event.target.id === 'closeModalBtn' || event.target.id === 'cancelBtn') {
+        if (modal) modal.style.display = "none";
+    }
+
+    // 3. Nếu bấm ra ngoài vùng xám của Modal
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+});
+</script>
 </body>
 </html>
