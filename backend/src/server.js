@@ -5,8 +5,8 @@ import studentRoute from '../routes/student.route.js'
 import classRoute from "../routes/class.router.js"
 import studyProcessRoute from '../routes/studyProcess.router.js'
 import authRoute from '../routes/auth.route.js'
-
 import academicRoute from '../routes/academic.router.js'
+import scoreRoute from '../routes/score.router.js'
 import helmet from 'helmet'
 
 
@@ -29,6 +29,7 @@ app.use("/api/school", classRoute);
 app.use("/api/school", studyProcessRoute);
 
 app.use("/api/school", academicRoute);
+app.use("/api/school", scoreRoute);
 
 app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
