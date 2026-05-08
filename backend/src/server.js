@@ -6,6 +6,10 @@ import classRoute from "../routes/class.router.js"
 import studyProcessRoute from '../routes/studyProcess.router.js'
 import authRoute from '../routes/auth.route.js'
 
+import academicRoute from '../routes/academic.router.js'
+import helmet from 'helmet'
+
+
 import cors from 'cors';
 dotenv.config();
 
@@ -24,6 +28,7 @@ app.use("/api/school", studentRoute);
 app.use("/api/school", classRoute);
 app.use("/api/school", studyProcessRoute);
 
+app.use("/api/school", academicRoute);
 
 app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
