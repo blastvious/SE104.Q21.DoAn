@@ -34,7 +34,6 @@ const Studentmodel = (sequelize) => {
           SoDienThoai: {
                type: DataTypes.STRING(20),
                allowNull: false,
-               unique: true
           }
      }, {
           freezeTableName: true,

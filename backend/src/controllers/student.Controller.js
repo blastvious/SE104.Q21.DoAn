@@ -71,7 +71,7 @@ export const createStudent = async (req, res) => {
 export const bulkCreateStudents = async (req, res) => {
     try {
         const studentData = req.body;
-        const khoa = "2662";
+        const khoa = "2652";
 
         // Lấy học sinh cuối cùng trong database để làm mốc cho việc thêm học sinh mới.
         const lastStudent = await db.HOCSINH.findOne({

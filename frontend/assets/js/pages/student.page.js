@@ -17,7 +17,7 @@ export async function init() {
     const fileInput = document.getElementById("excelFile");
 
     // --- XỬ LÝ IMPORT EXCEL ---
-    btnUpload.addEventListener("click", async () => {
+    btnUpload.onclick = async () => {
         const file = fileInput.files[0];
         if (!file) {
             alert("⚠️ Vui lòng chọn một file Excel trước khi tải lên!");
@@ -50,7 +50,7 @@ export async function init() {
             }
         };
         reader.readAsArrayBuffer(file);
-    });
+    };
 
     // --- XỬ LÝ RENDER BẢNG ---
     async function renderTable() {
