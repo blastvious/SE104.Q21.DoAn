@@ -14,60 +14,42 @@ export const getAllStudent = async (req, res) =>{
 //To do: Thêm method thêm học sinh
 
 export const createStudent = async (req, res) => {
+    // Sử dụng transaction để khóa bảng
+    const t = await db.sequelize.transaction();
     try {
-// ======= PhanThietke MaSo ===========
-        const {
-            HoTen,
-            GioiTinh,
-            NgaySinh,
-            DiaChi,
-            Email,
-            SoDienThoai
-        } = req.body;
-
+        const { HoTen, GioiTinh, NgaySinh, DiaChi, Email, SoDienThoai } = req.body;
         const khoa = "2652";
 
-        
+        // Tìm lastStudent bên trong transaction với khóa LOCK.UPDATE
         const lastStudent = await db.HOCSINH.findOne({
-            where: {
-                MaHS: {
-                    [Op.like]: `${khoa}%`
-                }
-            },
-            order: [["MaHS","DESC"]]
+            where: { MaHS: { [Op.like]: `${khoa}%` } },
+            order: [["MaHS", "DESC"]],
+            transaction: t,
+            lock: true // QUAN TRỌNG: Khóa dòng này lại để người khác không vào chiếm mã
         });
 
         let stt = 1;
+        if (lastStudent) {
+            stt = parseInt(lastStudent.MaHS.slice(4)) + 1;
+        }
 
-        if(lastStudent){
-            const lastNumber = parseInt(lastStudent.MaHS.slice(4))
-            stt = lastNumber + 1
-        };
+        const MaHS = `${khoa}${String(stt).padStart(4, '0')}`;
 
-        const padded = String(stt).padStart(4,'0');
-        const MaHS = `${khoa}${padded}`;
-// ==============================================================
         const newStudent = await db.HOCSINH.create({
-            MaHS,
-            HoTen,
-            GioiTinh,
-            NgaySinh,
-            DiaChi,
-            Email,
-            SoDienThoai
-        });
+            MaHS, HoTen, GioiTinh, NgaySinh, DiaChi, Email, SoDienThoai
+        }, { transaction: t });
 
-        res.status(201).json(newStudent)
+        // Commit dữ liệu
+        await t.commit();
+        res.status(201).json(newStudent);
 
     } catch (error) {
-        console.error(error)
-        res.status(500).json({
-            statusCode: 500,
-            message: "Error from server"
-        });
+        // Nếu lỗi thì hoàn tác (rollback)
+        await t.rollback();
+        console.error(error);
+        res.status(500).json({ message: "Mã học sinh bị trùng hoặc lỗi server, hãy thử lại" });
     }
 };
-
 export const bulkCreateStudents = async (req, res) => {
     try {
         const studentData = req.body;

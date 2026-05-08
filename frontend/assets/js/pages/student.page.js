@@ -83,7 +83,7 @@ export async function init() {
 
     // --- XỬ LÝ FORM THÊM MỚI (MODAL) ---
     if (form) {
-        form.addEventListener("submit", async (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
 
             const rawDate = document.getElementById("NgaySinh").value;
@@ -117,7 +117,7 @@ export async function init() {
             } catch (error) {
                 alert("❌ Lỗi: " + error.message);
             }
-        });
+        };
     }
 
     // Tải bảng lần đầu khi vào trang
