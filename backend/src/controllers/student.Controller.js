@@ -1,5 +1,10 @@
 import db from "../../libs/db.js"
 import { Op, where } from "sequelize"
+
+
+/* =========================================
+   GET STUDENT 
+========================================= */
 export const getAllStudent = async (req, res) =>{
     try {
         const student = await db.HOCSINH.findAll();
@@ -10,8 +15,42 @@ export const getAllStudent = async (req, res) =>{
         
     }
 }
+/* =========================================
+   GET STUDENT BY ID
+========================================= */
+export const getStudentById = async (req, res) => {
 
-//To do: Thêm method thêm học sinh
+    try {
+
+        const { id } = req.params;
+
+        const student = await db.HOCSINH.findByPk(id);
+
+        if (!student) {
+
+            return res.status(404).json({
+                message: "Không tìm thấy học sinh"
+            });
+
+        }
+
+        res.json(student);
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            message: "Error from server"
+        });
+
+    }
+
+};
+
+/* =========================================
+   CREATE STUDENT
+========================================= */
 
 export const createStudent = async (req, res) => {
     // Sử dụng transaction để khóa bảng
@@ -50,6 +89,11 @@ export const createStudent = async (req, res) => {
         res.status(500).json({ message: "Mã học sinh bị trùng hoặc lỗi server, hãy thử lại" });
     }
 };
+
+
+/* =========================================
+   BULK CREATE STUDENTS
+========================================= */
 export const bulkCreateStudents = async (req, res) => {
     try {
         const studentData = req.body;
@@ -91,3 +135,92 @@ export const bulkCreateStudents = async (req, res) => {
 }
 
 
+/* =========================================
+   UPDATE STUDENT
+========================================= */
+export const updateStudent = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+
+        const {
+            HoTen,
+            GioiTinh,
+            NgaySinh,
+            DiaChi,
+            Email,
+            SoDienThoai
+        } = req.body;
+
+        const student =
+            await db.HOCSINH.findByPk(id);
+
+        if (!student) {
+
+            return res.status(404).json({
+                message: "Không tìm thấy học sinh"
+            });
+
+        }
+
+        await student.update({
+            HoTen,
+            GioiTinh,
+            NgaySinh,
+            DiaChi,
+            Email,
+            SoDienThoai
+        });
+
+        res.json(student);
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            message: "Error from server"
+        });
+
+    }
+
+};
+
+/* =========================================
+   DELETE STUDENT
+========================================= */
+export const deleteStudent = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+
+        const student =
+            await db.HOCSINH.findByPk(id);
+
+        if (!student) {
+
+            return res.status(404).json({
+                message: "Không tìm thấy học sinh"
+            });
+
+        }
+
+        await student.destroy();
+
+        res.json({
+            message: "Xóa học sinh thành công"
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.status(500).json({
+            message: "Error from server"
+        });
+
+    }
+
+};

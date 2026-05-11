@@ -8,7 +8,11 @@ const router = express.Router();
 
 //Router cho môn học
 router.get("/subject", academicController.getAllSubjects);
+router.get("/subject/:id", academicController.getSubjectById);
 router.post("/subject", academicController.createSubject);
+router.put("/subject/:id", academicController.updateSubject);
+
+router.delete("/subject/:id", academicController.deleteSubject);
 
 //Router cho Loại hình kiểm tra
 router.get("/examtype", academicController.getAllExamTypes);

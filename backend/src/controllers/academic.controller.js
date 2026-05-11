@@ -47,17 +47,160 @@ export const createSubject = async (req, res) => {
   }
 };
 
+//Xem 
 export const getAllSubjects = async (req, res) => {
+
   try {
-    const subject = await db.MONHOC.findAll();
-    res.json(subject);
+
+    const { keyword } = req.query;
+
+    const whereClause = {};
+
+    if (keyword) {
+
+      whereClause.TenMonHoc = {
+        [Op.like]: `%${keyword}%`,
+      };
+
+    }
+
+    const subjects = await db.MONHOC.findAll({
+      where: whereClause,
+      order: [["MaMonHoc", "ASC"]],
+    });
+
+    res.json(subjects);
+
   } catch (error) {
+
     console.log(error);
-    res.status(500).json({ message: "Error from server" });
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
   }
+
 };
 
+export const getSubjectById = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const subject = await db.MONHOC.findByPk(id);
+
+    if (!subject) {
+      return res.status(404).json({
+        message: "Không tìm thấy môn học",
+      });
+    }
+
+    res.json(subject);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
+};
+
+
+//===========Sua
+export const updateSubject = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const { TenMonHoc, HeSo } = req.body;
+
+    const subject = await db.MONHOC.findByPk(id);
+
+    if (!subject) {
+      return res.status(404).json({
+        message: "Không tìm thấy môn học",
+      });
+    }
+
+    const trimmedTenMonHoc =
+      TenMonHoc?.trim().replace(/\s+/g, " ");
+
+    // check trùng tên
+    const existing = await db.MONHOC.findOne({
+      where: {
+        TenMonHoc: trimmedTenMonHoc,
+        MaMonHoc: {
+          [Op.ne]: id,
+        },
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Tên môn học đã tồn tại",
+      });
+    }
+
+    await subject.update({
+      TenMonHoc: trimmedTenMonHoc,
+      HeSo,
+    });
+
+    res.json(subject);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
+};
+
+//========= Xoa
+export const deleteSubject = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const subject = await db.MONHOC.findByPk(id);
+
+    if (!subject) {
+      return res.status(404).json({
+        message: "Không tìm thấy môn học",
+      });
+    }
+
+    await subject.destroy();
+
+    res.json({
+      message: "Xóa môn học thành công",
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
+};
 // ================================== Loại hình kiểm tra =====================================
+//========== Thêm
 export const createExamType = async (req, res) => {
   try {
     const { TenLoaiHinhKT, HeSo } = req.body;
@@ -102,13 +245,157 @@ export const createExamType = async (req, res) => {
     res.status(500).json({ message: "Error from server" });
   }
 };
-
+//============= Đọc
 export const getAllExamTypes = async (req, res) => {
+
   try {
-    const examType = await db.LOAIHINHKT.findAll();
-    res.json(examType);
+
+    const { keyword } = req.query;
+
+    const whereClause = {};
+
+    if (keyword) {
+
+      whereClause.TenLoaiHinhKT = {
+        [Op.like]: `%${keyword}%`,
+      };
+
+    }
+
+    const examTypes =
+      await db.LOAIHINHKT.findAll({
+        where: whereClause,
+        order: [["MaLoaiHinhKT", "ASC"]],
+      });
+
+    res.json(examTypes);
+
   } catch (error) {
+
     console.log(error);
-    res.status(500).json({ message: "Error from server" });
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
   }
+
+};
+export const getExamTypeById = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const examType =
+      await db.LOAIHINHKT.findByPk(id);
+
+    if (!examType) {
+      return res.status(404).json({
+        message: "Không tìm thấy loại hình kiểm tra",
+      });
+    }
+
+    res.json(examType);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
+};
+//=============== Xóa
+export const deleteExamType = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const examType =
+      await db.LOAIHINHKT.findByPk(id);
+
+    if (!examType) {
+      return res.status(404).json({
+        message: "Không tìm thấy loại hình kiểm tra",
+      });
+    }
+
+    await examType.destroy();
+
+    res.json({
+      message: "Xóa loại hình kiểm tra thành công",
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
+};
+
+//============== Sửa
+
+export const updateExamType = async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    const { TenLoaiHinhKT, HeSo } = req.body;
+
+    const examType =
+      await db.LOAIHINHKT.findByPk(id);
+
+    if (!examType) {
+      return res.status(404).json({
+        message: "Không tìm thấy loại hình kiểm tra",
+      });
+    }
+
+    const trimmedName =
+      TenLoaiHinhKT?.trim().replace(/\s+/g, " ");
+
+    const existing =
+      await db.LOAIHINHKT.findOne({
+        where: {
+          TenLoaiHinhKT: trimmedName,
+          MaLoaiHinhKT: {
+            [Op.ne]: id,
+          },
+        },
+      });
+
+    if (existing) {
+      return res.status(400).json({
+        message: "Tên loại hình kiểm tra đã tồn tại",
+      });
+    }
+
+    await examType.update({
+      TenLoaiHinhKT: trimmedName,
+      HeSo,
+    });
+
+    res.json(examType);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Error from server",
+    });
+
+  }
+
 };
