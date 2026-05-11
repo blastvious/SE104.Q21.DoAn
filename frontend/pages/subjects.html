@@ -1,0 +1,226 @@
+<div class="subjects-page">
+
+    <!-- HEADER -->
+    <div class="page-header">
+
+        <h2>📚 Quản Lý Môn Học</h2>
+
+        <p>
+            Quản lý danh sách môn học và hệ số áp dụng
+        </p>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="subject-stat-grid">
+
+        <!-- Tổng môn -->
+        <div class="subject-stat-card">
+
+            <div class="subject-icon purple">
+                📘
+            </div>
+
+            <div>
+                <h3 id="totalSubjects">0</h3>
+                <p>Tổng môn học</p>
+            </div>
+
+        </div>
+
+        <!-- Hệ số cao nhất -->
+        <div class="subject-stat-card">
+
+            <div class="subject-icon blue">
+                ⭐
+            </div>
+
+            <div>
+                <h3 id="highestSubject">
+                    --
+                </h3>
+
+                <p>
+                    Môn hệ số cao nhất
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Trung bình hệ số -->
+        <div class="subject-stat-card">
+
+            <div class="subject-icon green">
+                📊
+            </div>
+
+            <div>
+                <h3 id="avgHeSo">
+                    0
+                </h3>
+
+                <p>
+                    Hệ số trung bình
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="qlsv-toolbar">
+
+        <div class="qlsv-toolbar-left">
+
+            <button
+                class="qlsv-btn qlsv-btn--primary"
+                id="openSubjectModal"
+            >
+                ➕ Thêm môn học
+            </button>
+
+        </div>
+
+        <div class="toolbar-search">
+
+            <input
+                type="text"
+                id="subjectSearchInput"
+                placeholder="Tìm môn học..."
+            >
+
+        </div>
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="subject-table-wrapper">
+
+        <table class="subject-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Mã môn</th>
+
+                    <th>Tên môn</th>
+
+                    <th>Hệ số</th>
+
+                    <th>Thao tác</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="subjectTableBody">
+
+                <!-- Render từ JS -->
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="qlsv-modal" id="subjectModal">
+
+    <div class="qlsv-modal-content">
+
+        <!-- HEADER -->
+        <div class="modal-header">
+
+            <h3 id="subjectModalTitle">
+                Thêm Môn Học
+            </h3>
+
+            <span
+                class="close-modal"
+                id="closeSubjectModal"
+            >
+                &times;
+            </span>
+
+        </div>
+
+        <!-- FORM -->
+        <form class="modal-form" id="subjectForm">
+
+            <!-- Hidden mode -->
+            <input
+                type="hidden"
+                id="subjectId"
+            >
+
+            <!-- Tên môn -->
+            <div class="form-group">
+
+                <label>
+                    Tên môn học
+                </label>
+
+                <input
+                    type="text"
+                    id="subjectName"
+                    placeholder="VD: Toán"
+                    required
+                >
+
+            </div>
+
+            <!-- Hệ số -->
+            <div class="form-group">
+
+                <label>
+                    Hệ số
+                </label>
+
+                <select id="subjectHeSo">
+
+                    <option value="1">
+                        Hệ số 1
+                    </option>
+
+                    <option value="2">
+                        Hệ số 2
+                    </option>
+
+                    <option value="3">
+                        Hệ số 3
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-cancel"
+                    id="cancelSubjectBtn"
+                >
+                    Hủy
+                </button>
+
+                <button
+                    type="submit"
+                    class="qlsv-btn qlsv-btn--primary"
+                    id="saveSubjectBtn"
+                >
+                    Lưu môn học
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
