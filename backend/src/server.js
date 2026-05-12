@@ -9,7 +9,6 @@ import academicRoute from '../routes/academic.router.js'
 import scoreRoute from '../routes/score.router.js'
 import helmet from 'helmet'
 
-
 import cors from 'cors';
 dotenv.config();
 

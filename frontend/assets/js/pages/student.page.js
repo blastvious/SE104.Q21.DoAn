@@ -124,14 +124,14 @@ async function renderTable(keyword = "") {
                                 data-email="${s.Email}"
                                 data-sdt="${s.SoDienThoai}"
                             >
-                                ✏️
+                                <i class="fas fa-pen"></i>
                             </button>
 
                             <button
                                 class="action-btn delete"
                                 data-id="${s.MaHS}"
                             >
-                                🗑️
+                                <i class="fas fa-trash"></i>
                             </button>
 
                         </div>
@@ -293,7 +293,7 @@ function bindActionButtons() {
       try {
         await deleteStudent(id);
 
-        alert("🗑️ Xóa học sinh thành công");
+        alert("Xóa học sinh thành công");
 
         await renderTable();
       } catch (error) {

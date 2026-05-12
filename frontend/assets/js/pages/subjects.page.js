@@ -86,14 +86,14 @@ async function loadSubjects(keyword = "") {
                 data-name="${subject.TenMonHoc}"
                 data-heso="${subject.HeSo}"
               >
-                ✏️
+                <i class="fas fa-pen"></i>
               </button>
 
               <button
                 class="action-btn delete"
                 data-id="${subject.MaMonHoc}"
               >
-                🗑️
+                <i class="fas fa-trash"></i>
               </button>
 
             </div>
