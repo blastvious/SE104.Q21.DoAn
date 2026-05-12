@@ -1,12 +1,13 @@
 <div class="qlsv-content-wrapper">
-    <div class="qlsv-page-header">
-        <h1 class="qlsv-title">Tiếp Nhận Học Sinh</h1>
+    <div class="page-header">
+        <h2>Tiếp Nhận Học Sinh</h2>
+        <p>Quản lý hồ sơ học sinh, nhập liệu từ Excel</p>
     </div>
 
     <div class="qlsv-toolbar">
         <div class="qlsv-toolbar-left">
     <button class="qlsv-btn qlsv-btn--primary" id="openModalBtn">
-        <span class="icon">➕</span> Thêm học sinh mới
+        <i class="fas fa-plus"></i> Thêm học sinh mới
     </button>
 
     <div class="filter-group">
@@ -39,10 +40,10 @@
                 <input type="file" id="excelFile" accept=".xlsx, .xls" hidden />
                 <button type="button" class="qlsv-btn qlsv-btn--outline"
                     onclick="document.getElementById('excelFile').click()">
-                    <span class="icon">📁</span> Chọn File Excel
+                    <i class="fas fa-folder-open"></i> Chọn File Excel
                 </button>
                 <button type="button" class="qlsv-btn qlsv-btn--blue" id="btnUploadExcel">
-                    <span class="icon">📤</span> Tải lên Excel
+                    <i class="fas fa-upload"></i> Tải lên Excel
                 </button>
             </div>
         </div>

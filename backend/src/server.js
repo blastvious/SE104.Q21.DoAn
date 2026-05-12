@@ -10,7 +10,6 @@ import scoreRoute from '../routes/score.router.js'
 import parameterRoute from '../routes/parameter.router.js'
 import helmet from 'helmet'
 
-
 import cors from 'cors';
 dotenv.config();
 

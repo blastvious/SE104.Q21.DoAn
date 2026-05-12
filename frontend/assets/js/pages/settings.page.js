@@ -108,7 +108,7 @@ async function loadAllData() {
     // Render Bảng Lớp
     document.querySelector('#table-class tbody').innerHTML = classes.map(c => `
 
-        <tr><td>${c.MaLop}</td><td>${c.MaLop}</td><td>${c.TenLop}</td><td>${c.MaKhoiLop}</td><td>${c.TenNamHoc}</td></tr>
+        <tr><td>${c.MaLop}</td><td>${c.TenLop}</td><td>${c.MaKhoiLop}</td><td>${c.TenNamHoc}</td></tr>
     `).join('');
 
     // Cập nhật các thẻ Select (Dropdown) trong form tạo Lớp
