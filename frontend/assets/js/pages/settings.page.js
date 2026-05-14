@@ -8,21 +8,23 @@ const toISODate = (vnDate) => {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
 };
 
-// Helper: Tự động chèn dấu "/" khi nhập ngày
-const setupDateMask = (id) => {
-    const el = document.getElementById(id);
-    el?.addEventListener('input', (e) => {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
-        if (val.length > 5) val = val.slice(0, 5) + '/' + val.slice(5, 9);
-        e.target.value = val;
+const setupFlatpickr = (id) => {
+    flatpickr(`#${id}`, {
+        dateFormat: "d/m/Y",
+        allowInput: true,
+        locale: { firstDayOfWeek: 1 },
     });
 };
 
+const clearFlatpickr = (id) => {
+    const el = document.getElementById(id);
+    if (el && el._flatpickr) el._flatpickr.clear();
+};
+
 export const init = async () => {
-    // 1. Khởi tạo mask cho ngày tháng
-    setupDateMask('NgayBatDau');
-    setupDateMask('NgayKetThuc');
+    // 1. Khởi tạo date picker
+    setupFlatpickr('NgayBatDau');
+    setupFlatpickr('NgayKetThuc');
 
     // 2. Tải dữ liệu ban đầu
     await loadAllData();
@@ -39,6 +41,8 @@ export const init = async () => {
             await settingsService.createYear(data);
             alert("Thành công!");
             e.target.reset();
+            clearFlatpickr('NgayBatDau');
+            clearFlatpickr('NgayKetThuc');
             await loadAllData();
         } catch (err) { alert(err.message); }
     };

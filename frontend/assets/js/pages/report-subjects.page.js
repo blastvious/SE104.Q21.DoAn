@@ -50,16 +50,24 @@ async function loadReport() {
     }
 
     try {
-        const classesRes = await fetch(`${API}/class`);
-        const allClasses = await classesRes.json();
+        const res = await fetch(`${API}/report-subjects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ TenNamHoc, MaHocKy, MaMonHoc })
+        });
 
-        const diemDatMon = 5.0;
-        const filteredClasses = allClasses.filter(c => c.TenNamHoc === TenNamHoc);
-        filteredClasses.sort((a, b) => a.TenLop.localeCompare(b.TenLop));
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Lỗi khi tạo báo cáo");
+        }
+
+        const response = await res.json();
+        const data = response.data;
+        const details = data.details || [];
 
         const tbody = document.getElementById("reportTableBody");
 
-        if (filteredClasses.length === 0) {
+        if (details.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="empty-table">Không có lớp nào trong năm học này</td></tr>';
             document.getElementById("reportTableFoot").style.display = "none";
             document.getElementById("summaryTotalSiSo").textContent = "--";
@@ -69,58 +77,35 @@ async function loadReport() {
             return;
         }
 
-        let totalSiSo = 0;
-        let totalDat = 0;
         let rows = "";
-
-        for (let i = 0; i < filteredClasses.length; i++) {
-            const c = filteredClasses[i];
-            const siSo = c.SiSo || 0;
-
-            try {
-                const scoreRes = await fetch(`${API}/scores?MaLop=${c.MaLop}&MaMonHoc=${MaMonHoc}&MaHocKy=${MaHocKy}`);
-                if (!scoreRes.ok) throw new Error("Không tìm thấy");
-                const scoreData = await scoreRes.json();
-                const students = scoreData.data || [];
-
-                const soLuongDat = students.filter(s => (s.DiemTBMon ?? 0) >= diemDatMon).length;
-
-                totalSiSo += siSo;
-                totalDat += soLuongDat;
-                const tiLe = siSo > 0 ? ((soLuongDat / siSo) * 100).toFixed(1) : 0;
-
-                rows += `<tr>
-                    <td style="text-align:center">${i + 1}</td>
-                    <td>${c.TenLop}</td>
-                    <td style="text-align:center">${siSo}</td>
-                    <td style="text-align:center">${soLuongDat}</td>
-                    <td style="text-align:center;font-weight:600;color:${tiLe >= 50 ? '#16a34a' : '#dc2626'}">${tiLe}%</td>
-                </tr>`;
-            } catch {
-                totalSiSo += siSo;
-                rows += `<tr>
-                    <td style="text-align:center">${i + 1}</td>
-                    <td>${c.TenLop}</td>
-                    <td style="text-align:center">${siSo}</td>
-                    <td style="text-align:center">--</td>
-                    <td style="text-align:center">--</td>
-                </tr>`;
-            }
-        }
+        const isDark = document.body.classList.contains("dark-mode");
+        details.forEach((d, i) => {
+            const tiLe = d.TiLeDat;
+            const tleColor = tiLe >= 50
+                ? (isDark ? '#22c55e' : '#16a34a')
+                : (isDark ? '#ef4444' : '#dc2626');
+            rows += `<tr>
+                <td style="text-align:center">${i + 1}</td>
+                <td>${d.TenLop}</td>
+                <td style="text-align:center">${d.SiSo}</td>
+                <td style="text-align:center">${d.SoLuongDat}</td>
+                <td style="text-align:center;font-weight:600;color:${tleColor}">${tiLe}%</td>
+            </tr>`;
+        });
 
         tbody.innerHTML = rows;
-        const overallTiLe = totalSiSo > 0 ? ((totalDat / totalSiSo) * 100).toFixed(1) : 0;
 
-        document.getElementById("summaryTotalSiSo").textContent = totalSiSo;
-        document.getElementById("summaryTotalDat").textContent = totalDat;
-        document.getElementById("summaryTiLe").textContent = `${overallTiLe}%`;
+        document.getElementById("summaryTotalSiSo").textContent = data.TongSiSo;
+        document.getElementById("summaryTotalDat").textContent = data.TongSoLuongDat;
+        document.getElementById("summaryTiLe").textContent = `${data.TongTiLeDat}%`;
 
-        document.getElementById("totalSiSo").textContent = totalSiSo;
-        document.getElementById("totalDat").textContent = totalDat;
-        document.getElementById("totalTiLe").textContent = `${overallTiLe}%`;
+        document.getElementById("totalSiSo").textContent = data.TongSiSo;
+        document.getElementById("totalDat").textContent = data.TongSoLuongDat;
+        document.getElementById("totalTiLe").textContent = `${data.TongTiLeDat}%`;
         document.getElementById("reportTableFoot").style.display = "table-footer-group";
+        document.getElementById("exportPdfBtn").dataset.maBCTKMon = data.MaBCTKMon;
 
-        drawPieChart(totalDat, totalSiSo - totalDat);
+        drawPieChart(data.TongSoLuongDat, data.TongSiSo - data.TongSoLuongDat);
     } catch (error) {
         console.error(error);
         alert("Lỗi khi tải báo cáo: " + error.message);
@@ -141,83 +126,98 @@ async function exportPDF() {
     const totalDat = document.getElementById("summaryTotalDat").textContent;
     const tiLe = document.getElementById("summaryTiLe").textContent;
 
+    const MaBCTKMon = document.getElementById("exportPdfBtn").dataset.maBCTKMon || "";
+
     const tbody = document.getElementById("reportTableBody");
     const rows = tbody.querySelectorAll("tr");
+    const tongSoLop = rows.length;
 
     let tableRows = "";
-    rows.forEach((tr, i) => {
+    rows.forEach((tr) => {
         const tds = tr.querySelectorAll("td");
         if (tds.length === 5) {
             tableRows += `<tr>
-                <td style="text-align:center;padding:6px 8px;border:1px solid #ddd;font-size:11px">${tds[0].textContent}</td>
-                <td style="padding:6px 8px;border:1px solid #ddd;font-size:11px">${tds[1].textContent}</td>
-                <td style="text-align:center;padding:6px 8px;border:1px solid #ddd;font-size:11px">${tds[2].textContent}</td>
-                <td style="text-align:center;padding:6px 8px;border:1px solid #ddd;font-size:11px">${tds[3].textContent}</td>
-                <td style="text-align:center;padding:6px 8px;border:1px solid #ddd;font-size:11px">${tds[4].textContent}</td>
+                <td style="text-align:center;padding:6px 8px;border:1px solid #000;font-size:13pt">${tds[0].textContent}</td>
+                <td style="padding:6px 8px;border:1px solid #000;font-size:13pt">${tds[1].textContent}</td>
+                <td style="text-align:center;padding:6px 8px;border:1px solid #000;font-size:13pt">${tds[2].textContent}</td>
+                <td style="text-align:center;padding:6px 8px;border:1px solid #000;font-size:13pt">${tds[3].textContent}</td>
+                <td style="text-align:center;padding:6px 8px;border:1px solid #000;font-size:13pt">${tds[4].textContent}</td>
             </tr>`;
         }
     });
 
-    const today = new Date().toLocaleDateString("vi-VN");
+    const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+    const d = new Date();
+    const todayStr = `${days[d.getDay()]}, ngày ${String(d.getDate()).padStart(2,'0')} tháng ${String(d.getMonth()+1).padStart(2,'0')} năm ${d.getFullYear()}`;
 
     const pdfHtml = `
-        <div style="padding:30px 40px;font-family:'Times New Roman',serif;color:#222">
-            <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:11px">
-                <div style="text-align:left">
-                    <div style="font-weight:bold">TRƯỜNG ...</div>
-                    <div>---</div>
+        <div style="padding:30px 40px;font-family:'Times New Roman',serif;color:#000;font-size:13pt;line-height:1.4">
+            <table style="width:100%;border-collapse:collapse;border:none;margin-bottom:20px">
+                <tr>
+                    <td style="width:40%;text-align:center;border:none;vertical-align:top;padding:0">
+                        <div style="font-weight:bold;font-size:13pt">TRƯỜNG THPT VinSchool</div>
+                        <div style="font-weight:bold;font-style:italic;font-size:13pt;margin-top:2px">Mã báo cáo: #${MaBCTKMon}</div>
+                    </td>
+                    <td style="width:60%;text-align:center;border:none;vertical-align:top;padding:0">
+                        <div style="font-weight:bold;font-size:13pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                        <div style="font-weight:bold;font-size:13pt;margin-top:2px;border-bottom:1px solid #000;display:inline-block;padding-bottom:2px">Độc lập - Tự do - Hạnh phúc</div>
+                        <div style="font-style:italic;font-size:13pt;margin-top:2px">${todayStr}</div>
+                    </td>
+                </tr>
+            </table>
+
+            <h2 style="text-align:center;font-size:18pt;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px">BÁO CÁO TỔNG KẾT MÔN HỌC</h2>
+            <div style="text-align:center;font-size:13pt;margin-bottom:16px">
+                <div>Năm học: <b>${TenNamHoc}</b></div>
+                <div>Học kỳ: <b>${TenHocKy.replace(/^Học\s?Kỳ\s*/i, '')}</b></div>
+                <div>Môn học: <b>${TenMonHoc}</b></div>
+            </div>
+
+            <div style="margin-bottom:16px;font-size:13pt">
+                <div style="font-weight:bold;margin-bottom:6px">I. THÔNG TIN CHUNG</div>
+                <div style="margin-left:20px">
+                    <div>Tổng số lớp: <b>${tongSoLop}</b></div>
+                    <div>Tổng số học sinh: <b>${totalSiSo}</b></div>
+                    <div>Tỉ lệ đạt chung: <b>${tiLe}</b></div>
                 </div>
-                <div style="text-align:center;font-weight:bold">
-                    CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-                </div>
-            </div>
-            <div style="text-align:right;font-size:11px;font-style:italic;margin-bottom:20px">Độc lập - Tự do - Hạnh phúc</div>
-
-            <h2 style="text-align:center;font-size:18px;margin:0 0 4px;text-transform:uppercase;letter-spacing:1px">BÁO CÁO MÔN HỌC THEO LỚP</h2>
-            <div style="text-align:center;font-size:13px;margin-bottom:20px;color:#555">
-                Năm học: <b>${TenNamHoc}</b> | Học kỳ: <b>${TenHocKy}</b> | Môn học: <b>${TenMonHoc}</b>
             </div>
 
-            <div style="display:flex;gap:40px;justify-content:center;margin-bottom:20px;font-size:12px">
-                <div><b>Tổng sĩ số:</b> ${totalSiSo}</div>
-                <div><b>Số lượng đạt:</b> ${totalDat}</div>
-                <div><b>Tỉ lệ đạt:</b> ${tiLe}</div>
+            <div style="margin-bottom:6px;font-size:13pt">
+                <div style="font-weight:bold;margin-bottom:6px">II. CHI TIẾT THEO LỚP</div>
             </div>
 
-            <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13pt">
                 <thead>
-                    <tr style="background:#6b21a8;color:white">
-                        <th style="text-align:center;padding:8px;border:1px solid #6b21a8;font-size:12px;width:40px">STT</th>
-                        <th style="padding:8px;border:1px solid #6b21a8;font-size:12px">Lớp</th>
-                        <th style="text-align:center;padding:8px;border:1px solid #6b21a8;font-size:12px;width:70px">Sĩ số</th>
-                        <th style="text-align:center;padding:8px;border:1px solid #6b21a8;font-size:12px;width:90px">SL đạt</th>
-                        <th style="text-align:center;padding:8px;border:1px solid #6b21a8;font-size:12px;width:80px">Tỉ lệ</th>
+                    <tr>
+                        <th style="text-align:center;padding:8px;border:1px solid #000;width:40px;font-weight:bold;background:white;font-size:14pt;color:#000">STT</th>
+                        <th style="text-align:center;padding:8px;border:1px solid #000;font-weight:bold;background:white;font-size:14pt;color:#000">Tên Lớp</th>
+                        <th style="text-align:center;padding:8px;border:1px solid #000;width:60px;font-weight:bold;background:white;font-size:14pt;color:#000">Sĩ Số</th>
+                        <th style="text-align:center;padding:8px;border:1px solid #000;width:70px;font-weight:bold;background:white;font-size:14pt;color:#000">SL Đạt</th>
+                        <th style="text-align:center;padding:8px;border:1px solid #000;width:80px;font-weight:bold;background:white;font-size:14pt;color:#000">Tỉ Lệ (%)</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${tableRows}
                 </tbody>
                 <tfoot>
-                    <tr style="background:#f3e8ff;font-weight:bold">
-                        <td style="text-align:center;padding:8px;border:1px solid #ddd;font-size:12px"></td>
-                        <td style="padding:8px;border:1px solid #ddd;font-size:12px;color:#6b21a8">Tổng cộng</td>
-                        <td style="text-align:center;padding:8px;border:1px solid #ddd;font-size:12px">${totalSiSo}</td>
-                        <td style="text-align:center;padding:8px;border:1px solid #ddd;font-size:12px">${totalDat}</td>
-                        <td style="text-align:center;padding:8px;border:1px solid #ddd;font-size:12px">${tiLe}</td>
+                    <tr style="font-weight:bold;font-size:14pt">
+                        <td style="text-align:center;padding:8px;border:1px solid #000"></td>
+                        <td style="padding:8px;border:1px solid #000">Tổng cộng</td>
+                        <td style="text-align:center;padding:8px;border:1px solid #000">${totalSiSo}</td>
+                        <td style="text-align:center;padding:8px;border:1px solid #000">${totalDat}</td>
+                        <td style="text-align:center;padding:8px;border:1px solid #000">${tiLe}</td>
                     </tr>
                 </tfoot>
             </table>
 
-            <div style="display:flex;justify-content:space-between;margin-top:30px;font-size:12px">
-                <div style="text-align:center">
-                    <div>Ngày ... tháng ... năm ...</div>
+            <div style="display:flex;justify-content:space-between;margin-top:24px;font-size:13pt">
+                <div style="text-align:center;width:45%">
                     <div style="font-weight:bold;margin-top:4px">Người lập báo cáo</div>
-                    <div style="margin-top:40px;font-style:italic">(Ký, ghi rõ họ tên)</div>
+                    <div style="margin-top:36px;font-style:italic">(Ký, ghi rõ họ tên)</div>
                 </div>
-                <div style="text-align:center">
-                    <div>Ngày ${today}</div>
+                <div style="text-align:center;width:45%">
                     <div style="font-weight:bold;margin-top:4px">Xác nhận của nhà trường</div>
-                    <div style="margin-top:40px;font-style:italic">(Ký, đóng dấu)</div>
+                    <div style="margin-top:36px;font-style:italic">(Ký, đóng dấu)</div>
                 </div>
             </div>
         </div>
@@ -225,13 +225,10 @@ async function exportPDF() {
 
     const wrapper = document.createElement("div");
     wrapper.style.position = "absolute";
-    wrapper.style.left = "0";
+    wrapper.style.left = "-9999px";
     wrapper.style.top = "0";
     wrapper.style.width = "794px";
     wrapper.style.background = "white";
-    wrapper.style.opacity = "0";
-    wrapper.style.pointerEvents = "none";
-    wrapper.style.zIndex = "-1";
     wrapper.innerHTML = pdfHtml;
     document.body.appendChild(wrapper);
 
@@ -287,6 +284,8 @@ function drawPieChart(dat, khongDat) {
     canvas.style.height = size + "px";
     ctx.scale(dpr, dpr);
 
+    const isDark = document.body.classList.contains("dark-mode");
+
     const cx = size / 2;
     const cy = size / 2;
     const r = 80;
@@ -297,9 +296,9 @@ function drawPieChart(dat, khongDat) {
     if (total === 0) {
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = "#e5e7eb";
+        ctx.fillStyle = isDark ? "#1a2e40" : "#e5e7eb";
         ctx.fill();
-        ctx.fillStyle = "#6b7280";
+        ctx.fillStyle = isDark ? "#7a9ab0" : "#6b7280";
         ctx.font = "14px 'Segoe UI', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -346,16 +345,16 @@ function drawPieChart(dat, khongDat) {
 
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = "white";
+    ctx.fillStyle = isDark ? "#1a2e40" : "white";
     ctx.fill();
 
-    ctx.fillStyle = "#4a3052";
+    ctx.fillStyle = isDark ? "#c8dce8" : "#2c3e50";
     ctx.font = "bold 18px 'Segoe UI', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(`${total}`, cx, cy - 6);
     ctx.font = "11px 'Segoe UI', sans-serif";
-    ctx.fillStyle = "#7e6b8a";
+    ctx.fillStyle = isDark ? "#7a9ab0" : "#5a7080";
     ctx.fillText("HS", cx, cy + 14);
 
     const legendEl = document.getElementById("chartLegend");

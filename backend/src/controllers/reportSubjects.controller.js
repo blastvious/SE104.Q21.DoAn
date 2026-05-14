@@ -17,7 +17,9 @@ const handleCatch = (res, error) => {
 const generateMaBCTKMon = (tenNamHoc, maHocKy, maMonHoc) => {
     const parts = tenNamHoc.split("-");
     const yearCode = parts.map(y => y.slice(-2)).join("");
-    return `${yearCode}${maHocKy}${maMonHoc}`;
+    const hkNum = maHocKy.replace(/\D/g, "").padStart(3, "0");
+    const mhNum = maMonHoc.replace(/\D/g, "").padStart(3, "0");
+    return `${yearCode}${hkNum}${mhNum}`;
 };
 
 export const createReport = async (req, res) => {
@@ -29,15 +31,6 @@ export const createReport = async (req, res) => {
         }
 
         const MaBCTKMon = generateMaBCTKMon(TenNamHoc, MaHocKy, MaMonHoc);
-
-        const [existing] = await db.sequelize.query(
-            `SELECT MaBCTKMon FROM BAOCAOTONGKETMON WHERE MaBCTKMon = :MaBCTKMon`,
-            { replacements: { MaBCTKMon } }
-        );
-
-        if (existing.length > 0) {
-            throwHttp("Báo cáo tổng kết môn đã tồn tại", 409);
-        }
 
         const [params] = await db.sequelize.query(
             `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemDatMon'`
@@ -87,6 +80,15 @@ export const createReport = async (req, res) => {
 
         await db.sequelize.transaction(async (t) => {
             await db.sequelize.query(
+                `DELETE FROM CT_BAOCAOTONGKETMON WHERE MaBCTKMon = :MaBCTKMon`,
+                { replacements: { MaBCTKMon }, transaction: t }
+            );
+            await db.sequelize.query(
+                `DELETE FROM BAOCAOTONGKETMON WHERE MaBCTKMon = :MaBCTKMon`,
+                { replacements: { MaBCTKMon }, transaction: t }
+            );
+
+            await db.sequelize.query(
                 `INSERT INTO BAOCAOTONGKETMON (MaBCTKMon, TenNamHoc, MaMonHoc, MaHocKy, TongSiSo, TongSoLuongDat)
                  VALUES (:MaBCTKMon, :TenNamHoc, :MaMonHoc, :MaHocKy, :TongSiSo, :TongSoLuongDat)`,
                 {
@@ -107,6 +109,19 @@ export const createReport = async (req, res) => {
             }
         });
 
+        const [savedDetails] = await db.sequelize.query(
+            `SELECT c.*, l.TenLop
+             FROM CT_BAOCAOTONGKETMON c
+             LEFT JOIN LOP l ON l.MaLop = c.MaLop
+             WHERE c.MaBCTKMon = :MaBCTKMon
+             ORDER BY l.TenLop`,
+            { replacements: { MaBCTKMon } }
+        );
+
+        const TongTiLeDat = TongSiSo > 0
+            ? parseFloat(((TongSoLuongDat * 100.0) / TongSiSo).toFixed(2))
+            : 0;
+
         res.status(201).json({
             message: "Tạo báo cáo tổng kết môn thành công",
             data: {
@@ -116,7 +131,8 @@ export const createReport = async (req, res) => {
                 MaHocKy,
                 TongSiSo,
                 TongSoLuongDat,
-                details
+                TongTiLeDat,
+                details: savedDetails
             }
         });
 

@@ -15,21 +15,21 @@
         <div class="stat-card">
             <div class="stat-icon purple"><i class="fas fa-users"></i></div>
             <div class="stat-info">
-                <h3>1,250</h3>
+                <h3 id="totalStudents">--</h3>
                 <p>Tổng học sinh</p>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon blue"><i class="fas fa-book"></i></div>
             <div class="stat-info">
-                <h3>15</h3>
+                <h3 id="totalSubjects">--</h3>
                 <p>Môn học</p>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon green"><i class="fas fa-clipboard-check"></i></div>
             <div class="stat-info">
-                <h3>98%</h3>
+                <h3 id="passRate">--</h3>
                 <p>Tỉ lệ đạt</p>
             </div>
         </div>
@@ -37,19 +37,34 @@
 
     <div class="features-section">
         <h2>Chức năng cốt lõi</h2>
-        <div class="feature-grid">
-            <div class="feature-item">
+        <div class="feature-grid" id="featureGrid">
+            <div class="feature-item" data-page="students.html">
                 <span class="f-icon"><i class="fas fa-user-plus"></i></span>
                 <h4>Tiếp nhận học sinh</h4>
                 <p>Tự động hóa hồ sơ, nhập liệu nhanh chóng qua Excel.</p>
             </div>
-            <div class="feature-item">
-                <span class="f-icon"><i class="fas fa-chart-bar"></i></span>
-                <h4>Báo cáo học kỳ</h4>
-                <p>Xuất báo cáo trực quan, thống kê tỉ lệ đạt môn học.</p>
+            <div class="feature-item" data-page="search.html">
+                <span class="f-icon"><i class="fas fa-search"></i></span>
+                <h4>Tra cứu học sinh</h4>
+                <p>Tìm kiếm thông tin học sinh nhanh chóng theo nhiều tiêu chí.</p>
             </div>
-            <div class="feature-item">
-                <span class="f-icon"><i class="fas fa-cog"></i></span>
+            <div class="feature-item" data-page="settings.html">
+                <span class="f-icon"><i class="fas fa-layer-group"></i></span>
+                <h4>Thiết lập lớp</h4>
+                <p>Quản lý thông tin lớp học, khối lớp và niên khóa.</p>
+            </div>
+            <div class="feature-item" data-page="subjects.html">
+                <span class="f-icon"><i class="fas fa-book"></i></span>
+                <h4>Môn học</h4>
+                <p>Quản lý danh mục môn học và thông tin chi tiết từng môn.</p>
+            </div>
+            <div class="feature-item" data-page="scores.html">
+                <span class="f-icon"><i class="fas fa-pen"></i></span>
+                <h4>Nhập điểm</h4>
+                <p>Nhập và quản lý bảng điểm cho học sinh theo từng môn.</p>
+            </div>
+            <div class="feature-item" data-page="regulations.html">
+                <span class="f-icon"><i class="fas fa-clipboard-list"></i></span>
                 <h4>Thiết lập quy định</h4>
                 <p>Tùy chỉnh độ tuổi, sĩ số và điểm chuẩn linh hoạt.</p>
             </div>

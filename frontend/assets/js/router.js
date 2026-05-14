@@ -1,6 +1,7 @@
 const mainContent = document.getElementById("main-content");
 
 const routes = {
+    "dashboard.html": () => import("./pages/dashboard.page.js"),
     "students.html": () => import("./pages/student.page.js"),
     "settings.html": () => import("./pages/settings.page.js"),
     "subjects.html": () => import("./pages/subjects.page.js"),
