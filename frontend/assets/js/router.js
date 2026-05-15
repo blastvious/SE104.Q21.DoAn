@@ -1,4 +1,5 @@
 const mainContent = document.getElementById("main-content");
+import { logout } from "../js/service/auth.service.js";
 
 const routes = {
     "students.html": () => import("./pages/student.page.js"),
@@ -32,7 +33,7 @@ function activateMenuItem(el) {
     document.querySelectorAll('.sidebar-menu li, .submenu li').forEach(li => li.classList.remove('active'));
     if (el) el.classList.add('active');
 }
-
+document.getElementById("logoutBtn").addEventListener("click", logout);
 document.addEventListener('click', function (e) {
     const menuParent = e.target.closest('.menu-parent');
     if (menuParent) {
