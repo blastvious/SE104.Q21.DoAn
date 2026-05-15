@@ -393,5 +393,33 @@ main {
     padding: 8px;
     text-align: center;
     color: var(--text-primary);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+}
+/* account */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-menu {
+    flex: 1;
+}
+
+
+
+/* logout button */
+.logout-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ebeaea;
+    color: #120a1a;
 }

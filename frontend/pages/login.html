@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css" crossorigin="">
+
+   <link rel="stylesheet" href="../assets/css/styles.css">
+
+   <title>Login form - Bedimcode</title>
+</head>
+<body>
+   <div class="login">
+      <img src="../assets/images/background.jpg" alt="image" class="login__bg">
+
+      <form id="loginForm" class="login__form">
+         <div class="login__logo-title">
+            <img src="../assets/images/LOGO.png" alt="Logo" class="login__logo-img">
+         </div>
+
+         <div class="login__inputs">
+            <div class="login__box">
+               <input id="username" type="text" placeholder="Tên đăng nhập" required class="login__input">
+               <i class="ri-mail-fill"></i>
+            </div>
+
+            <div class="login__box">
+               <input id="password" type="password" placeholder="Mật khẩu" required class="login__input">
+               <i class="ri-lock-2-fill"></i>
+            </div>
+         </div>
+
+         <div class="login__check">
+            <a href="#" class="login__forgot">Quên mật khẩu?</a>
+         </div>
+
+         <button type="submit" class="login__button">Đăng nhập</button>
+      </form>
+   </div>
+   <script type="module" src="../assets/js/pages/login.page.js"></script>
+   
+</body>
+</html>
+

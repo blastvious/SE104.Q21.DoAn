@@ -53,44 +53,53 @@ export const getStudentById = async (req, res) => {
 ========================================= */
 
 export const createStudent = async (req, res) => {
-    // Sử dụng transaction để khóa bảng
     const t = await db.sequelize.transaction();
     try {
         const { HoTen, GioiTinh, NgaySinh, DiaChi, Email, SoDienThoai } = req.body;
-        const khoa = "2652";
 
-        // Tìm lastStudent bên trong transaction với khóa LOCK.UPDATE
+        // 1. Kiểm tra trùng lặp tổng hợp
+        const duplicate = await db.HOCSINH.findOne({
+            where: {
+                [Op.or]: [
+                    { [Op.and]: [{ HoTen }, { NgaySinh }, { DiaChi }] }, 
+                    { Email: Email || null }, 
+                    { SoDienThoai: SoDienThoai || null } 
+                ]
+            },
+            transaction: t
+        });
+
+        if (duplicate) {
+            await t.rollback();
+            let reason = "Học sinh đã tồn tại ";
+            return res.status(400).json({ message: reason });
+        }
+
+        const khoa = "2652";
         const lastStudent = await db.HOCSINH.findOne({
             where: { MaHS: { [Op.like]: `${khoa}%` } },
             order: [["MaHS", "DESC"]],
             transaction: t,
-            lock: true // QUAN TRỌNG: Khóa dòng này lại để người khác không vào chiếm mã
+            lock: true 
         });
 
         let stt = 1;
         if (lastStudent) {
             stt = parseInt(lastStudent.MaHS.slice(4)) + 1;
         }
-
         const MaHS = `${khoa}${String(stt).padStart(4, '0')}`;
 
         const newStudent = await db.HOCSINH.create({
             MaHS, HoTen, GioiTinh, NgaySinh, DiaChi, Email, SoDienThoai
         }, { transaction: t });
 
-        // Commit dữ liệu
         await t.commit();
         res.status(201).json(newStudent);
-
     } catch (error) {
-        // Nếu lỗi thì hoàn tác (rollback)
         await t.rollback();
-        console.error(error);
-        res.status(500).json({ message: "Mã học sinh bị trùng hoặc lỗi server, hãy thử lại" });
+        res.status(500).json({ message: "Lỗi hệ thống khi tạo học sinh" });
     }
 };
-
-
 /* =========================================
    BULK CREATE STUDENTS
 ========================================= */
@@ -99,40 +108,48 @@ export const bulkCreateStudents = async (req, res) => {
         const studentData = req.body;
         const khoa = "2652";
 
-        // Lấy học sinh cuối cùng trong database để làm mốc cho việc thêm học sinh mới.
+        // 1. Lấy tất cả HS hiện có để đối chiếu (Chỉ lấy các cột cần thiết để tối ưu bộ nhớ)
+        const existingStudents = await db.HOCSINH.findAll({
+            attributes: ['HoTen', 'NgaySinh', 'DiaChi', 'Email', 'SoDienThoai']
+        });
+
+        // 2. Hàm kiểm tra trùng nội bộ
+        const isDuplicate = (s) => existingStudents.some(existing => 
+            (existing.HoTen === s.HoTen && existing.NgaySinh === s.NgaySinh && existing.DiaChi === s.DiaChi) ||
+            (s.Email && existing.Email === s.Email) ||
+            (s.SoDienThoai && existing.SoDienThoai === s.SoDienThoai)
+        );
+
+        // 3. Lọc ra những học sinh chưa có trong DB
+        const uniqueStudentsToInsert = studentData.filter(s => !isDuplicate(s));
+
+        if (uniqueStudentsToInsert.length === 0) {
+            return res.status(400).json({ message: "Tất cả học sinh trong danh sách đều đã tồn tại" });
+        }
+
+        // 4. Cấp mã MaHS cho danh sách đã lọc (Logic cũ của bạn)
         const lastStudent = await db.HOCSINH.findOne({
-            where: {MaHS: {[Op.like]: `${khoa}%`}},
+            where: { MaHS: { [Op.like]: `${khoa}%` } },
             order: [["MaHS", "DESC"]]
         });
 
+        let currentStt = lastStudent ? parseInt(lastStudent.MaHS.slice(4)) + 1 : 1;
 
-        let currentStt = 1;
-        if (lastStudent) {
-            currentStt = parseInt(lastStudent.MaHS.slice(4)) + 1;
-        }
-
-        const studentsToInsert = studentData.map((s, index) =>{
+        const studentsWithIds = uniqueStudentsToInsert.map((s, index) => {
             const padded = String(currentStt + index).padStart(4, '0');
-            return {
-                ...s,
-                MaHS: `${khoa}${padded}`
-            }
+            return { ...s, MaHS: `${khoa}${padded}` };
         });
 
-        const result = await db.HOCSINH.bulkCreate(studentsToInsert, {validate: true});
+        const result = await db.HOCSINH.bulkCreate(studentsWithIds, { validate: true });
 
         res.status(201).json({
-            message: `Insert succesfully ${result.length} students`,
+            message: `Thành công: Đã thêm ${result.length} học sinh. Bỏ qua ${studentData.length - result.length} bản ghi trùng lặp.`,
             data: result
         });
     } catch (error) {
-        console.error(error)
-        res.status(500).json({
-            statusCode: 500,
-            message: "Error from server"
-        });
+        res.status(500).json({ message: "Lỗi hệ thống khi thêm hàng loạt" });
     }
-}
+};
 
 
 /* =========================================

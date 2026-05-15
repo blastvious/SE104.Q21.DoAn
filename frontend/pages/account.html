@@ -1,0 +1,43 @@
+<div class="qlsv-content-wrapper">
+
+    <div class="page-header">
+        <h2>Cài đặt tài khoản</h2>
+        <p>Thông tin người dùng & quản lý tài khoản</p>
+    </div>
+
+    <!-- 👤 Thông tin cá nhân -->
+    <div class="qlsv-table-card">
+        <h3>Thông tin của bạn</h3>
+        <div id="userInfo"></div>
+    </div>
+
+    <!-- 👑 Admin -->
+    <div id="adminSection" style="display:none">
+        <div class="qlsv-table-card">
+            <h3>Danh sách tài khoản</h3>
+            <div id="userList"></div>
+        </div>
+
+        <!-- Tạo user -->
+        <div class="qlsv-table-card">
+            <h3>Tạo tài khoản mới</h3>
+
+            <input id="newUsername" placeholder="Username">
+            <input id="newPassword" type="password" placeholder="Password">
+
+            <select id="newRole">
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="User">User</option>
+            </select>
+
+            <button id="createUserBtn" class="qlsv-btn qlsv-btn--primary">
+                Tạo tài khoản
+            </button>
+        </div>
+    </div>
+
+
+</div>
+
+<script type="module" src="../assets/js/pages/settings.page.js"></script>

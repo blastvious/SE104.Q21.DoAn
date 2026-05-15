@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <title>QLHS - Quản Lý Học Sinh</title>
@@ -8,121 +9,129 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
+
 <body>
 
-<div class="container">
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo" id="logoHome" style="cursor:pointer">
-            <img src="assets/images/LOGO-new.png" alt="QLHS" class="logo-img" id="logoImg">
-        </div>
-        <ul class="sidebar-menu">
-            <li class="active" data-page="dashboard.html">Trang chủ</li>
-
-            <li class="has-submenu">
-                <span class="menu-parent">
-                    Quản lý Học sinh
-                    <i class="fas fa-chevron-down sub-arrow"></i>
-                </span>
-                <ul class="submenu">
-                    <li data-page="students.html">Tiếp nhận</li>
-                    <li data-page="search.html">Tra cứu</li>
-                    <li data-page="class-assignment.html">Phân lớp</li>
-                    <li data-page="scores.html">Nhập điểm</li>
-                </ul>
-            </li>
-
-            <li class="has-submenu">
-                <span class="menu-parent">
-                    Cấu hình hệ thống
-                    <i class="fas fa-chevron-down sub-arrow"></i>
-                </span>
-                <ul class="submenu">
-                    <li data-page="settings.html">Thiết lập lớp</li>
-                    <li data-page="subjects.html">Môn học</li>
-                    <li data-page="regulations.html">Quy định</li>
-                </ul>
-            </li>
-
-            <li class="has-submenu">
-                <span class="menu-parent">
-                    Thống kê & Báo cáo
-                    <i class="fas fa-chevron-down sub-arrow"></i>
-                </span>
-                <ul class="submenu">
-                    <li data-page="report-semester.html">Báo cáo học kỳ</li>
-                    <li data-page="report-subjects.html">Báo cáo môn học</li>
-                </ul>
-            </li>
-        </ul>
-    </aside>
-
-    <div class="content-area">
-        <div class="bg-bubbles" id="bgBubbles"></div>
-
-        <header class="header">
-            <button id="toggle-btn" class="hamburger">☰</button>
-            <h1>Hệ Thống Quản Lý Học Sinh</h1>
-            <button id="themeToggle" class="theme-toggle" title="Chế độ sáng/tối">
-                <i class="fas fa-moon"></i>
-            </button>
-        </header>
-
-        <main id="main-content">
-            <div class="welcome-box">
-                <div class="welcome-glow"></div>
-                <div class="welcome-content">
-                    <h2>Chào mừng bạn quay trở lại!</h2>
-                    <p>Hãy chọn một chức năng ở thanh menu bên trái.</p>
-                </div>
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo" id="logoHome" style="cursor:pointer">
+                <img src="assets/images/logo.png" alt="QLHS" class="logo-img">
             </div>
-        </main>
+            <ul class="sidebar-menu">
+                <li class="active" data-page="dashboard.html">Trang chủ</li>
 
-        <footer class="footer">
-            <p>SE104 - Software Engineering Project | 2026</p>
-        </footer>
+                <li class="has-submenu">
+                    <span class="menu-parent">
+                        Quản lý Học sinh
+                        <i class="fas fa-chevron-down sub-arrow"></i>
+                    </span>
+                    <ul class="submenu">
+                        <li data-page="students.html">Tiếp nhận</li>
+                        <li data-page="search.html">Tra cứu</li>
+                        <li data-page="class-assignment.html">Phân lớp</li>
+                        <li data-page="scores.html">Nhập điểm</li>
+                    </ul>
+                </li>
+
+                <li class="has-submenu">
+                    <span class="menu-parent">
+                        Cấu hình hệ thống
+                        <i class="fas fa-chevron-down sub-arrow"></i>
+                    </span>
+                    <ul class="submenu">
+                        <li data-page="settings.html">Thiết lập lớp</li>
+                        <li data-page="subjects.html">Môn học</li>
+                        <li data-page="regulations.html">Quy định</li>
+                    </ul>
+                </li>
+
+                <li class="has-submenu">
+                    <span class="menu-parent">
+                        Thống kê & Báo cáo
+                        <i class="fas fa-chevron-down sub-arrow"></i>
+                    </span>
+                    <ul class="submenu">
+                        <li data-page="report-semester.html">Báo cáo học kỳ</li>
+                        <li data-page="report-subjects.html">Báo cáo môn học</li>
+                    </ul>
+                </li>
+                <li data-page="account.html">
+                    <i class="fas fa-user-cog"></i> Cài đặt tài khoản
+                </li>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Đăng xuất
+                </button>
+            </ul>
+        </aside>
+
+        <div class="content-area">
+            <div class="bg-bubbles" id="bgBubbles"></div>
+
+            <header class="header">
+                <button id="toggle-btn" class="hamburger">☰</button>
+                <h1>Hệ Thống Quản Lý Học Sinh</h1>
+                <button id="themeToggle" class="theme-toggle" title="Chế độ sáng/tối">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </header>
+
+            <main id="main-content">
+                <div class="welcome-box">
+                    <div class="welcome-glow"></div>
+                    <div class="welcome-content">
+                        <h2>Chào mừng bạn quay trở lại!</h2>
+                        <p>Hãy chọn một chức năng ở thanh menu bên trái.</p>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="footer">
+                <p>SE104 - Software Engineering Project | 2026</p>
+            </footer>
+        </div>
     </div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-<script type="module" src="assets/js/router.js"></script>
+    <script type="module" src="assets/js/router.js"></script>
 
-<script>
-    // Generate background bubbles
-    (function() {
-        const container = document.getElementById('bgBubbles');
-        if (!container) return;
-        const colors = [
-            'rgba(127,174,196,0.25)', 'rgba(59,112,143,0.2)', 'rgba(127,174,196,0.2)',
-            'rgba(127,174,196,0.2)', 'rgba(59,112,143,0.18)', 'rgba(127,174,196,0.18)',
-            'rgba(127,174,196,0.2)', 'rgba(59,112,143,0.15)', 'rgba(127,174,196,0.15)',
-            'rgba(127,174,196,0.18)', 'rgba(59,112,143,0.2)', 'rgba(127,174,196,0.18)',
-            'rgba(127,174,196,0.15)', 'rgba(59,112,143,0.15)'
-        ];
-        const gridPositions = [];
-        const cols = 4, rows = 4;
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                const offset = (r % 2) * (100 / (cols * 2));
-                gridPositions.push({
-                    x: (c + 0.5) * (100 / cols) + offset,
-                    y: (r + 0.5) * (100 / rows)
-                });
+    <script>
+        // Generate background bubbles
+        (function () {
+            const container = document.getElementById('bgBubbles');
+            if (!container) return;
+            const colors = [
+                'rgba(217,140,224,0.25)', 'rgba(147,51,234,0.2)', 'rgba(192,132,210,0.2)',
+                'rgba(217,140,224,0.2)', 'rgba(147,51,234,0.18)', 'rgba(192,132,210,0.18)',
+                'rgba(217,140,224,0.2)', 'rgba(147,51,234,0.15)', 'rgba(192,132,210,0.15)',
+                'rgba(217,140,224,0.18)', 'rgba(147,51,234,0.2)', 'rgba(192,132,210,0.18)',
+                'rgba(217,140,224,0.15)', 'rgba(147,51,234,0.15)'
+            ];
+            const gridPositions = [];
+            const cols = 4, rows = 4;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const offset = (r % 2) * (100 / (cols * 2));
+                    gridPositions.push({
+                        x: (c + 0.5) * (100 / cols) + offset,
+                        y: (r + 0.5) * (100 / rows)
+                    });
+                }
             }
-        }
-        for (let i = 0; i < 14; i++) {
-            const bubble = document.createElement('div');
-            bubble.className = 'bg-bubble';
-            const size = 50 + (i % 4) * 15;
-            const pos = gridPositions[i];
-            const x = pos.x + (Math.random() - 0.5) * 6;
-            const y = pos.y + (Math.random() - 0.5) * 6;
-            const dur = 3 + Math.random() * 3;
-            const delay = Math.random() * 4;
-            const color = colors[i];
-            bubble.style.cssText = `
+            for (let i = 0; i < 14; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bg-bubble';
+                const size = 50 + (i % 4) * 15;
+                const pos = gridPositions[i];
+                const x = pos.x + (Math.random() - 0.5) * 6;
+                const y = pos.y + (Math.random() - 0.5) * 6;
+                const dur = 3 + Math.random() * 3;
+                const delay = Math.random() * 4;
+                const color = colors[i];
+                bubble.style.cssText = `
                 width:${size}px;height:${size}px;
                 background:radial-gradient(circle at 35% 35%, ${color} 0%, transparent 70%);
                 border:1px solid ${color.replace('0.25', '0.08').replace('0.2', '0.06').replace('0.18', '0.05').replace('0.15', '0.04').replace('0.14', '0.04').replace('0.12', '0.03').replace('0.1', '0.03')};
@@ -130,46 +139,51 @@
                 opacity:${0.6 + (i % 3) * 0.1};
                 animation:bubbleAnim ${dur}s ease-in-out ${delay}s infinite alternate;
             `;
-            container.appendChild(bubble);
+                container.appendChild(bubble);
+            }
+        })();
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const themeToggle = document.getElementById('themeToggle');
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        document.getElementById('logoHome').addEventListener('click', () => {
+            document.querySelector('.sidebar-menu > li[data-page="dashboard.html"]').click();
+        });
+        document.addEventListener('click', function (event) {
+            const modal = document.getElementById("studentModal");
+
+            // 1. Nếu bấm vào nút "Thêm học sinh mới"
+            if (event.target.id === 'openModalBtn' || event.target.closest('#openModalBtn')) {
+                if (modal) modal.style.display = "block";
+            }
+
+            // 2. Nếu bấm vào nút X hoặc nút Hủy
+            if (event.target.id === 'closeModalBtn' || event.target.id === 'cancelBtn') {
+                if (modal) modal.style.display = "none";
+            }
+
+            // 3. Nếu bấm ra ngoài vùng xám của Modal
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            window.location.href = "./pages/login.html";
         }
-    })();
-
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggle-btn');
-    const themeToggle = document.getElementById('themeToggle');
-
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-        document.getElementById('logoImg').src = 'assets/images/LOGO-new.png';
-    });
-
-    toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-    });
-
-    document.getElementById('logoHome').addEventListener('click', () => {
-        document.querySelector('.sidebar-menu > li[data-page="dashboard.html"]').click();
-    });
-    document.addEventListener('click', function (event) {
-    const modal = document.getElementById("studentModal");
-
-    // 1. Nếu bấm vào nút "Thêm học sinh mới"
-    if (event.target.id === 'openModalBtn' || event.target.closest('#openModalBtn')) {
-        if (modal) modal.style.display = "block";
-    }
-
-    // 2. Nếu bấm vào nút X hoặc nút Hủy
-    if (event.target.id === 'closeModalBtn' || event.target.id === 'cancelBtn') {
-        if (modal) modal.style.display = "none";
-    }
-
-    // 3. Nếu bấm ra ngoài vùng xám của Modal
-    if (event.target === modal) {
-        modal.style.display = "none";
-    }
-});
-</script>
+    </script>
 </body>
+
 </html>
