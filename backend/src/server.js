@@ -23,7 +23,7 @@ app.use(express.json());
 
 //public route
 
-app.use("/api/school", authRoute);
+app.use("/api/auth", authRoute);
 
 //private route
 
