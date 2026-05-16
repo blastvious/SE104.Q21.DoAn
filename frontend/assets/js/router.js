@@ -2,11 +2,13 @@ const mainContent = document.getElementById("main-content");
 import { logout } from "../js/service/auth.service.js";
 
 const routes = {
+    "dashboard.html": () => import("./pages/dashboard.page.js"),
     "students.html": () => import("./pages/student.page.js"),
     "settings.html": () => import("./pages/settings.page.js"),
     "subjects.html": () => import("./pages/subjects.page.js"),
     "scores.html": () => import("./pages/scores.page.js"),
     "report-subjects.html": () => import("./pages/report-subjects.page.js"),
+    "report-semester.html": () => import("./pages/report-semester.page.js"),
 };
 
 async function loadPage(page) {

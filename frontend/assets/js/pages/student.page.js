@@ -44,7 +44,17 @@ export async function init() {
 
   setupSearch();
 
+  setupDatePicker();
+
   await renderTable();
+}
+
+function setupDatePicker() {
+  flatpickr("#NgaySinh", {
+    dateFormat: "d/m/Y",
+    allowInput: true,
+    locale: { firstDayOfWeek: 1 },
+  });
 }
 
 /* =========================================
@@ -249,7 +259,7 @@ function setupForm() {
 
 /* =========================================
    EDIT + DELETE
-========================================= */
+ ========================================= */
 function bindActionButtons() {
   /* =========================================
        EDIT
@@ -262,9 +272,8 @@ function bindActionButtons() {
 
       document.getElementById("GioiTinh").value = this.dataset.gioitinh;
 
-      document.getElementById("NgaySinh").value = formatDisplayDate(
-        this.dataset.ngaysinh,
-      );
+      const fp = document.getElementById("NgaySinh")._flatpickr;
+      if (fp) fp.setDate(this.dataset.ngaysinh);
 
       document.getElementById("DiaChi").value = this.dataset.diachi;
 
@@ -378,4 +387,6 @@ function setupExcelImport() {
 ========================================= */
 function resetForm() {
   document.getElementById("studentForm").reset();
+  const fp = document.getElementById("NgaySinh")._flatpickr;
+  if (fp) fp.clear();
 }
