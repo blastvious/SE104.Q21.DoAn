@@ -52,6 +52,7 @@ async function loadPassRate() {
     try {
         const res = await fetch(`${API}/report-subjects`);
         const reports = await res.json();
+        
         if (reports.length === 0) {
             document.getElementById("passRate").textContent = "--";
             return;

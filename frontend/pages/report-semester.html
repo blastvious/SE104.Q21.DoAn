@@ -1,0 +1,113 @@
+<div class="report-semester-page">
+    <div class="page-header">
+        <h2>Báo Cáo Học Kỳ</h2>
+        <p>Thống kê kết quả học tập theo từng học kỳ</p>
+    </div>
+
+    <div class="report-filters">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label>Năm học</label> 
+                <select id="selNam" class="qlsv-select">
+                    <option value="">-- Chọn năm --</option>
+                    <!--option value năm-->
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label>Học kỳ</label>
+                <select id="selHK" class="qlsv-select">
+                    <option value="">-- Chọn học kỳ --</option>
+                    <!--option value học kỳ-->
+                </select>
+            </div>
+        
+            <button class="qlsv-btn qlsv-btn--primary" id="reportFilterBtn">
+                <i class="fas fa-filter"></i> Xem báo cáo
+            </button>
+            <button class="qlsv-btn qlsv-btn--blue" id="exportPdfBtn">
+                <i class="fas fa-file-pdf"></i> Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="subject-stat-grid report-summary" id="reportSummary">
+        <div class="subject-stat-card">
+            <div class="subject-icon purple">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <h3 id="summaryTotalSiSo">--</h3>
+                <p>Tổng sĩ số</p>
+            </div>
+        </div>
+        <div class="subject-stat-card">
+            <div class="subject-icon blue">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <h3 id="summaryTotalDat">--</h3>
+                <p>Tổng số lượng đạt</p>
+            </div>
+        </div>
+        <div class="subject-stat-card">
+            <div class="subject-icon green">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div>
+                <h3 id="summaryTiLe">--</h3>
+                <p>Tỉ lệ đạt toàn học kỳ</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-content" id="reportContent">
+        <div class="report-table-area">
+            <div class="subject-table-wrapper">
+                <table class="subject-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;text-align:center">STT</th>
+                            <th style="width:120px">Lớp</th>
+                            <th style="width:70px;text-align:center">Sĩ số</th>
+                            <th style="width:110px;text-align:center">Số lượng đạt</th>
+                            <th style="width:90px;text-align:center">Tỉ lệ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <tr>
+                            <td colspan="5" class="empty-table">Chọn Năm học, Học kỳ và nhấn "Xem báo cáo"</td>
+                        </tr>
+                    </tbody>
+                    <tfoot id="reportTableFoot" style="display:none">
+                        <tr class="report-tfoot-row">
+                            <td></td>
+                            <td class="report-tfoot-label">Tổng cộng</td>
+                            <td id="totalSiSo" style="text-align:center">0</td>
+                            <td id="totalDat" style="text-align:center">0</td>
+                            <td id="totalTiLe" style="text-align:center">0%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div class="report-chart-area">
+            <div class="charts-row">
+                <div class="card">
+                    <div class="chart-wrap">
+                        <div class="chart-title">Tỉ lệ đạt theo lớp (%)</div>
+                        <canvas id="chartBar" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="chart-wrap">
+                        <div class="chart-title">Phân loại</div>
+                        <canvas id="chartDoughnut" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

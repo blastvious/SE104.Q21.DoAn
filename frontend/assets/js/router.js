@@ -7,6 +7,7 @@ const routes = {
     "subjects.html": () => import("./pages/subjects.page.js"),
     "scores.html": () => import("./pages/scores.page.js"),
     "report-subjects.html": () => import("./pages/report-subjects.page.js"),
+    "report-semester.html": () => import("./pages/report-semester.page.js"),
 };
 
 async function loadPage(page) {
