@@ -9,6 +9,7 @@ const routes = {
     "scores.html": () => import("./pages/scores.page.js"),
     "report-subjects.html": () => import("./pages/report-subjects.page.js"),
     "report-semester.html": () => import("./pages/report-semester.page.js"),
+    "class-assignment.html": () => import("./pages/class-assignment.page.js")
 };
 
 async function loadPage(page) {

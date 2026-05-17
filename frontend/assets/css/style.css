@@ -907,3 +907,44 @@ table td {
     width: 100% !important;
     height: 100% !important;
 }
+
+.class-assignment-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.4s ease;
+}
+
+.table-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4b306a;
+    margin-bottom: 6px;
+}
+
+.qlsv-table-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    border: 1px solid #f0e6f2;
+}
+
+/* Cột thao tác */
+.actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+
+
+
+

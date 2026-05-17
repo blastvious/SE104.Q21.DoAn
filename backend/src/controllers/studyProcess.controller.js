@@ -169,3 +169,105 @@ export const semesterSummary = async (req, res) => {
         handleCatch(res, error);
     }
 };
+
+export const assignStudentsBatch = async (req, res) => {
+    try {
+        const { students, MaLop, MaHocKy } = req.body;
+
+        if (!students || students.length === 0) {
+            throwHttp("No students selected", 400);
+        }
+
+        const result = await db.sequelize.transaction(async (t) => {
+            const classRecord = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+            if (!classRecord) throwHttp("Class not found", 404);
+
+            // kiểm tra sĩ số
+            const currentCount = await db.QUATRINHHOC.count({
+                where: { MaLop, MaHocKy },
+                transaction: t
+            });
+
+            if (classRecord.SiSo > 0 && currentCount + students.length > classRecord.SiSo) {
+                throwHttp("Class capacity exceeded", 400);
+            }
+
+            // check đã tồn tại
+            const existed = await db.QUATRINHHOC.findAll({
+                where: {
+                    MaHS: { [Op.in]: students },
+                    MaHocKy
+                },
+                transaction: t
+            });
+
+            if (existed.length > 0) {
+                throwHttp("Some students already assigned", 409);
+            }
+
+            // insert hàng loạt
+            const data = students.map(MaHS => ({
+                MaHS,
+                MaLop,
+                MaHocKy,
+                DiemTBHocKy: 0.00
+            }));
+
+            return db.QUATRINHHOC.bulkCreate(data, { transaction: t });
+        });
+
+        res.json({ message: "Assign success", data: result });
+
+    } catch (error) {
+        handleCatch(res, error);
+    }
+};
+
+export const getUnassignedStudents = async (req, res) => {
+    try {
+        const { MaHocKy } = req.query;
+
+        const list = await db.HOCSINH.findAll({
+            where: {
+                MaHS: {
+                    [Op.notIn]: db.sequelize.literal(`(
+                        SELECT MaHS FROM QUATRINHHOC WHERE MaHocKy = '${MaHocKy}'
+                    )`)
+                }
+            },
+            order: [['MaHS', 'ASC']]
+        });
+
+        res.json(list);
+    } catch (error) {
+        handleCatch(res, error);
+    }
+};
+
+export const getAssignedStudents = async (req, res) => {
+    try {
+        const { MaHocKy, MaLop } = req.query;
+
+        if (!MaHocKy) {
+            return res.status(400).json({
+                message: "MaHocKy is required"
+            });
+        }
+
+        const list = await db.QUATRINHHOC.findAll({
+            where: {
+                MaHocKy,
+                ...(MaLop ? { MaLop } : {})
+            },
+            include: [{
+                model: db.HOCSINH,
+                attributes: ['MaHS', 'HoTen', 'GioiTinh']
+            }]
+        });
+
+        res.json(list);
+
+    } catch (error) {
+        handleCatch(res, error);
+    }
+};

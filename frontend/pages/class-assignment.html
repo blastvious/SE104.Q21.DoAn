@@ -1,0 +1,108 @@
+<div class="qlsv-content-wrapper class-assignment-page">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <h2>Phân Lớp Học Sinh</h2>
+        <p>Xếp học sinh vào lớp theo năm học</p>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="qlsv-toolbar">
+        <div class="qlsv-toolbar-left">
+
+            <!-- ACTION -->
+            <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
+                <i class="fas fa-user-plus"></i> Xếp vào lớp
+            </button>
+
+            <!-- FILTER -->
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label>Năm học:</label>
+                    <select id="filterNamHoc" class="qlsv-select"></select>
+                    <label>Học kỳ:</label>
+                    <select id="filterHocKy" class="qlsv-select"></select>
+                    <label>Khối:</label>
+                    <select id="filterKhoi" class="qlsv-select">
+                        <option value="">--Chọn--</option>
+                        <option value="10">Khối 10</option>
+                        <option value="11">Khối 11</option>
+                        <option value="12">Khối 12</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label>Lớp:</label>
+                    <select id="filterLop" class="qlsv-select" disabled></select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== CHƯA XẾP LỚP ====== -->
+    <div class="table-section">
+        <h3 class="section-title">Học sinh chưa xếp lớp</h3>
+
+        <div class="qlsv-table-card">
+            <table class="qlsv-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkAllUnassigned"></th>
+                        <th>Mã HS</th>
+                        <th>Họ Tên</th>
+                        <th>Ngày Sinh</th>
+                        <th>Giới Tính</th>
+                    </tr>
+                </thead>
+                <tbody id="unassignedTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ====== ĐÃ XẾP LỚP ====== -->
+    <div class="table-section">
+        <h3 class="section-title">Học sinh đã xếp lớp</h3>
+
+        <div class="qlsv-table-card">
+            <table class="qlsv-table">
+                <thead>
+                    <tr>
+                        <th>Mã HS</th>
+                        <th>Họ Tên</th>
+                        <th>Lớp</th>
+                        <th>Học kỳ</th>
+                        <th style="text-align:center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="assignedTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<div id="transferModal" class="qlsv-modal">
+    <div class="qlsv-modal-content">
+        <div class="modal-header">
+            <h3>Chuyển lớp học sinh</h3>
+            <span class="close-modal" id="closeTransferModal">&times;</span>
+        </div>
+
+        <form id="transferForm" class="modal-form">
+
+            <div class="form-group">
+                <label>Chọn lớp mới</label>
+                <select id="newClassSelect" class="qlsv-select"></select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" id="cancelTransferBtn">
+                    Hủy
+                </button>
+                <button type="submit" class="qlsv-btn qlsv-btn--primary">
+                    Xác nhận
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
