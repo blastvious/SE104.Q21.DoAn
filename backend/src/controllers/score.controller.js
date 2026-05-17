@@ -87,9 +87,16 @@ export const getScore = async (req, res) => {
 
 // -- BULK IMPORT SCORES --
 export const bulkImportScores = async (req, res) => {
+  console.log(req.body);
   try {
-    const { MaLop, MaMonHoc, MaHocKy, MaLoaiHinhKT, Lan, danhSachDiem } =
-      req.body;
+    const {
+      MaLop,
+      MaMonHoc,
+      MaHocKy,
+      MaLoaiHinhKT,
+      Lan,
+      danhSachDiem,
+    } = req.body;
 
     if (
       !MaLop ||
@@ -99,7 +106,9 @@ export const bulkImportScores = async (req, res) => {
       !Lan ||
       !danhSachDiem?.length
     ) {
-      res.status(400).json({ message: "Missing required fields!" });
+      return res.status(400).json({
+        message: "Missing required fields!",
+      });
     }
 
     const [bangDiemMon] = await db.BANGDIEMMON.findOrCreate({
@@ -109,13 +118,20 @@ export const bulkImportScores = async (req, res) => {
         MaHocKy,
       },
       defaults: {
-        MaBangDiemMon: await CreateMa(db.BANGDIEMMON, "MaBangDiemMon", "BDM"),
+        MaBangDiemMon: await CreateMa(
+          db.BANGDIEMMON,
+          "MaBangDiemMon",
+          "BDM"
+        ),
       },
     });
 
-    const result = await Promise.all(
-      danhSachDiem.map(async ({ MaHS, Diem }) => {
-        const [ctBangDiemHS] = await db.CT_BANGDIEMMON_HS.findOrCreate({
+    const result = [];
+
+    for (const { MaHS, Diem } of danhSachDiem) {
+
+      const [ctBangDiemHS] =
+        await db.CT_BANGDIEMMON_HS.findOrCreate({
           where: {
             MaBangDiemMon: bangDiemMon.MaBangDiemMon,
             MaHS,
@@ -124,35 +140,55 @@ export const bulkImportScores = async (req, res) => {
             MaCTBDMHS: await CreateMa(
               db.CT_BANGDIEMMON_HS,
               "MaCTBDMHS",
-              "CTBDM",
+              "CTBDM"
             ),
             DiemTBMon: 0,
           },
         });
 
-        const [score, created] = await db.CT_BANGDIEMMON_LHKT.findOrCreate({
+      const [score, created] =
+        await db.CT_BANGDIEMMON_LHKT.findOrCreate({
           where: {
             MaCTBDMHS: ctBangDiemHS.MaCTBDMHS,
             MaLoaiHinhKT,
             Lan,
           },
-          defaults: { Diem },
+          defaults: {
+            Diem: Number(Diem)
+          },
         });
 
-        if (!created) {
-          await score.update({ Diem });
-        }
+      if (!created) {
+        await score.update({
+          Diem: Number(Diem)
+        });
+      }
 
-        await updateDiemTBMon(ctBangDiemHS.MaCTBDMHS);
+      await updateDiemTBMon(
+        ctBangDiemHS.MaCTBDMHS
+      );
 
-        return { MaHS, Diem, status: created ? "created" : "updated" };
-      }),
-    );
+      result.push({
+        MaHS,
+        Diem,
+        status: created
+          ? "created"
+          : "updated",
+      });
+    }
 
-    res.status(200).json({ message: "Bulk entry success", data: result });
+    return res.status(200).json({
+      message: "Bulk entry success",
+      data: result,
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error!" });
+
+    console.error("BULK SCORE ERROR:", error);
+
+    return res.status(500).json({
+      message: error.message || "Internal server error!",
+    });
   }
 };
 
