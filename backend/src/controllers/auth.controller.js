@@ -7,10 +7,15 @@ export const getMe = (req, res) => {
 };
 
 export const getUsers = async (req, res) => {
-    const users = await db.PHANQUYEN.findAll({
-        attributes: ["Id", "Username", "RoleName"]
-    });
-    res.json(users);
+    try {
+        const users = await db.PHANQUYEN.findAll({
+            attributes: ["Id", "Username", "RoleName"]
+        });
+        return res.json(users);
+    } catch (error) {
+        console.error("Lỗi tại getUsers controller:", error);
+        return res.status(500).json({ message: "Không thể lấy danh sách tài khoản từ cơ sở dữ liệu." });
+    }
 };
 
 export const createUser = async (req, res) => {
@@ -75,6 +80,43 @@ export const login = async (req, res) => {
 
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { RoleName } = req.body;
+
+        const user = await db.PHANQUYEN.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.RoleName = RoleName;
+        await user.save();
+
+        res.json({ message: "Updated successfully", user });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await db.PHANQUYEN.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await user.destroy();
+
+        res.json({ message: "Deleted successfully" });
+    } catch (err) {
         res.status(500).json({ message: "Server error" });
     }
 };

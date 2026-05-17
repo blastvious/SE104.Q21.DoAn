@@ -1,43 +1,45 @@
 <div class="qlsv-content-wrapper">
-
     <div class="page-header">
         <h2>Cài đặt tài khoản</h2>
         <p>Thông tin người dùng & quản lý tài khoản</p>
     </div>
 
-    <!-- 👤 Thông tin cá nhân -->
     <div class="qlsv-table-card">
         <h3>Thông tin của bạn</h3>
-        <div id="userInfo"></div>
+        <div id="userInfo">
+            </div>
     </div>
 
-    <!-- 👑 Admin -->
-    <div id="adminSection" style="display:none">
-        <div class="qlsv-table-card">
-            <h3>Danh sách tài khoản</h3>
-            <div id="userList"></div>
-        </div>
-
-        <!-- Tạo user -->
-        <div class="qlsv-table-card">
+    <div id="adminSection" style="display: none;">
+        
+        <div class="qlsv-table-card" style="margin-bottom: 20px;">
             <h3>Tạo tài khoản mới</h3>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <input id="newUsername" placeholder="Tên đăng nhập" class="qlsv-input">
+                <input id="newPassword" type="password" placeholder="Mật khẩu" class="qlsv-input">
+                <select id="newRole" class="qlsv-input">
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="User">User</option>
+                </select>
+                <button id="createUserBtn" class="qlsv-btn qlsv-btn--primary">Tạo tài khoản</button>
+            </div>
+        </div>
 
-            <input id="newUsername" placeholder="Username">
-            <input id="newPassword" type="password" placeholder="Password">
-
-            <select id="newRole">
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="User">User</option>
-            </select>
-
-            <button id="createUserBtn" class="qlsv-btn qlsv-btn--primary">
-                Tạo tài khoản
-            </button>
+        <div class="qlsv-table-card">
+            <h3>Danh sách tài khoản hệ thống</h3>
+            <table class="qlsv-table" id="usersTable" style="width:100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                    <tr style="background: #f4f4f4; text-align: left;">
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Vai trò (Role)</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="userListTableBody">
+                    </tbody>
+            </table>
         </div>
     </div>
-
-
 </div>
-
-<script type="module" src="../assets/js/pages/settings.page.js"></script>

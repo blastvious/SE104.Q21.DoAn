@@ -1,22 +1,12 @@
 const role = {
-    admin: {
-        can: [
-            'read',
-            'write',
-            'delete',
-        ],
-
+    Admin: {
+        can: ['read', 'write', 'delete'],
     },
-    editor: {
-        can: [
-            'read',
-            'write'
-        ],
+    Manager: { // Đổi từ editor thành Manager cho khớp database
+        can: ['read', 'write'],
     },
-    viewer: {
-        can: [
-            'read',
-        ],
+    User: { // Đổi từ viewer thành User cho khớp database
+        can: ['read'],
     },
 };
 

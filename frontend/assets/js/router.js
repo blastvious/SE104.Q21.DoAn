@@ -8,6 +8,8 @@ const routes = {
     "subjects.html": () => import("./pages/subjects.page.js"),
     "scores.html": () => import("./pages/scores.page.js"),
     "report-subjects.html": () => import("./pages/report-subjects.page.js"),
+    "regulations.html": () => import("./pages/parameter.page.js"),
+    "account.html": () => import("./pages/account.page.js"),
     "report-semester.html": () => import("./pages/report-semester.page.js"),
     "class-assignment.html": () => import("./pages/class-assignment.page.js")
 };

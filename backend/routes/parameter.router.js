@@ -8,9 +8,10 @@ const router = express.Router();
 
 //Router cho tham số
 router.get("/parameter", parameterController.getAllParameters);
-router.get("/parameter/:id", parameterController.getParameterByName);
 router.post("/parameter", parameterController.createParameter);
-router.put("/parameter/:id", parameterController.updateParameter);
-router.delete("/parameter/:id", parameterController.deleteParameter);
+
+router.get("/parameter/:name", parameterController.getParameterByName);
+router.put("/parameter/:name", parameterController.updateParameter);
+router.delete("/parameter/:name", parameterController.deleteParameter);
 
 export default router;
