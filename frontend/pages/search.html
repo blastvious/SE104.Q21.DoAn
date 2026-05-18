@@ -1,0 +1,137 @@
+<div class="search-page">
+    <div class="page-header">
+        <h2>Tra Cứu Học Sinh</h2>
+        <p>Tìm kiếm thông tin và kết quả học tập</p>
+    </div>
+
+    <div class="students-toolbar" style="margin-bottom: 22px;">
+        <div class="student-toolbar-left">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label>Họ và tên học sinh</label>
+                    <input type="text" id="inputTen" class="qlsv-select"
+                        placeholder="Nhập tên học sinh..."
+                        autocomplete="off"
+                        oninput="onSearchInput(this, 'ten')"
+                        style="width:220px"/>
+                    <div class="autocomplete-list" id="acTen"></div>
+                </div>
+
+                <div class="filter-item">
+                    <label>Tên lớp</label>
+                    <input type="text" id="inputLop" class="qlsv-select"
+                        placeholder="Nhập lớp..."
+                        autocomplete="off"
+                        oninput="onSearchInput(this, 'lop')"
+                        style="width:120px"/>
+                    <div class="autocomplete-list" id="acLop"></div>
+                </div>
+                
+                <button class="qlsv-btn qlsv-btn--primary" onclick="doSearch()">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>           
+        </div>
+    </div>
+
+    <div class="result-section" id="resultSection" style="display:none">
+        <div class="result-grid">
+            <div class="infor-card">
+                <div class="info-card-header">
+                    <div class="avatar"><i class="fas fa-user-graduate"></i></div>
+                    <h3 id="resHoTen">--</h3>
+                    <span class="lop-badge" id="resLop">--</span>
+                </div>  
+
+                <div class="infor-body">
+                    <div class="info-row">
+                        <i class="fas fa-id-card"></i>
+                        <span class="info-label">Mã HS</span>
+                        <span class="info-value" id="resMaHS">--</span>
+                    </div>
+                
+                    <div class="info-row">
+                        <i class="fas fa-venus-mars"></i>
+                        <span class="info-label">Giới tính</span>
+                        <span class="info-value" id="resGioiTinh">--</span>
+                    </div>
+        
+                    <div class="info-row">
+                        <i class="fas fa-birthday-cake"></i>
+                        <span class="info-label">Ngày sinh</span>
+                        <span class="info-value" id="resNgaySinh">--</span>
+                    </div>
+                        
+                    <div class="info-row">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span class="info-label">Địa chỉ</span>
+                        <span class="info-value" id="resDiaChi">--</span>
+                    </div>
+                
+                    <div class="info-row">
+                        <i class="fas fa-envelope"></i>
+                        <span class="info-label">Email</span>
+                        <span class="info-value" id="resEmail">--</span>
+                    </div>
+            
+                    <div class="info-row">
+                        <i class="fas fa-phone"></i>
+                        <span class="info-label">SĐT</span>
+                        <span class="info-value" id="resSdt">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history-card">
+                <div class="card-head">
+                    <i class="fas fa-history"></i>
+                    Quá trình học tập
+                </div>
+
+                <div id="historyBody">
+                    <div class="empty-state">
+                    <div class="empty-circle"></div>
+                    Chưa có dữ liệu
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal(event)">
+        <div class="modal">
+            <div class="modal-head">
+                <h3 id="modalTitle">Chi tiết điểm</h3>
+                <button class="modal-close" onclick="closeModalBtn()"><i class="fas fa-times"></i></button>
+            </div>
+        
+            <div class="modal-body">
+                <div class="modal-info">
+                    <div class="modal-info-item"><div class="mi-label">Học sinh</div><div class="mi-val" id="mHoTen">--</div></div>
+                    <div class="modal-info-item"><div class="mi-label">Lớp</div><div class="mi-val" id="mLop">--</div></div>
+                    <div class="modal-info-item"><div class="mi-label">Học kỳ</div><div class="mi-val" id="mHocKy">--</div></div>
+                    <div class="modal-info-item"><div class="mi-label">Năm học</div><div class="mi-val" id="mNamHoc">--</div></div>
+                    <div class="modal-info-item"><div class="mi-label">ĐTB Học Kỳ</div><div class="mi-val" id="mDTB">--</div></div>
+                </div>
+        
+                <table class="detail-table">
+                    <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Môn học</th>
+                        <th>Hệ số</th>
+                        <th>TX1</th><th>TX2</th><th>Giữa Kỳ</th><th>Cuối Kỳ</th>
+                        <th>ĐTB Môn</th>
+                    </tr>
+                    </thead>
+                    <tbody id="modalTableBody"></tbody>
+                </table>
+            </div>
+        
+            <div class="modal-foot">
+                <button class="btn btn-pdf" onclick="exportModalPDF()"><i class="fas fa-file-pdf"></i> Xuất PDF</button>
+                <button class="btn btn-primary" onclick="closeModalBtn()">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>

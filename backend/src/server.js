@@ -11,7 +11,7 @@ import parameterRoute from '../routes/parameter.router.js'
 
 import reportSubjectsRoute from '../routes/reportSubjects.router.js'
 import reportSemesterRoute from '../routes/reportSemester.router.js'
-
+import searchRoute from '../routes/search.router.js'
 
 import helmet from 'helmet'
 
@@ -40,6 +40,7 @@ app.use("/api/school", parameterRoute);
 
 app.use("/api/school", reportSubjectsRoute);
 app.use("/api/school", reportSemesterRoute);
+app.use("/api/school", searchRoute);
 
 app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);

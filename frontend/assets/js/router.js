@@ -11,7 +11,8 @@ const routes = {
     "regulations.html": () => import("./pages/parameter.page.js"),
     "account.html": () => import("./pages/account.page.js"),
     "report-semester.html": () => import("./pages/report-semester.page.js"),
-    "class-assignment.html": () => import("./pages/class-assignment.page.js")
+    "class-assignment.html": () => import("./pages/class-assignment.page.js"),
+    "search.html":           () => import("./pages/search.page.js")
 };
 
 async function loadPage(page) {
