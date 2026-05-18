@@ -11,19 +11,13 @@ let selectedStudents = new Set();
 let allClasses = [];
 let currentStudentId = null;
 
-/* ===============================
-   INIT
-================================ */
 export const init = async () => {
-  await loadFilters(); // 🔥 QUAN TRỌNG
-  bindFilterEvents(); // 🔥 QUAN TRỌNG
+  await loadFilters();
+  bindFilterEvents();
   bindEvents();
-  loadData();
+  loadUnassigned();
 };
 
-/* ===============================
-   LOAD FILTER DATA
-================================ */
 async function loadFilters() {
   try {
     const [years, grades, classes, semesters] = await Promise.all([
@@ -35,7 +29,6 @@ async function loadFilters() {
 
     allClasses = classes;
 
-    // ===== NĂM HỌC =====
     const yearSelect = document.getElementById("filterNamHoc");
     yearSelect.innerHTML =
       '<option value="">--Chọn--</option>' +
@@ -49,7 +42,6 @@ async function loadFilters() {
         )
         .join("");
 
-    // ===== HỌC KỲ =====
     const semesterSelect = document.getElementById("filterHocKy");
     if (semesterSelect) {
       semesterSelect.innerHTML =
@@ -65,7 +57,6 @@ async function loadFilters() {
           .join("");
     }
 
-    // ===== KHỐI =====
     const gradeSelect = document.getElementById("filterKhoi");
     gradeSelect.innerHTML =
       '<option value="">--Chọn--</option>' +
@@ -83,26 +74,34 @@ async function loadFilters() {
   }
 }
 
-/* ===============================
-   FILTER EVENTS
-================================ */
 function bindFilterEvents() {
   const gradeSelect = document.getElementById("filterKhoi");
-  const classSelect = document.getElementById("filterLop");
+  const assignClassSelect = document.getElementById("assignClassSelect");
+  const yearSelect = document.getElementById("filterNamHoc");
+  const semesterSelect = document.getElementById("filterHocKy");
 
-  // ===== CHỌN KHỐI → LOAD LỚP =====
+  const reload = () => {
+    selectedStudents.clear();
+    updateAssignButton();
+    loadUnassigned();
+    loadAssigned();
+  };
+
+  yearSelect.addEventListener("change", reload);
+  if (semesterSelect) semesterSelect.addEventListener("change", reload);
+
   gradeSelect.addEventListener("change", () => {
     const grade = gradeSelect.value;
 
     if (!grade) {
-      classSelect.innerHTML = "";
-      classSelect.disabled = true;
+      assignClassSelect.innerHTML = "";
+      assignClassSelect.disabled = true;
       return;
     }
 
     const filtered = allClasses.filter((c) => c.MaKhoiLop === grade);
 
-    classSelect.innerHTML =
+    assignClassSelect.innerHTML =
       '<option value="">--Chọn lớp--</option>' +
       filtered
         .map(
@@ -114,23 +113,17 @@ function bindFilterEvents() {
         )
         .join("");
 
-    classSelect.disabled = false;
-    selectedStudents.clear();
-    updateAssignButton();
-    loadData();
+    assignClassSelect.disabled = false;
+    reload();
   });
 
-  // ===== CHỌN LỚP → LOAD DATA =====
-  classSelect.addEventListener("change", () => {
+  assignClassSelect.addEventListener("change", () => {
     selectedStudents.clear();
     updateAssignButton();
-    loadData();
+    loadAssigned();
   });
 }
 
-/* ===============================
-   EVENTS
-================================ */
 function bindEvents() {
   document
     .getElementById("checkAllUnassigned")
@@ -146,7 +139,7 @@ function bindEvents() {
     });
 
   document.getElementById("assignBtn").addEventListener("click", handleAssign);
-  // đóng modal
+
   document
     .getElementById("closeTransferModal")
     .addEventListener("click", () => {
@@ -156,27 +149,38 @@ function bindEvents() {
   document.getElementById("cancelTransferBtn").addEventListener("click", () => {
     document.getElementById("transferModal").style.display = "none";
   });
+
   document
-  .getElementById("transferForm")
-  .addEventListener("submit", handleTransfer);
+    .getElementById("transferForm")
+    .addEventListener("submit", handleTransfer);
 }
 
-/* ===============================
-   LOAD DATA
-================================ */
-async function loadData() {
+async function loadUnassigned() {
   try {
-    const MaLop = document.getElementById("filterLop").value;
     const MaHocKy = document.getElementById("filterHocKy")?.value;
 
-    // ❌ CHƯA CHỌN HỌC KỲ → KHÔNG GỌI API
     if (!MaHocKy) {
       document.getElementById("unassignedTable").innerHTML = `
         <tr><td colspan="5" class="empty-table">
             Vui lòng chọn học kỳ
         </td></tr>
       `;
+      return;
+    }
 
+    const unassigned = await getUnassignedStudents(MaHocKy);
+    renderUnassigned(unassigned);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadAssigned() {
+  try {
+    const MaLop = document.getElementById("assignClassSelect").value;
+    const MaHocKy = document.getElementById("filterHocKy")?.value;
+
+    if (!MaHocKy) {
       document.getElementById("assignedTable").innerHTML = `
         <tr><td colspan="5" class="empty-table">
             Vui lòng chọn học kỳ
@@ -185,21 +189,22 @@ async function loadData() {
       return;
     }
 
-    const [unassigned, assigned] = await Promise.all([
-      getUnassignedStudents(MaHocKy),
-      MaLop ? getAssignedStudents(MaHocKy, MaLop) : Promise.resolve([]),
-    ]);
+    if (!MaLop) {
+      document.getElementById("assignedTable").innerHTML = `
+        <tr><td colspan="5" class="empty-table">
+            Chọn lớp để xem học sinh đã xếp
+        </td></tr>
+      `;
+      return;
+    }
 
-    renderUnassigned(unassigned);
+    const assigned = await getAssignedStudents(MaHocKy, MaLop);
     renderAssigned(assigned);
   } catch (err) {
     console.error(err);
   }
 }
 
-/* ===============================
-   RENDER UNASSIGNED
-================================ */
 function renderUnassigned(data) {
   const tbody = document.getElementById("unassignedTable");
 
@@ -238,16 +243,13 @@ function renderUnassigned(data) {
   });
 }
 
-/* ===============================
-   RENDER ASSIGNED
-================================ */
 function renderAssigned(data) {
   const tbody = document.getElementById("assignedTable");
 
   if (!data.length) {
     tbody.innerHTML = `
-      <tr><td colspan="5" class="empty-table">
-        Chưa có học sinh
+      <tr><td colspan="3" class="empty-table">
+        Hiện chưa có học sinh nào ở lớp này
       </td></tr>`;
     return;
   }
@@ -258,8 +260,6 @@ function renderAssigned(data) {
     <tr>
         <td>${s.MaHS}</td>
         <td>${s.HOCSINH?.HoTen || ""}</td>
-        <td><span class="class-badge">${s.MaLop}</span></td>
-        <td>${s.MaHocKy}</td>
         <td class="actions">
             <button class="action-btn edit"
                 data-id="${s.MaHS}">
@@ -271,20 +271,19 @@ function renderAssigned(data) {
     )
     .join("");
 
-  // 👉 mở popup
   document.querySelectorAll(".action-btn.edit").forEach((btn) => {
     btn.addEventListener("click", () => {
       openTransferModal(btn.dataset.id);
     });
   });
 }
+
 function openTransferModal(studentId) {
   currentStudentId = studentId;
 
   const modal = document.getElementById("transferModal");
   const select = document.getElementById("newClassSelect");
-
-  const currentClass = document.getElementById("filterLop").value;
+  const currentClass = document.getElementById("assignClassSelect").value;
 
   select.innerHTML =
     '<option value="">--Chọn lớp--</option>' +
@@ -297,9 +296,6 @@ function openTransferModal(studentId) {
   modal.style.display = "block";
 }
 
-/* ===============================
-   SELECT
-================================ */
 function toggleStudent(id, checked) {
   if (checked) selectedStudents.add(id);
   else selectedStudents.delete(id);
@@ -307,35 +303,22 @@ function toggleStudent(id, checked) {
 
 function updateAssignButton() {
   const btn = document.getElementById("assignBtn");
-  const hasClass = document.getElementById("filterLop").value;
+  const hasClass = document.getElementById("assignClassSelect").value;
 
   btn.disabled = selectedStudents.size === 0 || !hasClass;
 }
 
-/* ===============================
-   ASSIGN
-================================ */
 async function handleAssign() {
-  const MaLop = document.getElementById("filterLop").value;
+  const MaLop = document.getElementById("assignClassSelect").value;
   const MaHocKy = document.getElementById("filterHocKy").value;
 
   if (!MaLop) {
     alert("Vui lòng chọn lớp");
     return;
   }
+
   if (!MaHocKy) {
-    document.getElementById("unassignedTable").innerHTML = `
-        <tr><td colspan="5" class="empty-table">
-            Vui lòng chọn học kỳ
-        </td></tr>
-    `;
-
-    document.getElementById("assignedTable").innerHTML = `
-        <tr><td colspan="5" class="empty-table">
-            Vui lòng chọn học kỳ
-        </td></tr>
-    `;
-
+    alert("Vui lòng chọn học kỳ");
     return;
   }
 
@@ -356,21 +339,19 @@ async function handleAssign() {
     alert("Xếp lớp thành công!");
 
     selectedStudents.clear();
-    loadData();
+    document.getElementById("checkAllUnassigned").checked = false;
+    loadUnassigned();
+    loadAssigned();
   } catch (err) {
     alert(err.message);
   }
 }
 
-/* ===============================
-   UTIL
-================================ */
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   return d.toLocaleDateString("vi-VN");
 }
-
 
 async function handleTransfer(e) {
   e.preventDefault();
@@ -400,14 +381,9 @@ async function handleTransfer(e) {
 
     alert("Chuyển lớp thành công!");
 
-    // đóng modal
     document.getElementById("transferModal").style.display = "none";
-
-    // reset form
     document.getElementById("transferForm").reset();
-
-    // reload lại bảng
-    loadData();
+    loadAssigned();
   } catch (err) {
     alert(err.message);
   }

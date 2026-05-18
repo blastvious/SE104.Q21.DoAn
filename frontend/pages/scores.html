@@ -1,318 +1,85 @@
 <!-- scores.html -->
-<style>
-    /* VARIABLES & THEME */
-    :root {
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --success: #16a34a;
-        --success-hover: #15803d;
-        --warning: #ea580c;
-        --warning-hover: #c2410c;
-        --danger: #dc2626;
-        --danger-hover: #b91c1c;
-        --background: #f8fafc;
-        --surface: #ffffff;
-        --text: #0f172a;
-        --text-muted: #64748b;
-        --border: #e2e8f0;
-        --radius: 12px;
-        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .scores-page {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background-color: var(--background);
-        color: var(--text);
-        padding: 24px;
-        max-width: 1400px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 16px;
-    }
-    .page-header h2 {
-        font-size: 24px;
-        font-weight: 700;
-        margin: 0 0 4px 0;
-        color: var(--text);
-    }
-    .page-header p {
-        font-size: 14px;
-        color: var(--text-muted);
-        margin: 0;
-    }
-
-    .card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        padding: 20px;
-    }
-
-    .filter-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 16px;
-    }
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    .form-group label {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-muted);
-    }
-    .form-group select {
-        padding: 10px 14px;
-        font-size: 14px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background-color: var(--surface);
-        color: var(--text);
-        outline: none;
-        transition: var(--transition);
-        cursor: pointer;
-    }
-    .form-group select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-    .form-group select:disabled {
-        background-color: #f1f5f9;
-        color: #94a3b8;
-        cursor: not-allowed;
-    }
-
-    .score-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
-    .action-group-left, .action-group-right {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        border-radius: 8px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-    .btn i { font-size: 14px; }
-    .btn.primary   { background: var(--primary); color: white; }
-    .btn.primary:hover { background: var(--primary-hover); }
-    .btn.success   { background: transparent; color: var(--success); border-color: var(--success); }
-    .btn.success:hover { background: rgba(22, 163, 74, 0.08); }
-    .btn.warning   { background: transparent; color: var(--warning); border-color: var(--warning); }
-    .btn.warning:hover { background: rgba(234, 88, 12, 0.08); }
-    .btn.danger    { background: transparent; color: var(--danger); border-color: var(--danger); }
-    .btn.danger:hover  { background: rgba(220, 38, 38, 0.08); }
-    .btn:disabled  { opacity: .45; cursor: not-allowed; pointer-events: none; }
-
-    .input-number-custom {
-        padding: 10px 14px;
-        font-size: 14px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background-color: var(--surface);
-        color: var(--text);
-        outline: none;
-        transition: var(--transition);
-        font-weight: 600;
-        text-align: center;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .input-number-custom:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-    .input-number-custom::-webkit-inner-spin-button,
-    .input-number-custom::-webkit-outer-spin-button {
-        opacity: 1;
-        height: 24px;
-        cursor: pointer;
-    }
-
-    .score-alert {
-        padding: 14px 18px;
-        border-radius: 8px;
-        border: 1px solid #bfdbfe;
-        background: #eff6ff;
-        color: #1d4ed8;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: var(--transition);
-    }
-
-    .score-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-    }
-    .stat-box {
-        padding: 14px;
-        border-radius: 8px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        text-align: center;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    .stat-box span { font-weight: 700; font-size: 20px; display: block; margin-top: 4px; }
-    .stat-total  { border-left: 4px solid var(--primary); color: var(--primary); }
-    .stat-filled { border-left: 4px solid var(--success); color: var(--success); }
-    .stat-empty  { border-left: 4px solid var(--danger);  color: var(--danger);  }
-
-    .table-wrapper {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-    }
-    .score-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-        font-size: 14px;
-    }
-    .score-table th {
-        background: #f8fafc;
-        color: var(--text-muted);
-        font-weight: 600;
-        padding: 14px 16px;
-        border-bottom: 1px solid var(--border);
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.5px;
-    }
-    .score-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-        color: var(--text);
-    }
-    .score-table tbody tr:hover { background-color: #f8fafc; }
-    .score-table tbody tr:last-child td { border-bottom: none; }
-
-    .custom-checkbox {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-        accent-color: var(--primary);
-    }
-    .input-score {
-        width: 90px;
-        padding: 6px 10px;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        text-align: center;
-        font-size: 14px;
-        font-weight: 600;
-        outline: none;
-        transition: var(--transition);
-    }
-    .input-score:focus { border-color: var(--primary); }
-
-    @media (max-width: 768px) {
-        .score-actions { flex-direction: column; align-items: stretch; }
-        .action-group-left, .action-group-right { width: 100%; }
-        .btn { flex: 1; }
-        .score-stats { grid-template-columns: 1fr; }
-    }
-</style>
 
 <div class="scores-page">
 
     <!-- HEADER -->
     <div class="page-header">
-        <div>
-            <h2>Nhập Điểm Học Sinh</h2>
-            <p>Quản lý nhập điểm học sinh trực tiếp bằng tay hoặc tối ưu hóa thông qua import Excel</p>
-        </div>
+        <h2>Nhập Điểm Học Sinh</h2>
+        <p>Quản lý nhập điểm học sinh trực tiếp bằng tay hoặc tối ưu hóa thông qua import Excel</p>
     </div>
 
     <!-- FILTER -->
-    <div class="card">
-        <div class="filter-grid">
+    <div class="filter-group">
 
-            <div class="form-group">
-                <label>Năm học</label>
-                <select id="scoreNamHoc">
-                    <option value="">-- Chọn năm học --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Khối</label>
-                <!-- value phải khớp khoiMap trong JS: "Lớp 10", "Lớp 11", "Lớp 12" -->
-                <select id="scoreKhoi" disabled>
-                    <option value="">-- Chọn khối --</option>
-                    <option value="Lớp 10">Khối 10</option>
-                    <option value="Lớp 11">Khối 11</option>
-                    <option value="Lớp 12">Khối 12</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Lớp</label>
-                <!-- KHÔNG disabled — JS sẽ điền option sau khi chọn khối -->
-                <select id="scoreLop">
-                    <option value="">-- Chọn lớp --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Môn học</label>
-                <select id="scoreMonHoc">
-                    <option value="">-- Chọn môn --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Học kỳ</label>
-                <select id="scoreHocKy">
-                    <option value="">-- Chọn học kỳ --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Loại kiểm tra</label>
-                <select id="scoreLoaiKT">
-                    <option value="">-- Chọn loại --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Lần kiểm tra <span style="font-weight:normal;color:var(--text-muted);font-size:11px;">(1-10)</span></label>
-                <input type="number" id="scoreLan" min="1" max="10" value="1" class="input-number-custom">
-            </div>
-
+        <div class="filter-item">
+            <label>Năm học</label>
+            <select id="scoreNamHoc" class="qlsv-select">
+                <option value="">-- Chọn năm học --</option>
+            </select>
         </div>
+
+        <div class="filter-item">
+            <label>Khối</label>
+            <!-- value phải khớp khoiMap trong JS: "Lớp 10", "Lớp 11", "Lớp 12" -->
+            <select id="scoreKhoi" class="qlsv-select" disabled>
+                <option value="">-- Chọn khối --</option>
+                <option value="Lớp 10">Khối 10</option>
+                <option value="Lớp 11">Khối 11</option>
+                <option value="Lớp 12">Khối 12</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>Lớp</label>
+            <!-- KHÔNG disabled — JS sẽ điền option sau khi chọn khối -->
+            <select id="scoreLop" class="qlsv-select">
+                <option value="">-- Chọn lớp --</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>Môn học</label>
+            <select id="scoreMonHoc" class="qlsv-select">
+                <option value="">-- Chọn môn --</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>Học kỳ</label>
+            <select id="scoreHocKy" class="qlsv-select">
+                <option value="">-- Chọn học kỳ --</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>Loại kiểm tra</label>
+            <select id="scoreLoaiKT" class="qlsv-select">
+                <option value="">-- Chọn loại --</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>Lần kiểm tra <span style="font-weight:normal;color:#888;font-size:11px;">(1-10)</span></label>
+            <input type="number" id="scoreLan" min="1" max="10" value="1" class="input-number-custom">
+        </div>
+
+        <button id="scoreBtnLoad" class="qlsv-btn qlsv-btn--primary" disabled>
+            <i class="fas fa-search"></i> Tải danh sách
+        </button>
+        <button id="scoreBtnTemplate" class="qlsv-btn qlsv-btn--outline" disabled>
+            <i class="fas fa-file-excel"></i> Tải file mẫu
+        </button>
+        <label for="scoreFileInput" id="scoreUploadLabel" class="qlsv-btn qlsv-btn--outline" style="cursor:pointer;">
+            <i class="fas fa-upload"></i> Upload Excel
+        </label>
+        <input type="file" id="scoreFileInput" accept=".xlsx" hidden disabled>
+        <button id="scoreBtnDelete" class="qlsv-btn qlsv-btn--outline" style="color:#e74c3c;border-color:#e74c3c;" disabled>
+            <i class="fas fa-trash"></i> Xóa điểm đã chọn
+        </button>
+        <button id="scoreBtnSave" class="qlsv-btn qlsv-btn--primary" disabled>
+            <i class="fas fa-save"></i> Lưu tất cả
+        </button>
+
     </div>
 
     <!-- ALERT -->
@@ -320,31 +87,6 @@
         <i class="fas fa-info-circle"></i>
         <div id="scoreAlertText">
             Vui lòng chọn đầy đủ bộ lọc: <strong>Năm học → Khối → Lớp → Môn → Học kỳ</strong> để thực hiện tác vụ.
-        </div>
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="score-actions">
-        <div class="action-group-left">
-            <button id="scoreBtnLoad" class="btn primary" disabled>
-                <i class="fas fa-search"></i> Tải danh sách
-            </button>
-            <button id="scoreBtnTemplate" class="btn success" disabled>
-                <i class="fas fa-file-excel"></i> Tải file mẫu
-            </button>
-            <label for="scoreFileInput" class="btn warning" id="scoreUploadLabel" style="cursor:not-allowed;opacity:.45;">
-                <i class="fas fa-upload"></i> Upload Excel
-            </label>
-            <input type="file" id="scoreFileInput" accept=".xlsx" hidden disabled>
-        </div>
-
-        <div class="action-group-right">
-            <button id="scoreBtnDelete" class="btn danger" disabled>
-                <i class="fas fa-trash"></i> Xóa điểm đã chọn
-            </button>
-            <button id="scoreBtnSave" class="btn primary" disabled>
-                <i class="fas fa-save"></i> Lưu tất cả
-            </button>
         </div>
     </div>
 

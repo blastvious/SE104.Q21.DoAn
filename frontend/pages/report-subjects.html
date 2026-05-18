@@ -4,38 +4,36 @@
         <p>Thống kê kết quả đạt môn theo từng lớp</p>
     </div>
 
-    <div class="report-filters">
-        <div class="filter-group">
-            <div class="filter-item">
-                <label>Năm học</label>
-                <select id="reportYear" class="qlsv-select">
-                    <option value="">-- Chọn năm --</option>
-                </select>
-            </div>
-            <div class="filter-item">
-                <label>Học kỳ</label>
-                <select id="reportSemester" class="qlsv-select">
-                    <option value="">-- Chọn học kỳ --</option>
-                </select>
-            </div>
-            <div class="filter-item">
-                <label>Môn học</label>
-                <select id="reportSubject" class="qlsv-select">
-                    <option value="">-- Chọn môn --</option>
-                </select>
-            </div>
-            <button class="qlsv-btn qlsv-btn--primary" id="reportFilterBtn">
-                <i class="fas fa-filter"></i> Xem báo cáo
-            </button>
-            <button class="qlsv-btn qlsv-btn--blue" id="exportPdfBtn">
-                <i class="fas fa-file-pdf"></i> Xuất PDF
-            </button>
+    <div class="filter-group">
+        <div class="filter-item">
+            <label>Năm học</label>
+            <select id="reportYear" class="qlsv-select">
+                <option value="">-- Chọn năm --</option>
+            </select>
         </div>
+        <div class="filter-item">
+            <label>Học kỳ</label>
+            <select id="reportSemester" class="qlsv-select">
+                <option value="">-- Chọn học kỳ --</option>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label>Môn học</label>
+            <select id="reportSubject" class="qlsv-select">
+                <option value="">-- Chọn môn --</option>
+            </select>
+        </div>
+        <button class="qlsv-btn qlsv-btn--primary" id="reportFilterBtn">
+            <i class="fas fa-filter"></i> Xem báo cáo
+        </button>
+        <button class="qlsv-btn qlsv-btn--blue" id="exportPdfBtn">
+            <i class="fas fa-file-pdf"></i> Xuất PDF
+        </button>
     </div>
 
     <div class="subject-stat-grid report-summary" id="reportSummary">
         <div class="subject-stat-card">
-            <div class="subject-icon purple">
+            <div class="subject-icon primary">
                 <i class="fas fa-users"></i>
             </div>
             <div>
@@ -44,7 +42,7 @@
             </div>
         </div>
         <div class="subject-stat-card">
-            <div class="subject-icon blue">
+            <div class="subject-icon secondary">
                 <i class="fas fa-check-circle"></i>
             </div>
             <div>
@@ -53,7 +51,7 @@
             </div>
         </div>
         <div class="subject-stat-card">
-            <div class="subject-icon green">
+            <div class="subject-icon info">
                 <i class="fas fa-trophy"></i>
             </div>
             <div>

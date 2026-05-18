@@ -1,0 +1,107 @@
+/* SUBJECT PAGE */
+.subjects-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.4s ease;
+}
+
+/* STATS */
+.subject-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.subject-stat-card {
+    background: var(--surface-card);
+    border-radius: 18px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
+    transition: 0.3s;
+}
+
+.subject-stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.subject-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.subject-icon.primary {
+    background: rgba(127,174,196,0.2);
+}
+
+.subject-icon.secondary {
+    background: rgba(109,157,180,0.15);
+}
+
+.subject-icon.info {
+    background: rgba(44,95,122,0.15);
+}
+
+/* TABLE */
+.subject-table-wrapper {
+    background: var(--surface-card);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
+}
+
+.subject-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.subject-table th {
+    background: var(--surface-section);
+    padding: 16px;
+    text-align: center;
+    color: var(--text-heading);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.subject-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.subject-table tbody tr:hover {
+    background: var(--surface-section-hover);
+}
+
+/* BADGE */
+.subject-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.subject-badge.hs1 {
+    background: var(--surface-section);
+    color: var(--text-heading);
+}
+
+.subject-badge.hs3 {
+    background: var(--surface-section);
+    color: var(--text-heading);
+}
+
+.subject-badge.hs2 {
+    background: var(--surface-section);
+    color: var(--text-heading);
+}

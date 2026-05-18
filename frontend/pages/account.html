@@ -1,45 +1,62 @@
-<div class="qlsv-content-wrapper">
+<div class="account-page">
     <div class="page-header">
-        <h2>Cài đặt tài khoản</h2>
+        <h2>Cài Đặt Tài Khoản</h2>
         <p>Thông tin người dùng & quản lý tài khoản</p>
     </div>
 
-    <div class="qlsv-table-card">
+    <div class="account-card">
         <h3>Thông tin của bạn</h3>
-        <div id="userInfo">
+        <div class="user-profile">
+            <div class="user-avatar"><i class="fas fa-user"></i></div>
+            <div class="user-details" id="userInfo">
+                <div class="user-name">--</div>
+                <div class="user-role"><span>--</span></div>
             </div>
+        </div>
+        <div class="user-meta">
+            <div class="user-meta-item">
+                <span class="meta-label">Tên đăng nhập</span>
+                <span class="meta-value" id="metaUsername">--</span>
+            </div>
+            <div class="user-meta-item">
+                <span class="meta-label">Vai trò</span>
+                <span class="meta-value" id="metaRole">--</span>
+            </div>
+        </div>
     </div>
 
     <div id="adminSection" style="display: none;">
-        
-        <div class="qlsv-table-card" style="margin-bottom: 20px;">
-            <h3>Tạo tài khoản mới</h3>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <input id="newUsername" placeholder="Tên đăng nhập" class="qlsv-input">
-                <input id="newPassword" type="password" placeholder="Mật khẩu" class="qlsv-input">
-                <select id="newRole" class="qlsv-input">
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                    <option value="User">User</option>
-                </select>
-                <button id="createUserBtn" class="qlsv-btn qlsv-btn--primary">Tạo tài khoản</button>
+        <div class="table-section">
+            <h3 class="section-title">Tạo tài khoản mới</h3>
+            <div class="qlsv-table-card" style="padding:20px 24px;">
+                <div class="create-form">
+                    <input id="newUsername" placeholder="Tên đăng nhập" class="qlsv-input">
+                    <input id="newPassword" type="password" placeholder="Mật khẩu" class="qlsv-input">
+                    <select id="newRole" class="qlsv-input">
+                        <option value="Admin">Admin</option>
+                        <option value="Manager">Manager</option>
+                        <option value="User">User</option>
+                    </select>
+                    <button id="createUserBtn" class="qlsv-btn qlsv-btn--primary">Tạo tài khoản</button>
+                </div>
             </div>
         </div>
 
-        <div class="qlsv-table-card">
-            <h3>Danh sách tài khoản hệ thống</h3>
-            <table class="qlsv-table" id="usersTable" style="width:100%; border-collapse: collapse; margin-top: 10px;">
-                <thead>
-                    <tr style="background: #f4f4f4; text-align: left;">
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>Vai trò (Role)</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="userListTableBody">
-                    </tbody>
-            </table>
+        <div class="table-section">
+            <h3 class="section-title">Danh sách tài khoản hệ thống</h3>
+            <div class="qlsv-table-card">
+                <table class="account-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Vai trò</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userListTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

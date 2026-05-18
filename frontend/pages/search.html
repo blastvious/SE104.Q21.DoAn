@@ -4,34 +4,30 @@
         <p>Tìm kiếm thông tin và kết quả học tập</p>
     </div>
 
-    <div class="students-toolbar" style="margin-bottom: 22px;">
-        <div class="student-toolbar-left">
-            <div class="filter-group">
-                <div class="filter-item">
-                    <label>Họ và tên học sinh</label>
-                    <input type="text" id="inputTen" class="qlsv-select"
-                        placeholder="Nhập tên học sinh..."
-                        autocomplete="off"
-                        oninput="onSearchInput(this, 'ten')"
-                        style="width:220px"/>
-                    <div class="autocomplete-list" id="acTen"></div>
-                </div>
-
-                <div class="filter-item">
-                    <label>Tên lớp</label>
-                    <input type="text" id="inputLop" class="qlsv-select"
-                        placeholder="Nhập lớp..."
-                        autocomplete="off"
-                        oninput="onSearchInput(this, 'lop')"
-                        style="width:120px"/>
-                    <div class="autocomplete-list" id="acLop"></div>
-                </div>
-                
-                <button class="qlsv-btn qlsv-btn--primary" onclick="doSearch()">
-                    <i class="fas fa-search"></i> Tìm kiếm
-                </button>
-            </div>           
+    <div class="filter-group">
+        <div class="filter-item">
+            <label>Họ và tên học sinh</label>
+            <input type="text" id="inputTen" class="qlsv-select"
+                placeholder="Nhập tên học sinh..."
+                autocomplete="off"
+                oninput="onSearchInput(this, 'ten')"
+                style="width:220px"/>
+            <div class="autocomplete-list" id="acTen"></div>
         </div>
+
+        <div class="filter-item">
+            <label>Tên lớp</label>
+            <input type="text" id="inputLop" class="qlsv-select"
+                placeholder="Nhập lớp..."
+                autocomplete="off"
+                oninput="onSearchInput(this, 'lop')"
+                style="width:120px"/>
+            <div class="autocomplete-list" id="acLop"></div>
+        </div>
+        
+        <button class="qlsv-btn qlsv-btn--primary" onclick="doSearch()">
+            <i class="fas fa-search"></i> Tìm kiếm
+        </button>
     </div>
 
     <div class="result-section" id="resultSection" style="display:none">

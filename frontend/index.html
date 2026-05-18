@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="assets/css/search.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/settings.css">
+    <link rel="stylesheet" href="assets/css/students.css">
+    <link rel="stylesheet" href="assets/css/subjects.css">
+    <link rel="stylesheet" href="assets/css/class-assignment.css">
+    <link rel="stylesheet" href="assets/css/scores.css">
+    <link rel="stylesheet" href="assets/css/account.css">
+    <link rel="stylesheet" href="assets/css/regulations.css">
+    <link rel="stylesheet" href="assets/css/report-semester.css">
+    <link rel="stylesheet" href="assets/css/report-subjects.css">
     
     <script>
         // Auth
@@ -69,7 +79,7 @@
                 </li>
 
                 <li data-page="account.html">
-                    <i class="fas fa-user-cog"></i> Cài đặt tài khoản
+                    Cài đặt tài khoản
                 </li>
             </ul>
 
@@ -115,7 +125,52 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
-
+        // Generate background bubbles
+        (function() {
+            const container = document.getElementById('bgBubbles');
+            if (!container) return;
+            const colors = [
+                'rgba(127,174,196,0.25)', 'rgba(59,112,143,0.2)', 'rgba(127,174,196,0.2)',
+                'rgba(127,174,196,0.2)', 'rgba(59,112,143,0.18)', 'rgba(127,174,196,0.18)',
+                'rgba(127,174,196,0.2)', 'rgba(59,112,143,0.15)', 'rgba(127,174,196,0.15)',
+                'rgba(127,174,196,0.18)', 'rgba(59,112,143,0.2)', 'rgba(127,174,196,0.18)',
+                'rgba(127,174,196,0.15)', 'rgba(59,112,143,0.15)'
+            ];
+            const gridPositions = [];
+            const cols = 4, rows = 4;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const offset = (r % 2) * (100 / (cols * 2));
+                    gridPositions.push({
+                        x: (c + 0.5) * (100 / cols) + offset,
+                        y: (r + 0.5) * (100 / rows)
+                    });
+                }
+            }
+            const bigIndices = new Set();
+            while (bigIndices.size < 3) bigIndices.add(Math.floor(Math.random() * 14));
+            for (let i = 0; i < 14; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bg-bubble';
+                const base = [50, 65, 80, 95][i % 4];
+                const size = bigIndices.has(i) ? base + 100 + Math.floor(Math.random() * 40) : base;
+                const pos = gridPositions[i];
+                const x = pos.x + (Math.random() - 0.5) * 6;
+                const y = pos.y + (Math.random() - 0.5) * 6;
+                const dur = 3 + Math.random() * 3;
+                const delay = Math.random() * 4;
+                const color = colors[i];
+                bubble.style.cssText = `
+                    width:${size}px;height:${size}px;
+                    background:radial-gradient(circle at 35% 35%, ${color} 0%, transparent 70%);
+                    border:1px solid ${color.replace('0.25', '0.08').replace('0.2', '0.06').replace('0.18', '0.05').replace('0.15', '0.04').replace('0.14', '0.04').replace('0.12', '0.03').replace('0.1', '0.03')};
+                    top:${y}%;left:${x}%;
+                    opacity:${0.6 + (i % 3) * 0.1};
+                    animation:bubbleAnim ${dur}s ease-in-out ${delay}s infinite alternate;
+                `;
+                container.appendChild(bubble);
+            }
+        })();
 
         // Toggle sidebar
         const sidebar = document.getElementById('sidebar');
@@ -125,18 +180,22 @@
 
         // Dark mode
         const themeToggle = document.getElementById('themeToggle');
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
         themeToggle.onclick = () => {
             document.body.classList.toggle('dark-mode');
-            themeToggle.innerHTML =
-                document.body.classList.contains('dark-mode')
-                    ? '<i class="fas fa-sun"></i>'
-                    : '<i class="fas fa-moon"></i>';
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', isDark);
         };
 
         // Logo click
         document.getElementById('logoHome').onclick = () => {
             document.querySelector('[data-page="dashboard.html"]').click();
         };
+
     </script>
 
 </body>

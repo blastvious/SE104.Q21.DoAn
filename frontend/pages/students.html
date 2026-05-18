@@ -4,18 +4,14 @@
         <p>Quản lý hồ sơ học sinh, nhập liệu từ Excel</p>
     </div>
 
-    <div class="qlsv-toolbar">
-        <div class="qlsv-toolbar-left">
-    <button class="qlsv-btn qlsv-btn--primary" id="openModalBtn">
-        <i class="fas fa-plus"></i> Thêm học sinh mới
-    </button>
-
     <div class="filter-group">
         <div class="filter-item">
             <label for="fillterNamHoc">Năm học:</label>
             <select id="fillterNamHoc" class="qlsv-select">
                 <option value="">-- Chọn Năm học --</option>
             </select>
+        </div>
+        <div class="filter-item">
             <label for="filterKhoi">Khối:</label>
             <select id="filterKhoi" class="qlsv-select">
                 <option value="">-- Chọn Khối --</option>
@@ -29,24 +25,18 @@
             <select id="filterLop" class="qlsv-select" disabled>
                 <option value="">-- Chọn Lớp --</option>
             </select>
-
         </div>
-    </div>
-</div>
-
-        
-        <div class="qlsv-toolbar-right">
-            <div class="excel-controls">
-                <input type="file" id="excelFile" accept=".xlsx, .xls" hidden />
-                <button type="button" class="qlsv-btn qlsv-btn--outline"
-                    onclick="document.getElementById('excelFile').click()">
-                    <i class="fas fa-folder-open"></i> Chọn File Excel
-                </button>
-                <button type="button" class="qlsv-btn qlsv-btn--blue" id="btnUploadExcel">
-                    <i class="fas fa-upload"></i> Tải lên Excel
-                </button>
-            </div>
-        </div>
+        <button class="qlsv-btn qlsv-btn--primary" id="openModalBtn">
+            <i class="fas fa-plus"></i> Thêm học sinh mới
+        </button>
+        <input type="file" id="excelFile" accept=".xlsx, .xls" hidden />
+        <button type="button" class="qlsv-btn qlsv-btn--outline"
+            onclick="document.getElementById('excelFile').click()">
+            <i class="fas fa-folder-open"></i> Chọn File Excel
+        </button>
+        <button type="button" class="qlsv-btn qlsv-btn--blue" id="btnUploadExcel">
+            <i class="fas fa-upload"></i> Tải lên Excel
+        </button>
     </div>
 
     <div class="qlsv-table-card">

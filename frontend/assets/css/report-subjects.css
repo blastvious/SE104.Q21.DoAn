@@ -1,0 +1,128 @@
+.report-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.4s ease;
+}
+
+.report-summary {
+    margin-bottom: 5px;
+}
+
+.report-summary .subject-stat-card {
+    padding: 14px 18px;
+    gap: 12px;
+}
+
+.report-summary .subject-stat-card .subject-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+}
+
+.report-summary .subject-stat-card h3 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.report-summary .subject-stat-card p {
+    font-size: 0.78rem;
+    margin: 2px 0 0 0;
+    color: var(--text-table);
+}
+
+.report-content {
+    display: flex;
+    gap: 25px;
+}
+
+.report-table-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.report-table-area .subject-table-wrapper {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+
+.report-tfoot-row {
+    background: var(--surface-section);
+}
+
+.report-tfoot-row td {
+    padding: 12px 16px;
+    font-weight: 700;
+    color: var(--text-heading);
+    border-top: 2px solid var(--border);
+}
+
+.report-tfoot-label {
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.report-chart-area {
+    width: 320px;
+    flex-shrink: 0;
+}
+
+.chart-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow-card);
+    text-align: center;
+}
+
+.chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.chart-card canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.chart-legend {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.chart-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-table);
+}
+
+.chart-legend .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .report-content {
+        flex-direction: column;
+    }
+
+    .report-chart-area {
+        width: 100%;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

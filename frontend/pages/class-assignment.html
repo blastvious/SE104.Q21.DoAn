@@ -1,82 +1,77 @@
 <div class="qlsv-content-wrapper class-assignment-page">
 
-    <!-- HEADER -->
     <div class="page-header">
         <h2>Phân Lớp Học Sinh</h2>
         <p>Xếp học sinh vào lớp theo năm học</p>
     </div>
 
-    <!-- TOOLBAR -->
-    <div class="qlsv-toolbar">
-        <div class="qlsv-toolbar-left">
+    <div class="filter-group">
+        <div class="filter-item">
+            <label>Năm học:</label>
+            <select id="filterNamHoc" class="qlsv-select"></select>
+        </div>
+        <div class="filter-item">
+            <label>Học kỳ:</label>
+            <select id="filterHocKy" class="qlsv-select"></select>
+        </div>
+        <div class="filter-item">
+            <label>Khối:</label>
+            <select id="filterKhoi" class="qlsv-select">
+                <option value="">--Chọn--</option>
+                <option value="10">Khối 10</option>
+                <option value="11">Khối 11</option>
+                <option value="12">Khối 12</option>
+            </select>
+        </div>
+    </div>
 
-            <!-- ACTION -->
-            <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
-                <i class="fas fa-user-plus"></i> Xếp vào lớp
-            </button>
+    <div class="assignment-grid">
 
-            <!-- FILTER -->
-            <div class="filter-group">
-                <div class="filter-item">
-                    <label>Năm học:</label>
-                    <select id="filterNamHoc" class="qlsv-select"></select>
-                    <label>Học kỳ:</label>
-                    <select id="filterHocKy" class="qlsv-select"></select>
-                    <label>Khối:</label>
-                    <select id="filterKhoi" class="qlsv-select">
-                        <option value="">--Chọn--</option>
-                        <option value="10">Khối 10</option>
-                        <option value="11">Khối 11</option>
-                        <option value="12">Khối 12</option>
-                    </select>
-                </div>
-
-                <div class="filter-item">
-                    <label>Lớp:</label>
-                    <select id="filterLop" class="qlsv-select" disabled></select>
-                </div>
+        <div class="assignment-card">
+            <h3 class="section-title">Học sinh chưa xếp lớp</h3>
+            <div class="qlsv-table-card">
+                <table class="qlsv-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="checkAllUnassigned"></th>
+                            <th>Mã HS</th>
+                            <th>Họ Tên</th>
+                            <th>Ngày Sinh</th>
+                            <th>Giới Tính</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unassignedTable"></tbody>
+                </table>
             </div>
         </div>
-    </div>
 
-    <!-- ====== CHƯA XẾP LỚP ====== -->
-    <div class="table-section">
-        <h3 class="section-title">Học sinh chưa xếp lớp</h3>
-
-        <div class="qlsv-table-card">
-            <table class="qlsv-table">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="checkAllUnassigned"></th>
-                        <th>Mã HS</th>
-                        <th>Họ Tên</th>
-                        <th>Ngày Sinh</th>
-                        <th>Giới Tính</th>
-                    </tr>
-                </thead>
-                <tbody id="unassignedTable"></tbody>
-            </table>
+        <div class="assignment-card">
+            <div class="assign-header">
+                <h3 class="section-title">Học sinh đã xếp lớp</h3>
+                <div class="assign-controls">
+                    <div class="filter-item" style="margin:0;flex-direction:row;align-items:center;gap:8px;">
+                        <label style="font-size:0.82rem;white-space:nowrap;">Lớp:</label>
+                        <select id="assignClassSelect" class="qlsv-select" disabled></select>
+                    </div>
+                    <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
+                        <i class="fas fa-user-plus"></i> Xếp vào lớp
+                    </button>
+                </div>
+            </div>
+            <div class="qlsv-table-card">
+                <table class="qlsv-table">
+                    <thead>
+                        <tr>
+                            <th>Mã HS</th>
+                            <th>Họ Tên</th>
+                            <th style="text-align:center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assignedTable"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- ====== ĐÃ XẾP LỚP ====== -->
-    <div class="table-section">
-        <h3 class="section-title">Học sinh đã xếp lớp</h3>
-
-        <div class="qlsv-table-card">
-            <table class="qlsv-table">
-                <thead>
-                    <tr>
-                        <th>Mã HS</th>
-                        <th>Họ Tên</th>
-                        <th>Lớp</th>
-                        <th>Học kỳ</th>
-                        <th style="text-align:center">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody id="assignedTable"></tbody>
-            </table>
-        </div>
     </div>
 
 </div>

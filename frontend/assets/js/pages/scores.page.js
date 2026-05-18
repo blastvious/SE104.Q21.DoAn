@@ -86,9 +86,9 @@ function syncUI() {
         const tenHK  = document.getElementById("scoreHocKy").selectedOptions[0]?.text || "";
         alertText.innerHTML = `Sẵn sàng — <strong>${tenLop}</strong> | <strong>${tenMon}</strong> | <strong>${tenHK}</strong> | Lần <strong>${state.Lan}</strong>`;
     } else {
-        alertBox.style.background   = "#eff6ff";
-        alertBox.style.borderColor  = "#bfdbfe";
-        alertBox.style.color        = "#1d4ed8";
+        alertBox.style.background   = "#eaf2f7";
+        alertBox.style.borderColor  = "#d4e8f2";
+        alertBox.style.color        = "#2c5f7a";
         alertBox.querySelector("i").className = "fas fa-info-circle";
         alertText.innerHTML = `Vui lòng chọn đầy đủ bộ lọc: <strong>Năm học → Khối → Lớp → Môn → Học kỳ</strong> để thực hiện tác vụ.`;
     }

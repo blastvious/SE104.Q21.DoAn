@@ -26,18 +26,20 @@ async function loadCurrentUserInfo() {
         const currentUser = await getMe();
         
         // Render thông tin của chính mình
-        const userInfoEl = document.getElementById("userInfo");
-        if (userInfoEl) {
-            userInfoEl.innerHTML = `
-                <p><strong>Quyền hạn:</strong> <span class="badge">${currentUser.role}</span></p>
-            `;
-        }
+        const userNameEl = document.querySelector("#userInfo .user-name");
+        const userRoleEl = document.querySelector("#userInfo .user-role span");
+        const metaUsername = document.getElementById("metaUsername");
+        const metaRole = document.getElementById("metaRole");
+        if (userNameEl) userNameEl.textContent = currentUser.username || currentUser.Username || "--";
+        if (userRoleEl) userRoleEl.textContent = currentUser.role || currentUser.RoleName || "--";
+        if (metaUsername) metaUsername.textContent = currentUser.username || currentUser.Username || "--";
+        if (metaRole) metaRole.textContent = currentUser.role || currentUser.RoleName || "--";
 
         // Nếu là Admin thì mở chặn hiển thị khu vực quản lý và load danh sách
         if (currentUser.role === "Admin") {
             const adminSection = document.getElementById("adminSection");
             if (adminSection) {
-                adminSection.style.display = "block";
+                adminSection.style.display = "flex";
                 await loadAllUsers();
                 initAdminEventListeners();
             }
@@ -64,15 +66,15 @@ async function loadAllUsers() {
                 <td>${user.Id}</td>
                 <td>${user.Username}</td>
                 <td>
-                    <select class="role-select qlsv-input">
+                    <select class="role-select qlsv-select">
                         <option value="Admin" ${user.RoleName === 'Admin' ? 'selected' : ''}>Admin</option>
                         <option value="Manager" ${user.RoleName === 'Manager' ? 'selected' : ''}>Manager</option>
                         <option value="User" ${user.RoleName === 'User' ? 'selected' : ''}>User</option>
                     </select>
                 </td>
                 <td>
-                    <button class="qlsv-btn qlsv-btn--success save-role-btn" style="padding: 4px 8px;">Lưu</button>
-                    <button class="qlsv-btn qlsv-btn--danger delete-user-btn" style="padding: 4px 8px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor:pointer;">Xóa</button>
+                    <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-check"></i></button>
+                    <button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);

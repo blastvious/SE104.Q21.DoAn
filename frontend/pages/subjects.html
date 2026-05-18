@@ -17,7 +17,7 @@
         <!-- Tổng môn -->
         <div class="subject-stat-card">
 
-            <div class="subject-icon purple">
+            <div class="subject-icon primary">
                 <i class="fas fa-book-open"></i>
             </div>
 
@@ -31,7 +31,7 @@
         <!-- Hệ số cao nhất -->
         <div class="subject-stat-card">
 
-            <div class="subject-icon blue">
+            <div class="subject-icon secondary">
                 <i class="fas fa-star"></i>
             </div>
 
@@ -50,7 +50,7 @@
         <!-- Trung bình hệ số -->
         <div class="subject-stat-card">
 
-            <div class="subject-icon green">
+            <div class="subject-icon info">
                 <i class="fas fa-chart-line"></i>
             </div>
 
@@ -68,30 +68,13 @@
 
     </div>
 
-    <!-- TOOLBAR -->
-    <div class="qlsv-toolbar">
-
-        <div class="qlsv-toolbar-left">
-
-            <button
-                class="qlsv-btn qlsv-btn--primary"
-                id="openSubjectModal"
-            >
-                <i class="fas fa-plus"></i> Thêm môn học
-            </button>
-
-        </div>
-
+    <div class="filter-group">
         <div class="toolbar-search">
-
-            <input
-                type="text"
-                id="subjectSearchInput"
-                placeholder="Tìm môn học..."
-            >
-
+            <input type="text" id="subjectSearchInput" placeholder="Tìm môn học...">
         </div>
-
+        <button class="qlsv-btn qlsv-btn--primary" id="openSubjectModal">
+            <i class="fas fa-plus"></i> Thêm môn học
+        </button>
     </div>
 
     <!-- TABLE -->

@@ -1,0 +1,122 @@
+/* Layout chung cho trang settings */
+.settings-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.4s ease;
+}
+
+/* Chia lưới 2x2 */
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* Style cho từng Card */
+.config-card {
+    background: var(--surface-card);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    transition: 0.3s;
+    overflow: hidden;
+}
+
+.config-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-heading);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    letter-spacing: 0.3px;
+}
+
+/* Input group label styling */
+.modern-form .input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.modern-form .input-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-table);
+    text-align: center;
+}
+
+/* Form layout */
+.modern-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.modern-form .row {
+    display: flex;
+    gap: 10px;
+}
+
+.modern-form input,
+.modern-form select {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    font-size: 0.88rem;
+    transition: 0.2s;
+    background: var(--surface-card);
+    color: var(--text-body);
+}
+
+.modern-form input:focus,
+.modern-form select:focus {
+    border-color: #2c5f7a;
+    box-shadow: 0 0 0 3px rgba(44, 95, 122, 0.1);
+    background: var(--surface-card);
+}
+
+.btn-add {
+    background: var(--blue-gradient);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 12px rgba(44, 95, 122, 0.25);
+    width: fit-content;
+}
+
+.btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(44, 95, 122, 0.35);
+}
+
+/* Bảng có thanh cuộn nếu quá dài */
+.table-scroll {
+    overflow-y: auto;
+    max-height: 250px;
+}
+
+/* Mobile responsive */
+@media (max-width: 900px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}

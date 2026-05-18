@@ -1,0 +1,220 @@
+.account-page {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    animation: fadeIn 0.4s ease;
+}
+
+.account-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.account-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.user-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--blue-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.user-details .user-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+.user-details .user-role {
+    font-size: 0.85rem;
+    color: var(--text-table);
+}
+
+.user-details .user-role span {
+    display: inline-block;
+    background: var(--surface-section);
+    color: var(--text-heading);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.user-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.user-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-meta-item .meta-label {
+    font-size: 0.78rem;
+    color: var(--text-table);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.user-meta-item .meta-value {
+    font-size: 0.95rem;
+    color: var(--text-body);
+    font-weight: 600;
+}
+
+/* Admin create account form */
+.create-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.create-form .qlsv-input {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-size: 0.88rem;
+    background: var(--surface-card);
+    transition: 0.2s;
+    min-width: 160px;
+    color: var(--text-body);
+}
+
+.create-form .qlsv-input:focus {
+    border-color: #2c5f7a;
+    box-shadow: 0 0 0 3px rgba(44, 95, 122, 0.1);
+}
+
+.create-form select.qlsv-input {
+    cursor: pointer;
+}
+
+/* Users table */
+.account-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.account-table th {
+    background: var(--surface-section);
+    padding: 16px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    border-bottom: 1px solid var(--border);
+}
+
+.account-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-table);
+}
+
+.account-table tbody tr:hover {
+    background: var(--surface-section-hover);
+}
+
+.account-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.role-badge.admin {
+    background: var(--surface-section);
+    color: var(--text-heading);
+}
+
+.role-badge.manager {
+    background: rgba(109, 157, 180, 0.12);
+    color: #6d9db4;
+}
+
+.role-badge.user {
+    background: rgba(127, 174, 196, 0.12);
+    color: #7faec4;
+}
+
+#adminSection {
+    display: none;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.table-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .user-profile {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .create-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .create-form .qlsv-input {
+        min-width: auto;
+    }
+}

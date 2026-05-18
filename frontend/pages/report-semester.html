@@ -4,36 +4,32 @@
         <p>Thống kê kết quả học tập theo từng học kỳ</p>
     </div>
 
-    <div class="report-filters">
-        <div class="filter-group">
-            <div class="filter-item">
-                <label>Năm học</label> 
-                <select id="selNam" class="qlsv-select">
-                    <option value="">-- Chọn năm --</option>
-                    <!--option value năm-->
-                </select>
-            </div>
-
-            <div class="filter-item">
-                <label>Học kỳ</label>
-                <select id="selHK" class="qlsv-select">
-                    <option value="">-- Chọn học kỳ --</option>
-                    <!--option value học kỳ-->
-                </select>
-            </div>
-        
-            <button class="qlsv-btn qlsv-btn--primary" id="reportFilterBtn">
-                <i class="fas fa-filter"></i> Xem báo cáo
-            </button>
-            <button class="qlsv-btn qlsv-btn--blue" id="exportPdfBtn">
-                <i class="fas fa-file-pdf"></i> Xuất PDF
-            </button>
+    <div class="filter-group">
+        <div class="filter-item">
+            <label>Năm học</label> 
+            <select id="selNam" class="qlsv-select">
+                <option value="">-- Chọn năm --</option>
+            </select>
         </div>
+
+        <div class="filter-item">
+            <label>Học kỳ</label>
+            <select id="selHK" class="qlsv-select">
+                <option value="">-- Chọn học kỳ --</option>
+            </select>
+        </div>
+    
+        <button class="qlsv-btn qlsv-btn--primary" id="reportFilterBtn">
+            <i class="fas fa-filter"></i> Xem báo cáo
+        </button>
+        <button class="qlsv-btn qlsv-btn--blue" id="exportPdfBtn">
+            <i class="fas fa-file-pdf"></i> Xuất PDF
+        </button>
     </div>
 
     <div class="subject-stat-grid report-summary" id="reportSummary">
         <div class="subject-stat-card">
-            <div class="subject-icon purple">
+            <div class="subject-icon primary">
                 <i class="fas fa-users"></i>
             </div>
             <div>
@@ -42,7 +38,7 @@
             </div>
         </div>
         <div class="subject-stat-card">
-            <div class="subject-icon blue">
+            <div class="subject-icon secondary">
                 <i class="fas fa-check-circle"></i>
             </div>
             <div>
@@ -51,7 +47,7 @@
             </div>
         </div>
         <div class="subject-stat-card">
-            <div class="subject-icon green">
+            <div class="subject-icon info">
                 <i class="fas fa-trophy"></i>
             </div>
             <div>
@@ -63,6 +59,12 @@
 
     <div class="report-content" id="reportContent">
         <div class="report-table-area">
+            <div class="chart-card" id="barChartCard" style="display:none">
+                <h4 class="chart-title">Tỉ lệ đạt theo lớp (%)</h4>
+                <div class="chart-wrap" style="height:200px;">
+                    <canvas id="chartBar" class="chart-canvas"></canvas>
+                </div>
+            </div>
             <div class="subject-table-wrapper">
                 <table class="subject-table">
                     <thead>
@@ -92,19 +94,10 @@
             </div>
         </div>
         <div class="report-chart-area">
-            <div class="charts-row">
-                <div class="card">
-                    <div class="chart-wrap">
-                        <div class="chart-title">Tỉ lệ đạt theo lớp (%)</div>
-                        <canvas id="chartBar" class="chart-canvas"></canvas>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="chart-wrap">
-                        <div class="chart-title">Phân loại</div>
-                        <canvas id="chartDoughnut" class="chart-canvas"></canvas>
-                    </div>
+            <div class="chart-card">
+                <h4 class="chart-title">Phân loại</h4>
+                <div class="chart-wrap" style="height:200px;">
+                    <canvas id="chartDoughnut" class="chart-canvas"></canvas>
                 </div>
             </div>
         </div>

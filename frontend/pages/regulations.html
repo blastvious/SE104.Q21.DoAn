@@ -1,39 +1,33 @@
-<div class="parameter-page" style="animation: fadeIn 0.4s ease;">
+<div class="parameter-page">
     <div class="page-header">
-        <div>
-            <h2>Quy Định & Tham Số Hệ Thống</h2>
-            <p style="margin: 4px 0 0 0; color: #999; font-size: 0.88rem;">
-                Điều chỉnh các hằng số quy chuẩn tính toán toàn trường (Tuổi tối đa, tối thiểu, điểm chuẩn, số lượng lớp,...)
-            </p>
-        </div>
+        <h2>Quy Định & Tham Số Hệ Thống</h2>
+        <p>
+            Điều chỉnh các hằng số quy chuẩn tính toán toàn trường (Tuổi tối đa, tối thiểu, điểm chuẩn, số lượng lớp,...)
+        </p>
     </div>
 
-    <div class="students-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: white; padding: 16px 20px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid #f0e6f2;">
-        <div class="students-toolbar-left">
-            <div class="toolbar-search">
-                <input type="text" id="searchParamInput" placeholder="Tìm kiếm mã tham số..." style="padding: 10px 15px; width: 260px; border-radius: 10px; border: 1px solid #ddd; outline: none;">
-            </div>
+    <div class="filter-group">
+        <div class="toolbar-search">
+            <input type="text" id="searchParamInput" placeholder="Tìm kiếm mã tham số...">
         </div>
-        <div class="students-toolbar-right">
-            <button class="qlsv-btn qlsv-btn--primary" id="openAddParamModalBtn">
-                <i class="fas fa-plus" style="margin-right: 6px;"></i> Thêm tham số mới
-            </button>
-        </div>
+        <button class="qlsv-btn qlsv-btn--primary" id="openAddParamModalBtn">
+            <i class="fas fa-plus"></i> Thêm tham số mới
+        </button>
     </div>
 
-    <div class="students-table-wrapper" style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid #f0e6f2;">
-        <table class="students-table" style="width: 100%; border-collapse: collapse;">
+    <div class="students-table-wrapper">
+        <table class="students-table">
             <thead>
-                <tr style="background: #faf4fc;">
-                    <th style="width: 60px; text-align: center; padding: 14px 16px; color: #7d5c8f; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;">STT</th>
-                    <th style="padding: 14px 16px; text-align: left; color: #7d5c8f; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;">Tên Tham Số (Mã Định Danh)</th>
-                    <th style="padding: 14px 16px; text-align: left; color: #7d5c8f; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;">Giá Trị Áp Dụng</th>
-                    <th style="text-align: right; padding: 14px 25px; color: #7d5c8f; font-size: 0.82rem; font-weight: 600; text-transform: uppercase;">Thao tác</th>
+                <tr>
+                    <th style="width: 60px;">STT</th>
+                    <th>Tên tham số (Mã định danh)</th>
+                    <th>Giá trị áp dụng</th>
+                    <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody id="parameterTableBody">
                 <tr>
-                    <td colspan="4" style="text-align: center; color: #aaa; padding: 30px; font-size: 0.9rem;">
+                    <td colspan="4" class="empty-table">
                         <i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i> Đang tải dữ liệu tham số...
                     </td>
                 </tr>
@@ -42,24 +36,24 @@
     </div>
 </div>
 
-<div class="qlsv-modal" id="paramModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
-    <div class="qlsv-modal-content" style="background-color: white; margin: 10% auto; width: 480px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
-        <div class="modal-header" style="padding: 20px 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="modalTitle" style="color: #2d1f33; margin: 0; font-size: 1.1rem; font-weight: 700;">Thêm Tham Số Hệ Thống</h3>
-            <span class="close-modal" style="font-size: 28px; cursor: pointer; color: #aaa;">&times;</span>
+<div class="qlsv-modal" id="paramModal">
+    <div class="qlsv-modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Thêm Tham Số Hệ Thống</h3>
+            <span class="close-modal">&times;</span>
         </div>
-        <div class="modal-form" style="padding: 25px;">
+        <div class="modal-form">
             <form id="paramForm" onsubmit="return false;">
-                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-weight: 600; font-size: 0.85rem; color:#475569;">Tên Tham Số (Viết liền, không dấu)</label>
-                    <input type="text" id="paramNameInput" placeholder="Ví dụ: TuoiToiDa, DiemChuan" style="padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline-color: #d98ce0;">
+                <div class="form-group">
+                    <label>Tên Tham Số (Viết liền, không dấu)</label>
+                    <input type="text" id="paramNameInput" placeholder="Ví dụ: TuoiToiDa, DiemChuan">
                 </div>
-                <div class="form-group" style="display: flex; flex-direction: column; gap: 6px; margin-top: 15px;">
-                    <label style="font-weight: 600; font-size: 0.85rem; color:#475569;">Giá Trị Cấu Hình</label>
-                    <input type="text" id="paramValueInput" placeholder="Ví dụ: 20 hoặc 5.0" style="padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline-color: #d98ce0;">
+                <div class="form-group">
+                    <label>Giá Trị Cấu Hình</label>
+                    <input type="text" id="paramValueInput" placeholder="Ví dụ: 20 hoặc 5.0">
                 </div>
-                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;">
-                    <button type="button" class="btn-cancel" id="cancelParamBtn" style="background: #f1f1f1; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Hủy Bỏ</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancelParamBtn">Hủy Bỏ</button>
                     <button type="button" class="qlsv-btn qlsv-btn--primary" id="saveParamBtn">Lưu Thay Đổi</button>
                 </div>
             </form>

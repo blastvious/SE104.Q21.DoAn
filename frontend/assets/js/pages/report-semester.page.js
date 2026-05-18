@@ -133,6 +133,7 @@ function renderTable(details, data) {
     document.getElementById("totalDat").textContent  = data.TongSoLuongDat;
     document.getElementById("totalTiLe").textContent = `${data.TongTiLeDat}%`;
     document.getElementById("reportTableFoot").style.display = "table-footer-group";
+    document.getElementById("barChartCard").style.display = "block";
 }
 
 function renderSummary(data) {
@@ -235,6 +236,7 @@ function resetReport() {
     document.getElementById("summaryTotalDat").textContent  = "--";
     document.getElementById("summaryTiLe").textContent      = "--";
     document.getElementById("reportTableFoot").style.display = "none";
+    document.getElementById("barChartCard").style.display = "none";
 
     if (barChart)      { barChart.destroy();      barChart      = null; }
     if (doughnutChart) { doughnutChart.destroy(); doughnutChart = null; }
