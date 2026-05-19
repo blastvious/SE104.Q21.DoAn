@@ -639,15 +639,24 @@ function downloadExcelTemplate() {
     const rows = [headerRow];
 
     state.students.forEach((s, i) => {
-        const dataRow = [i + 1, s.HoTen, ...state.scoreColumns.map(c => {
-            const key = `${s.MaHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
-            const val = state.scoreMap[key] ?? "";
-            return val === "" ? "" : parseFloat(val);
-        })];
+        const excelRow = i + 2;
 
-        // Để trống ĐTB — sẽ gán công thức bên dưới
-        dataRow.push(null);
-        rows.push(dataRow);
+        let tongHeSo = 0;
+        const parts = state.scoreColumns.map((c, ci) => {
+            const heSo = state.examTypes.find(t => t.MaLoaiHinhKT === c.MaLoaiHinhKT)?.HeSo ?? 1;
+            tongHeSo += heSo;
+            const colLetter = XLSX.utils.encode_col(scoreStartCol + ci);
+            // Ô trống tính là 0: dùng IF để thay "" thành 0
+            return `IF(${colLetter}${excelRow}="",0,${colLetter}${excelRow})*${heSo}`;
+        });
+
+        // Luôn chia cho tổng hệ số, không cần kiểm tra COUNTA
+        const formula = tongHeSo > 0
+            ? `ROUND((${parts.join("+")})/\${tongHeSo},2)`
+            : `""`;
+
+        const dtbCellAddr = XLSX.utils.encode_cell({ r: excelRow - 1, c: dtbColIdx });
+        ws[dtbCellAddr] = { t: "n", f: formula };
     });
 
     if (typeof XLSX === "undefined") return;
@@ -1062,16 +1071,17 @@ function tinhDTB(maHS) {
     let tongHeSo = 0;
 
     state.scoreColumns.forEach(c => {
-        const key  = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
-        const raw  = (state.scoreMap[key] ?? "").toString().trim();
-        if (raw === "") return;
+        const heSo = state.examTypes.find(t => t.MaLoaiHinhKT === c.MaLoaiHinhKT)?.HeSo ?? 1;
+        tongHeSo += heSo; // luôn cộng hệ số dù ô trống
+
+        const key = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
+        const raw = (state.scoreMap[key] ?? "").toString().trim();
+        if (raw === "") return; // điểm = 0 nếu trống (không cộng vào tổng điểm)
 
         const diem = parseFloat(raw.replace(",", "."));
         if (isNaN(diem)) return;
 
-        const heSo = state.examTypes.find(t => t.MaLoaiHinhKT === c.MaLoaiHinhKT)?.HeSo ?? 1;
         tongDiem += diem * heSo;
-        tongHeSo += heSo;
     });
 
     if (tongHeSo === 0) return "";
