@@ -1,126 +1,686 @@
-<!-- scores.html -->
+    <!-- scores.html -->
+<style>
+    :root {
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --success: #16a34a;
+        --success-hover: #15803d;
+        --warning: #ea580c;
+        --warning-hover: #c2410c;
+        --danger: #dc2626;
+        --danger-hover: #b91c1c;
+        --background: #f8fafc;
+        --surface: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-<div class="scores-page">
+    .scores-page {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--background);
+        color: var(--text);
+        padding: 24px;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
 
-    <!-- HEADER -->
-    <div class="page-header">
-        <h2>Nhập Điểm Học Sinh</h2>
-        <p>Quản lý nhập điểm học sinh trực tiếp bằng tay hoặc tối ưu hóa thông qua import Excel</p>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+    }
+    .page-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: var(--text);
+    }
+    .page-header p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+    .form-group select {
+        padding: 10px 14px;
+        font-size: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background-color: var(--surface);
+        color: var(--text);
+        outline: none;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    .form-group select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .form-group select:disabled {
+        background-color: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    /* ── Actions ── */
+    .score-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+    .action-group-left, .action-group-right {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* ── Row states ── */
+    .row-unsaved { background: #fef9c3 !important; }
+    .row-invalid { background: #fee2e2 !important; }
+
+    /* ── Col option (modal) ── */
+    .col-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 14px;
+    }
+    .col-option:hover {
+        border-color: var(--primary);
+        background: #eff6ff;
+    }
+    .col-option input[type="radio"] {
+        accent-color: var(--primary);
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .col-option.selected {
+        border-color: var(--primary);
+        background: #eff6ff;
+    }
+    .col-option-label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .col-option-label span { font-weight: 600; color: var(--text); }
+    .col-option-label small { color: var(--text-muted); font-size: 12px; }
+    .col-option-new span { color: var(--success); }
+
+    /* ── Resizable columns ── */
+    .col-resizer {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        width: 6px;
+        cursor: col-resize;
+        user-select: none;
+        z-index: 10;
+    }
+    .col-resizer:hover,
+    .col-resizer.resizing {
+        background: var(--primary);
+        opacity: 0.5;
+    }
+
+    /* ── Table wrapper ── */
+    .table-wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 70vh;
+        width: 100%;
+    }
+
+    /* ── Table base ── */
+    .score-table {
+        width: 100%;
+        min-width: max-content;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    .score-table th,
+    .score-table td {
+        border-right: 1px solid var(--border);
+    }
+    .score-table th:last-child,
+    .score-table td:last-child {
+        border-right: none;
+    }
+
+    /* th mặc định: sticky top */
+    .score-table th {
+        background: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        overflow: visible; /* cho col-resizer */
+    }
+
+    .score-table td {
+        padding: 9px 16px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        vertical-align: middle;
+    }
+
+    /* ── Sticky 2 cột đầu ── */
+    .score-table th:nth-child(1) {
+        position: sticky;
+        top: 0;
+        left: 0;
+        z-index: 7; /* cao hơn th thường (5) */
+        background: #f8fafc;
+    }
+    .score-table th:nth-child(2) {
+        position: sticky;
+        top: 0;
+        left: 52px;
+        z-index: 7;
+        background: #f8fafc;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+    }
+    .score-table td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: var(--surface);
+    }
+    .score-table td:nth-child(2) {
+        position: sticky;
+        left: 52px;
+        z-index: 3;
+        background: var(--surface);
+        box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+    }
+
+    /* ── Hover & row states ── */
+    .score-table tbody tr { cursor: text; transition: background .1s; }
+    .score-table tbody tr:hover { background-color: #f0f7ff; }
+    .score-table tbody tr.row-unsaved:hover { background: #fef08a !important; }
+    .score-table tbody tr.row-invalid:hover  { background: #fecaca !important; }
+    .score-table tbody tr:last-child td { border-bottom: none; }
+
+    /* sticky cols phải override bg theo row state */
+    .score-table tbody tr:hover td:nth-child(1),
+    .score-table tbody tr:hover td:nth-child(2) {
+        background: #f0f7ff;
+    }
+    .score-table tbody tr.row-unsaved td:nth-child(1),
+    .score-table tbody tr.row-unsaved td:nth-child(2) {
+        background: #fef9c3 !important;
+    }
+    .score-table tbody tr.row-unsaved:hover td:nth-child(1),
+    .score-table tbody tr.row-unsaved:hover td:nth-child(2) {
+        background: #fef08a !important;
+    }
+    .score-table tbody tr.row-invalid td:nth-child(1),
+    .score-table tbody tr.row-invalid td:nth-child(2) {
+        background: #fee2e2 !important;
+    }
+    .score-table tbody tr.row-invalid:hover td:nth-child(1),
+    .score-table tbody tr.row-invalid:hover td:nth-child(2) {
+        background: #fecaca !important;
+    }
+
+    /* ── Score cell (contenteditable) ── */
+    .score-cell {
+        min-width: 40px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        outline: none;
+        transition: all 0.2s;
+        background-color: transparent;
+        text-align: center;
+        cursor: text;
+    }
+    .score-cell:focus {
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    /* ── Modal ── */
+    .score-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(3px);
+    }
+    .score-modal {
+        width: 460px;
+        max-width: calc(100vw - 32px);
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        animation: modalIn .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(16px) scale(.97); }
+        to   { opacity: 1; transform: none; }
+    }
+    .score-modal-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .score-modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
+    .score-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .score-modal-footer {
+        padding: 14px 20px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    /* ── File import ── */
+    .file-import-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .file-drop-area {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+    }
+    .file-drop-area:hover {
+        border-color: var(--primary);
+        background: #eff6ff;
+        color: var(--primary);
+    }
+    .file-drop-area input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+    }
+    .file-drop-area i { font-size: 24px; margin-bottom: 8px; display: block; }
+    .file-name-display {
+        font-size: 13px;
+        color: var(--success);
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-download-template {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--primary);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    /* ── Info chip ── */
+    .info-chip {
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .info-chip i { color: var(--success); }
+
+    /* ── Buttons ── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+    .btn i { font-size: 14px; }
+    .btn.primary   { background: var(--primary); color: white; }
+    .btn.primary:hover { background: var(--primary-hover); }
+    .btn.success   { background: transparent; color: var(--success); border-color: var(--success); }
+    .btn.success:hover { background: rgba(22, 163, 74, 0.08); }
+    .btn.warning   { background: transparent; color: var(--warning); border-color: var(--warning); }
+    .btn.warning:hover { background: rgba(234, 88, 12, 0.08); }
+    .btn.danger    { background: transparent; color: var(--danger); border-color: var(--danger); }
+    .btn.danger:hover  { background: rgba(220, 38, 38, 0.08); }
+    .btn:disabled  { opacity: .45; cursor: not-allowed; pointer-events: none; }
+
+    /* ── Alert ── */
+    .score-alert {
+        padding: 14px 18px;
+        border-radius: 8px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+    }
+
+    /* ── Banner ── */
+    .import-success-banner {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 8px;
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    }
+    .import-success-banner i { font-size: 18px; color: var(--success); flex-shrink: 0; }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Tooltip ── */
+    .cell-wrap { position: relative; display: inline-flex; }
+    .cell-wrap .tooltip {
+        display: none;
+        position: absolute;
+        bottom: calc(100% + 5px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: #fff;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 4px 9px;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 20;
+    }
+    .cell-wrap:hover .tooltip { display: block; }
+
+    @media (max-width: 768px) {
+        .score-actions { flex-direction: column; align-items: stretch; }
+        .action-group-left, .action-group-right { width: 100%; }
+        .btn { flex: 1; }
+    }
+</style>
+
+    <div class="scores-page">
+
+        <!-- HEADER -->
+        <div class="page-header">
+            <div>
+                <h2>Nhập Điểm Học Sinh</h2>
+                <p>Chọn lớp và môn để tải bảng điểm. Dùng các nút bên dưới để thêm cột hoặc import Excel.</p>
+            </div>
+        </div>
+
+        <!-- FILTER -->
+        <div class="card">
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label>Năm học</label>
+                    <select id="scoreNamHoc"><option value="">-- Chọn năm học --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Khối</label>
+                    <select id="scoreKhoi">
+                        <option value="">-- Chọn khối --</option>
+                        <option value="Lớp 10">Khối 10</option>
+                        <option value="Lớp 11">Khối 11</option>
+                        <option value="Lớp 12">Khối 12</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Lớp</label>
+                    <select id="scoreLop"><option value="">-- Chọn lớp --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Môn học</label>
+                    <select id="scoreMonHoc"><option value="">-- Chọn môn --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Học kỳ</label>
+                    <select id="scoreHocKy"><option value="">-- Chọn học kỳ --</option></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALERT -->
+        <div id="scoreAlert" class="score-alert">
+            <i class="fas fa-info-circle"></i>
+            <div id="scoreAlertText">
+                Vui lòng chọn đầy đủ bộ lọc: <strong>Năm học, khối, lớp, môn học, học kỳ</strong>.
+            </div>
+        </div>
+
+        <!-- IMPORT SUCCESS BANNER -->
+        <div id="importSuccessBanner" class="import-success-banner">
+            <i class="fas fa-check-circle"></i>
+            <span id="importBannerText">Import điểm thành công. Kiểm tra trước khi lưu dữ liệu!</span>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="score-actions">
+            <div class="action-group-left">
+                <button id="scoreBtnAddColumn" class="btn primary" disabled>
+                    <i class="fas fa-plus"></i>
+                    Thêm cột điểm mới
+                </button>
+                <button id="scoreBtnImportExcel" class="btn success" disabled>
+                    <i class="fas fa-file-excel"></i>
+                    Nhập điểm từ Excel
+                </button>
+                <button id="scoreBtnDeleteColumn" class="btn danger" disabled>
+                    <i class="fas fa-trash-alt"></i>
+                    Xóa cột điểm
+                </button>
+            </div>
+            <div class="action-group-right">
+                <button id="scoreBtnSave" class="btn primary" disabled>
+                    <i class="fas fa-save"></i>
+                    Lưu dữ liệu
+                </button>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-wrapper">
+            <table class="score-table">
+                <thead id="scoreTableHead"></thead>
+                <tbody id="scoreTableBody">
+                    </tbody>
+            </table>
+        </div>
+
     </div>
 
-    <!-- FILTER -->
-    <div class="filter-group">
-
-        <div class="filter-item">
-            <label>Năm học</label>
-            <select id="scoreNamHoc" class="qlsv-select">
-                <option value="">-- Chọn năm học --</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Khối</label>
-            <!-- value phải khớp khoiMap trong JS: "Lớp 10", "Lớp 11", "Lớp 12" -->
-            <select id="scoreKhoi" class="qlsv-select" disabled>
-                <option value="">-- Chọn khối --</option>
-                <option value="Lớp 10">Khối 10</option>
-                <option value="Lớp 11">Khối 11</option>
-                <option value="Lớp 12">Khối 12</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Lớp</label>
-            <!-- KHÔNG disabled — JS sẽ điền option sau khi chọn khối -->
-            <select id="scoreLop" class="qlsv-select">
-                <option value="">-- Chọn lớp --</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Môn học</label>
-            <select id="scoreMonHoc" class="qlsv-select">
-                <option value="">-- Chọn môn --</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Học kỳ</label>
-            <select id="scoreHocKy" class="qlsv-select">
-                <option value="">-- Chọn học kỳ --</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Loại kiểm tra</label>
-            <select id="scoreLoaiKT" class="qlsv-select">
-                <option value="">-- Chọn loại --</option>
-            </select>
-        </div>
-
-        <div class="filter-item">
-            <label>Lần kiểm tra <span style="font-weight:normal;color:#888;font-size:11px;">(1-10)</span></label>
-            <input type="number" id="scoreLan" min="1" max="10" value="1" class="input-number-custom">
-        </div>
-
-        <button id="scoreBtnLoad" class="qlsv-btn qlsv-btn--primary" disabled>
-            <i class="fas fa-search"></i> Tải danh sách
-        </button>
-        <button id="scoreBtnTemplate" class="qlsv-btn qlsv-btn--outline" disabled>
-            <i class="fas fa-file-excel"></i> Tải file mẫu
-        </button>
-        <label for="scoreFileInput" id="scoreUploadLabel" class="qlsv-btn qlsv-btn--outline" style="cursor:pointer;">
-            <i class="fas fa-upload"></i> Upload Excel
-        </label>
-        <input type="file" id="scoreFileInput" accept=".xlsx" hidden disabled>
-        <button id="scoreBtnDelete" class="qlsv-btn qlsv-btn--outline" style="color:#e74c3c;border-color:#e74c3c;" disabled>
-            <i class="fas fa-trash"></i> Xóa điểm đã chọn
-        </button>
-        <button id="scoreBtnSave" class="qlsv-btn qlsv-btn--primary" disabled>
-            <i class="fas fa-save"></i> Lưu tất cả
-        </button>
-
-    </div>
-
-    <!-- ALERT -->
-    <div id="scoreAlert" class="score-alert">
-        <i class="fas fa-info-circle"></i>
-        <div id="scoreAlertText">
-            Vui lòng chọn đầy đủ bộ lọc: <strong>Năm học → Khối → Lớp → Môn → Học kỳ</strong> để thực hiện tác vụ.
+    <!-- ═══════════════════════════
+        MODAL: THÊM CỘT MỚI
+    ═══════════════════════════ -->
+    <div class="score-modal-overlay" id="modalAddColumn">
+        <div class="score-modal">
+            <div class="score-modal-header">
+                <h3><i class="fas fa-plus" style="color:var(--primary);margin-right:8px;"></i>Thêm cột điểm mới</h3>
+                <button id="closeModalAddColumn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">&times;</button>
+            </div>
+            <div class="score-modal-body">
+                <div class="form-group">
+                    <label>Loại hình kiểm tra</label>
+                    <select id="popupLoaiKTAdd">
+                        <option value="">-- Chọn loại --</option>
+                    </select>
+                </div>
+                <div id="addColumnLanInfo" class="info-chip" style="display:none;">
+                    <i class="fas fa-magic"></i>
+                    Sẽ tạo: <strong id="addColumnLanText">—</strong>
+                </div>
+            </div>
+            <div class="score-modal-footer">
+                <button class="btn danger" id="cancelModalAddColumn">Hủy</button>
+                <button class="btn primary" id="confirmAddColumnBtn">
+                    <i class="fas fa-plus"></i> Thêm cột
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- STATS -->
-    <div class="score-stats">
-        <div class="stat-box stat-total">Tổng học sinh<span id="statTotal">0</span></div>
-        <div class="stat-box stat-filled">Đã nhập điểm<span id="statFilled">0</span></div>
-        <div class="stat-box stat-empty">Chưa nhập điểm<span id="statEmpty">0</span></div>
+    <!-- ═══════════════════════════
+        MODAL: IMPORT EXCEL
+    ═══════════════════════════ -->
+    <div class="score-modal-overlay" id="modalImportExcel">
+        <div class="score-modal">
+            <div class="score-modal-header">
+                <h3><i class="fas fa-file-excel" style="color:var(--success);margin-right:8px;"></i>Nhập điểm từ Excel</h3>
+                <button id="closeModalImport" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">&times;</button>
+            </div>
+            <div class="score-modal-body">
+
+                <div class="info-chip">
+                    <i class="fas fa-info-circle"></i>
+                    <span>File Excel phải đúng định dạng mẫu. Chỉ các ô điểm thay đổi mới được cập nhật.</span>
+                </div>
+
+                <div class="file-import-section">
+                    <button class="btn-download-template" id="btnDownloadTemplate">
+                        <i class="fas fa-download"></i>
+                        Bước 1: Tải file Excel mẫu (có sẵn điểm hiện tại)
+                    </button>
+                    <div class="file-drop-area" id="fileDropArea">
+                        <input type="file" id="scoreFileInput" accept=".xlsx,.xls">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <div>Bước 2: Kéo thả file hoặc <strong>nhấn để chọn</strong></div>
+                        <div style="font-size:12px;margin-top:4px;">Hỗ trợ .xlsx, .xls</div>
+                    </div>
+                    <div class="file-name-display" id="fileNameDisplay">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="fileNameText"></span>
+                    </div>
+                </div>
+
+            </div>
+            <div class="score-modal-footer">
+                <button class="btn danger" id="cancelModalImport">Hủy</button>
+                <button class="btn primary" id="confirmImportBtn">
+                    <i class="fas fa-upload"></i> Import điểm
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrapper">
-        <table class="score-table">
-            <thead>
-                <tr>
-                    <th style="width:52px;text-align:center;">
-                        <input type="checkbox" class="custom-checkbox" id="selectAllScores">
-                    </th>
-                    <th style="width:64px;text-align:center;">STT</th>
-                    <th>Họ và tên</th>
-                    <th style="width:160px;text-align:center;">Điểm số</th>
-                    <th style="width:150px;text-align:center;">Trạng thái</th>
-                </tr>
-            </thead>
-            <tbody id="scoreTableBody">
-                <tr>
-                    <td colspan="5" style="text-align:center;padding:64px 16px;color:var(--text-muted);">
-                        <i class="fas fa-folder-open" style="font-size:32px;display:block;margin-bottom:12px;color:#cbd5e1;"></i>
-                        Chưa có dữ liệu. Thiết lập bộ lọc rồi nhấn <strong>Tải danh sách</strong>
-                        hoặc <strong>Tải file mẫu → Upload Excel</strong>.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+    <!-- ═══════════════════════════
+    MODAL: XÓA CỘT ĐIỂM
+═══════════════════════════ -->
+<div class="score-modal-overlay" id="modalDeleteColumn">
+    <div class="score-modal">
+        <div class="score-modal-header">
+            <h3><i class="fas fa-trash-alt" style="color:var(--danger);margin-right:8px;"></i>Xóa cột điểm</h3>
+            <button id="closeModalDeleteColumn" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">&times;</button>
+        </div>
+        <div class="score-modal-body">
+            <div class="info-chip" style="background:#fff5f5;border-color:#fecaca;color:#991b1b;">
+                <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i>
+                <span>Cột bị xóa sẽ mất toàn bộ điểm. Hãy lưu dữ liệu sau khi xóa.</span>
+            </div>
+            <div class="form-group">
+                <label>Chọn cột muốn xóa</label>
+                <div id="deleteColOptions" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+            </div>
+        </div>
+        <div class="score-modal-footer">
+            <button class="btn danger" id="cancelModalDeleteColumn">Hủy</button>
+            <button class="btn danger" id="confirmDeleteColumnBtn" style="background:var(--danger);color:white;">
+                <i class="fas fa-trash-alt"></i> Xóa cột
+            </button>
+        </div>
     </div>
-
 </div>

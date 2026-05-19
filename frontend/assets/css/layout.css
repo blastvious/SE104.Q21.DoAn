@@ -262,6 +262,8 @@ body.dark-mode {
     flex-direction: column;
     background: var(--body-bg);
     position: relative;
+    min-width: 0;
+    overflow: hidden;
 }
 
 /* Global background bubbles */
@@ -397,6 +399,7 @@ main {
     flex: 1;
     padding: 28px;
     overflow-y: auto;
+    min-width: 0;       /* cho phép flex child co lại đúng */
 }
 
 .welcome-box {
@@ -444,7 +447,7 @@ main {
 
 .footer {
     background: var(--footer-bg);
-    padding: 8px;
+    padding: 2px;
     text-align: center;
     color: var(--text-primary);
     font-size: 0.85rem;
