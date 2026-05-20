@@ -104,12 +104,11 @@ export const createStudent = async (
             await response.json();
 
         if (!response.ok) {
-
-            throw new Error(
-                data.message ||
-                "Lỗi khi thêm học sinh"
-            );
-
+            let msg = data.message || "Lỗi khi thêm học sinh";
+            if (data.details && data.details.length) {
+                msg += "\n" + data.details.join("\n");
+            }
+            throw new Error(msg);
         }
 
         return data;

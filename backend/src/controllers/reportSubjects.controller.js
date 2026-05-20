@@ -38,6 +38,25 @@ export const createReport = async (req, res) => {
 
         const DiemDatMon = params.length > 0 ? parseFloat(params[0].GiaTri) : 5.0;
 
+        // backfill sĩ số thực tế cho các lớp chưa được cập nhật
+        await db.sequelize.query(
+            `UPDATE LOP
+             SET SiSo = (
+                 SELECT COUNT(*)
+                 FROM QUATRINHHOC
+                 WHERE QUATRINHHOC.MaLop = LOP.MaLop
+                 AND QUATRINHHOC.MaHocKy = :MaHocKy
+             )
+             WHERE SiSo = 0
+               AND EXISTS (
+                 SELECT 1
+                 FROM QUATRINHHOC
+                 WHERE QUATRINHHOC.MaLop = LOP.MaLop
+                 AND QUATRINHHOC.MaHocKy = :MaHocKy
+               )`,
+            { replacements: { MaHocKy } }
+        );
+
         const [classes] = await db.sequelize.query(
             `SELECT l.MaLop, l.SiSo
              FROM LOP l

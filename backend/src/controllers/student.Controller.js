@@ -108,26 +108,46 @@ export const bulkCreateStudents = async (req, res) => {
         const studentData = req.body;
         const khoa = "2652";
 
-        // 1. Lấy tất cả HS hiện có để đối chiếu (Chỉ lấy các cột cần thiết để tối ưu bộ nhớ)
         const existingStudents = await db.HOCSINH.findAll({
             attributes: ['HoTen', 'NgaySinh', 'DiaChi', 'Email', 'SoDienThoai']
         });
 
-        // 2. Hàm kiểm tra trùng nội bộ
-        const isDuplicate = (s) => existingStudents.some(existing => 
-            (existing.HoTen === s.HoTen && existing.NgaySinh === s.NgaySinh && existing.DiaChi === s.DiaChi) ||
-            (s.Email && existing.Email === s.Email) ||
-            (s.SoDienThoai && existing.SoDienThoai === s.SoDienThoai)
+        const existingEmails = new Set(existingStudents.map(s => s.Email).filter(Boolean));
+        const existingPhones = new Set(existingStudents.map(s => s.SoDienThoai).filter(Boolean));
+        const existingNameDobAddr = new Set(
+            existingStudents.map(s => {
+                const dob = s.NgaySinh instanceof Date
+                    ? s.NgaySinh.toISOString().slice(0, 10)
+                    : String(s.NgaySinh);
+                return `${s.HoTen}|${dob}|${s.DiaChi}`;
+            })
         );
 
-        // 3. Lọc ra những học sinh chưa có trong DB
-        const uniqueStudentsToInsert = studentData.filter(s => !isDuplicate(s));
+        const uniqueStudentsToInsert = [];
+        const seen = new Set();
+
+        for (const s of studentData) {
+            const dob = s.NgaySinh instanceof Date
+                ? s.NgaySinh.toISOString().slice(0, 10)
+                : String(s.NgaySinh);
+            const key = `${s.HoTen}|${dob}|${s.DiaChi}`;
+
+            const isDuplicate =
+                (s.Email && existingEmails.has(s.Email)) ||
+                (s.SoDienThoai && existingPhones.has(s.SoDienThoai)) ||
+                existingNameDobAddr.has(key) ||
+                seen.has(key);
+
+            if (!isDuplicate) {
+                seen.add(key);
+                uniqueStudentsToInsert.push(s);
+            }
+        }
 
         if (uniqueStudentsToInsert.length === 0) {
             return res.status(400).json({ message: "Tất cả học sinh trong danh sách đều đã tồn tại" });
         }
 
-        // 4. Cấp mã MaHS cho danh sách đã lọc (Logic cũ của bạn)
         const lastStudent = await db.HOCSINH.findOne({
             where: { MaHS: { [Op.like]: `${khoa}%` } },
             order: [["MaHS", "DESC"]]
@@ -140,12 +160,18 @@ export const bulkCreateStudents = async (req, res) => {
             return { ...s, MaHS: `${khoa}${padded}` };
         });
 
-        const result = await db.HOCSINH.bulkCreate(studentsWithIds, { validate: true });
-
-        res.status(201).json({
-            message: `Thành công: Đã thêm ${result.length} học sinh. Bỏ qua ${studentData.length - result.length} bản ghi trùng lặp.`,
-            data: result
-        });
+        const t = await db.sequelize.transaction();
+        try {
+            const result = await db.HOCSINH.bulkCreate(studentsWithIds, { transaction: t });
+            await t.commit();
+            res.status(201).json({
+                message: `Thành công: Đã thêm ${result.length} học sinh. Bỏ qua ${studentData.length - result.length} bản ghi trùng lặp.`,
+                data: result
+            });
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
     } catch (error) {
         res.status(500).json({ message: "Lỗi hệ thống khi thêm hàng loạt" });
     }

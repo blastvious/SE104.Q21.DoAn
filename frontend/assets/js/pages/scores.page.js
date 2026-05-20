@@ -47,6 +47,7 @@ const state = {
     years: [], grades: [], classes: [], subjects: [], semesters: [], examTypes: [],
     students: [], scoreColumns: [],
     scoreMap: {}, originalScoreMap: {},
+    dtbMap: {},
     selected: new Set()
 };
 
@@ -81,14 +82,10 @@ function buildExamTypeOptions() {
 // ======================
 function updateButtons() {
     const hasData = state.students.length > 0;
-    const btnAdd          = getEl("scoreBtnAddColumn");
-    const btnImport       = getEl("scoreBtnImportExcel");
-    const btnSave         = getEl("scoreBtnSave");
-    const btnDeleteColumn = getEl("scoreBtnDeleteColumn");
-    if (btnAdd)          btnAdd.disabled          = !hasData;
-    if (btnImport)       btnImport.disabled       = !hasData;
-    if (btnSave)         btnSave.disabled         = !hasData;
-    if (btnDeleteColumn) btnDeleteColumn.disabled = state.scoreColumns.length === 0;
+    const btnImport = getEl("scoreBtnImportExcel");
+    const btnSave   = getEl("scoreBtnSave");
+    if (btnImport) btnImport.disabled = !hasData;
+    if (btnSave)   btnSave.disabled   = !hasData;
 }
 
 // ======================
@@ -184,6 +181,7 @@ async function loadStudentsAndScores() {
     state.scoreColumns    = [];
     state.scoreMap        = {};
     state.originalScoreMap = {};
+    state.dtbMap          = {};
 
     const colSet = new Set();
 
@@ -197,6 +195,7 @@ async function loadStudentsAndScores() {
 
         hsRecords.forEach(hs => {
             const maHS = hs.MaHS;
+            state.dtbMap[maHS] = hs.DiemTBMon;
 
             (hs.loaidiem || []).forEach(loai => {
                 const maLoai  = loai.MaLoaiHinhKT;
@@ -238,14 +237,7 @@ async function loadStudentsAndScores() {
         }
     });
 
-    state.scoreColumns.sort((a, b) => {
-        const hesoA = state.examTypes.find(t => t.MaLoaiHinhKT === a.MaLoaiHinhKT)?.HeSo ?? 0;
-        const hesoB = state.examTypes.find(t => t.MaLoaiHinhKT === b.MaLoaiHinhKT)?.HeSo ?? 0;
-        if (hesoA !== hesoB) return hesoA - hesoB;                        // tăng dần theo hệ số
-        if (a.MaLoaiHinhKT !== b.MaLoaiHinhKT)
-            return a.MaLoaiHinhKT.localeCompare(b.MaLoaiHinhKT);          // cùng hệ số → theo mã
-        return a.Lan - b.Lan;                                             // cùng loại → theo lần
-    });
+    sortScoreColumns();
 
     renderTable();
     updateButtons();
@@ -259,30 +251,45 @@ function renderTable() {
     const tbody = getEl("scoreTableBody");
     if (!thead || !tbody) return;
 
+    // Group columns by exam type
+    const groups = {};
+    state.scoreColumns.forEach(c => {
+        if (!c || !c.MaLoaiHinhKT || !c.TenLoaiHinhKT) return;
+        if (!groups[c.MaLoaiHinhKT]) {
+            groups[c.MaLoaiHinhKT] = { TenLoaiHinhKT: c.TenLoaiHinhKT, columns: [] };
+        }
+        groups[c.MaLoaiHinhKT].columns.push(c);
+    });
+    const groupList = Object.values(groups);
+
+    // Row 1: group headers
     let html = `
         <tr>
-            <th style="width:52px;left:0;">STT</th>
-            <th style="left:52px;">Họ và tên</th>
+            <th rowspan="2" style="width:48px;">STT</th>
+            <th rowspan="2" style="min-width:140px;text-align:left;">Họ và tên</th>
     `;
 
-    state.scoreColumns
-        .filter(c => c && c.MaLoaiHinhKT && c.TenLoaiHinhKT)
-        .forEach(c => {
-            html += `
-                <th style="text-align:center;min-width:110px;">
-                    ${c.TenLoaiHinhKT}<br>
-                    <small style="font-weight:400;color:var(--text-muted);">Lần ${c.Lan}</small>
-                </th>
-            `;
-        });
+    groupList.forEach(g => {
+        const colIndex = state.scoreColumns.indexOf(g.columns[0]);
+        html += `<th colspan="${g.columns.length}" data-colidx="${colIndex}" style="text-align:center;">${g.TenLoaiHinhKT}</th>`;
+    });
 
     html += `
-        <th style="text-align:center;min-width:110px;">
-            Điểm TB
-        </th>
-    `;
+        <th rowspan="2" style="width:80px;text-align:center;">Điểm TB</th>
+    </tr>`;
 
+    // Row 2: sub-headers (Lần X for multi-column groups)
+    html += `<tr>`;
+    groupList.forEach(g => {
+        if (g.columns.length > 1) {
+            g.columns.forEach(c => {
+                const colIndex = state.scoreColumns.indexOf(c);
+                html += `<th data-colidx="${colIndex}" style="text-align:center;font-weight:400;color:var(--text-muted);font-size:0.78rem;">Lần ${c.Lan}</th>`;
+            });
+        }
+    });
     html += `</tr>`;
+
     thead.innerHTML = html;
     tbody.innerHTML = "";
 
@@ -295,7 +302,7 @@ function renderTable() {
         const tr = document.createElement("tr");
         let row = `
             <td style="text-align:center;">${i + 1}</td>
-            <td><strong>${s.HoTen}</strong></td>
+            <td style="text-align:left;">${s.HoTen}</td>
         `;
 
         state.scoreColumns.forEach(c => {
@@ -314,7 +321,7 @@ function renderTable() {
             `;
         });
 
-        const dtb = tinhDTB(s.MaHS);
+        const dtb = getDTBForStudent(s.MaHS);
         row += `
             <td class="dtb-cell" data-mahs="${s.MaHS}"
                 style="text-align:center;font-weight:700;color:#1d4ed8;background:#eff6ff;">
@@ -328,7 +335,6 @@ function renderTable() {
 
     bindCellEvents();
     markUnsavedRows();
-    bindColumnResize();
 }
 
 // ======================
@@ -344,7 +350,7 @@ function bindCellEvents() {
 
             // Cập nhật ĐTB realtime
             const dtbCell = document.querySelector(`.dtb-cell[data-mahs="${maHS}"]`);
-            if (dtbCell) dtbCell.textContent = tinhDTB(maHS);
+            if (dtbCell) dtbCell.textContent = getDTBForStudent(maHS);
 
             const tr = e.target.closest("tr");
             if (!tr) return;
@@ -417,7 +423,7 @@ function bindEvents() {
 // ======================
 function openModal(id) {
     const el = getEl(id);
-    if (el) el.style.display = "flex";
+    if (el) el.style.display = "block";
 }
 
 function closeModal(id) {
@@ -470,14 +476,7 @@ function bindModalAddColumn() {
         state.scoreColumns.push({ MaLoaiHinhKT: maLoai, TenLoaiHinhKT: tenLoai, Lan: nextLan });
 
         // ← thêm sort sau khi push
-        state.scoreColumns.sort((a, b) => {
-            const hesoA = state.examTypes.find(t => t.MaLoaiHinhKT === a.MaLoaiHinhKT)?.HeSo ?? 0;
-            const hesoB = state.examTypes.find(t => t.MaLoaiHinhKT === b.MaLoaiHinhKT)?.HeSo ?? 0;
-            if (hesoA !== hesoB) return hesoA - hesoB;
-            if (a.MaLoaiHinhKT !== b.MaLoaiHinhKT)
-                return a.MaLoaiHinhKT.localeCompare(b.MaLoaiHinhKT);
-            return a.Lan - b.Lan;
-        });
+    sortScoreColumns();
 
         renderTable();
         closeModal("modalAddColumn");
@@ -741,20 +740,29 @@ async function importExcelFile(file) {
             }
         }
 
+        console.group("📊 Import Excel debug");
+        console.log("Header row:", headerRow);
+        console.log("scoreColumns:", state.scoreColumns.map(c => `${c.TenLoaiHinhKT} (Lần ${c.Lan})`));
+        console.log("colIndexMap (Excel col → scoreColumn idx):", colIndexMap);
+        console.log("Sample rows:", rows.slice(1, 4));
+        console.groupEnd();
+
         const dataRows = rows.slice(1).filter(r => r.some(c => c !== "" && c !== undefined));
         if (!dataRows.length) { Toast.warning("File không có dữ liệu hợp lệ."); return; }
 
         let updatedCount = 0;
         let errorCount   = 0;
+        let matchedCount = 0;
 
         dataRows.forEach(row => {
-            const hoTen = String(row[1] || "").trim();
+            const hoTen = normalizeName(row[1]);
             if (!hoTen) return;
 
             const student = state.students.find(s =>
-                s.HoTen.trim().toLowerCase() === hoTen.toLowerCase()
+                normalizeName(s.HoTen) === hoTen
             );
             if (!student) return;
+            matchedCount++;
 
             // Duyệt từng cột điểm
             Object.entries(colIndexMap).forEach(([excelIdx, scIdx]) => {
@@ -786,11 +794,22 @@ async function importExcelFile(file) {
             });
         });
 
+        if (matchedCount === 0) {
+            if (dataRows.length === 0) {
+                Toast.warning("File không có dữ liệu hợp lệ.");
+            } else {
+                Toast.warning(`Không tìm thấy học sinh nào khớp với dữ liệu trong file (đã đọc ${dataRows.length} dòng). Kiểm tra lại tên học sinh.`);
+            }
+            return;
+        }
+
         if (errorCount > 0) {
-            Toast.warningtoast(`Có ${errorCount} ô điểm không hợp lệ (ngoài 0–10) bị bỏ qua.`);
+            Toast.warning(`Có ${errorCount} ô điểm không hợp lệ (ngoài 0–10) bị bỏ qua.`);
         }
 
         if (updatedCount === 0 && errorCount === 0) {
+            console.warn("⚠️ matched students:", matchedCount, "but no score changes detected");
+            console.warn("Sample student name:", dataRows[0] ? dataRows[0][1] : "N/A");
             Toast.info("Không có thay đổi nào so với dữ liệu hiện tại.");
             return;
         }
@@ -814,6 +833,108 @@ async function importExcelFile(file) {
         console.error("Import Excel lỗi:", err);
         Toast.error("Lỗi đọc file: " + err.message);
     }
+}
+
+function normalizeName(name) {
+    return String(name).trim().replace(/\s+/g, " ").normalize("NFC").toLowerCase();
+}
+
+// ======================
+// IMPORT 1 CỘT TỪ EXCEL
+// ======================
+function triggerSingleColumnImport(col) {
+    if (!col) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+    input.style.display = "none";
+    document.body.appendChild(input);
+    input.addEventListener("change", async () => {
+        const file = input.files?.[0];
+        if (file) await importSingleColumn(file, col);
+        input.remove();
+    }, { once: true });
+    input.click();
+}
+
+async function importSingleColumn(file, col) {
+    if (typeof XLSX === "undefined") { Toast.error("Thư viện SheetJS chưa được tải."); return; }
+
+    try {
+        const data = await file.arrayBuffer();
+        const wb   = XLSX.read(data, { type: "array" });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+        if (rows.length < 2) { Toast.warning("File không có dữ liệu."); return; }
+
+        const dataRows = rows.slice(1).filter(r => r.some(c => c !== "" && c !== undefined));
+        if (!dataRows.length) { Toast.warning("File không có dữ liệu hợp lệ."); return; }
+
+        let updatedCount = 0;
+        let errorCount   = 0;
+        let matchedCount = 0;
+
+        dataRows.forEach(row => {
+            const hoTen = normalizeName(row[1]);
+            if (!hoTen) return;
+
+            const student = state.students.find(s =>
+                normalizeName(s.HoTen) === hoTen
+            );
+            if (!student) return;
+            matchedCount++;
+
+            const raw = row[2]; // cột C: điểm
+            const key = `${student.MaHS}_${col.MaLoaiHinhKT}_${col.Lan}`;
+            const newVal = (raw === undefined || raw === null || raw === "") ? "" : String(raw).trim();
+
+            if (newVal !== "") {
+                const diem = parseFloat(newVal.replace(",", "."));
+                if (isNaN(diem) || diem < 0 || diem > 10) { errorCount++; return; }
+            }
+
+            if (newVal !== (state.scoreMap[key] ?? "").toString()) {
+                state.scoreMap[key] = newVal;
+                updatedCount++;
+            }
+        });
+
+        if (matchedCount === 0) {
+            if (dataRows.length === 0) {
+                Toast.warning("File không có dữ liệu hợp lệ.");
+            } else {
+                Toast.warning(`Không tìm thấy học sinh nào khớp với dữ liệu trong file (đã đọc ${dataRows.length} dòng). Kiểm tra lại tên học sinh.`);
+            }
+            return;
+        }
+
+        if (errorCount > 0) {
+            Toast.warning(`Có ${errorCount} ô điểm không hợp lệ (ngoài 0–10) bị bỏ qua.`);
+        }
+        if (updatedCount === 0 && errorCount === 0) {
+            Toast.info("Không có thay đổi nào so với dữ liệu hiện tại."); return;
+        }
+
+        renderTable();
+        Toast.success(`Đã import ${updatedCount} ô vào cột ${col.TenLoaiHinhKT} (Lần ${col.Lan}).`);
+    } catch (err) {
+        console.error("Import cột lỗi:", err);
+        Toast.error("Lỗi đọc file: " + err.message);
+    }
+}
+
+function bindColumnHeaderClick() {
+    const table = document.querySelector(".score-table");
+    if (!table) return;
+    table.addEventListener("click", (e) => {
+        const th = e.target.closest(".score-table th[data-colidx]");
+        if (!th) return;
+        if (e.target.closest(".col-resizer")) return;
+        const col = state.scoreColumns[parseInt(th.dataset.colidx)];
+        if (!col) return;
+        triggerSingleColumnImport(col);
+    });
 }
 
 // ======================
@@ -929,50 +1050,10 @@ export async function init() {
 
     requestAnimationFrame(() => {
         bindEvents();
-        bindModalAddColumn();
         bindModalImportExcel();
-        bindModalDeleteColumn();
+        bindColumnContextMenu();
+        bindColumnHeaderClick();
         bindSave();
-    });
-}
-// ======================
-// RESIZABLE COLUMNS
-// ======================
-function bindColumnResize() {
-    const table = document.querySelector(".score-table");
-    if (!table) return;
-
-    table.querySelectorAll("th").forEach(th => {
-        // Tránh thêm resizer trùng
-        if (th.querySelector(".col-resizer")) return;
-
-        const resizer = document.createElement("div");
-        resizer.className = "col-resizer";
-        th.appendChild(resizer);
-
-        let startX, startWidth;
-
-        resizer.addEventListener("mousedown", (e) => {
-            startX     = e.pageX;
-            startWidth = th.offsetWidth;
-            resizer.classList.add("resizing");
-
-            const onMouseMove = (e) => {
-                const newWidth = Math.max(60, startWidth + (e.pageX - startX));
-                th.style.width    = newWidth + "px";
-                th.style.minWidth = newWidth + "px";
-            };
-
-            const onMouseUp = () => {
-                resizer.classList.remove("resizing");
-                document.removeEventListener("mousemove", onMouseMove);
-                document.removeEventListener("mouseup",  onMouseUp);
-            };
-
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup",   onMouseUp);
-            e.preventDefault();
-        });
     });
 }
 
@@ -1063,19 +1144,174 @@ function renderDeleteColOptions() {
     });
 }
 // ======================
-// TÍNH ĐIỂM TRUNG BÌNH
+// SORT COLUMNS
 // ======================
+function sortScoreColumns() {
+    state.scoreColumns.sort((a, b) => {
+        const hesoA = state.examTypes.find(t => t.MaLoaiHinhKT === a.MaLoaiHinhKT)?.HeSo ?? 0;
+        const hesoB = state.examTypes.find(t => t.MaLoaiHinhKT === b.MaLoaiHinhKT)?.HeSo ?? 0;
+        if (hesoA !== hesoB) return hesoA - hesoB;
+        if (a.MaLoaiHinhKT !== b.MaLoaiHinhKT)
+            return a.MaLoaiHinhKT.localeCompare(b.MaLoaiHinhKT);
+        return a.Lan - b.Lan;
+    });
+}
+
+// ======================
+// CONTEXT MENU
+// ======================
+let contextMenuCol = null;
+
+function bindColumnContextMenu() {
+    const menu = getEl("colContextMenu");
+    if (!menu) return;
+
+    const menuAdd    = getEl("colContextAdd");
+    const menuDelete = getEl("colContextDelete");
+
+    document.addEventListener("contextmenu", (e) => {
+        const th = e.target.closest(".score-table th");
+        if (!th) { menu.style.display = "none"; return; }
+
+        const colIdx = th.dataset.colidx;
+        if (colIdx == null) { menu.style.display = "none"; return; }
+
+        const col = state.scoreColumns[parseInt(colIdx)];
+        if (!col) { menu.style.display = "none"; return; }
+
+        e.preventDefault();
+        contextMenuCol = col;
+
+        const isGroup = th.hasAttribute("colspan");
+        menuAdd.classList.toggle("hidden", !isGroup);
+        menuDelete.classList.toggle("hidden", isGroup);
+
+        menu.style.left = e.pageX + "px";
+        menu.style.top = e.pageY + "px";
+        menu.style.display = "block";
+    });
+
+    document.addEventListener("click", () => { menu.style.display = "none"; });
+
+    menuAdd?.addEventListener("click", () => {
+        menu.style.display = "none";
+        if (!contextMenuCol) return;
+
+        const maLoai  = contextMenuCol.MaLoaiHinhKT;
+        const tenLoai = state.examTypes.find(t => t.MaLoaiHinhKT === maLoai)?.TenLoaiHinhKT || maLoai;
+        const existing = state.scoreColumns.filter(c => c.MaLoaiHinhKT === maLoai);
+        const nextLan  = existing.length + 1;
+
+        state.scoreColumns.push({ MaLoaiHinhKT: maLoai, TenLoaiHinhKT: tenLoai, Lan: nextLan });
+        sortScoreColumns();
+        renderTable();
+        contextMenuCol = null;
+    });
+
+    menuDelete?.addEventListener("click", () => {
+        menu.style.display = "none";
+        if (!contextMenuCol) return;
+
+        const col    = contextMenuCol;
+        const maLoai = col.MaLoaiHinhKT;
+        const lan    = col.Lan;
+        const ten    = state.examTypes.find(t => t.MaLoaiHinhKT === maLoai)?.TenLoaiHinhKT || maLoai;
+
+        const sameTypeCount = state.scoreColumns.filter(c => c.MaLoaiHinhKT === maLoai).length;
+        if (sameTypeCount <= 1) {
+            Toast.warning("Chỉ có một cột của loại này, không thể xóa.");
+            contextMenuCol = null;
+            return;
+        }
+
+        if (!confirm(`Bạn có chắc muốn xóa cột "${ten} — Lần ${lan}" không?`)) {
+            contextMenuCol = null;
+            return;
+        }
+
+        // Xóa khỏi scoreColumns
+        state.scoreColumns = state.scoreColumns.filter(
+            c => !(c.MaLoaiHinhKT === maLoai && c.Lan === lan)
+        );
+
+        // Xóa điểm khỏi scoreMap & originalScoreMap
+        state.students.forEach(s => {
+            delete state.scoreMap[`${s.MaHS}_${maLoai}_${lan}`];
+            delete state.originalScoreMap[`${s.MaHS}_${maLoai}_${lan}`];
+        });
+
+        // Renumber các cột cùng loại có Lan > lan vừa xóa
+        state.scoreColumns
+            .filter(c => c.MaLoaiHinhKT === maLoai && c.Lan > lan)
+            .sort((a, b) => a.Lan - b.Lan)
+            .forEach(c => {
+                const oldLan = c.Lan;
+                const newLan = c.Lan - 1;
+                c.Lan = newLan;
+
+                state.students.forEach(s => {
+                    const oldKey = `${s.MaHS}_${maLoai}_${oldLan}`;
+                    const newKey = `${s.MaHS}_${maLoai}_${newLan}`;
+                    if (state.scoreMap[oldKey] !== undefined) {
+                        state.scoreMap[newKey] = state.scoreMap[oldKey];
+                        delete state.scoreMap[oldKey];
+                    }
+                    if (state.originalScoreMap[oldKey] !== undefined) {
+                        state.originalScoreMap[newKey] = state.originalScoreMap[oldKey];
+                        delete state.originalScoreMap[oldKey];
+                    }
+                });
+            });
+
+        renderTable();
+        updateButtons();
+        contextMenuCol = null;
+
+        const banner   = getEl("importSuccessBanner");
+        const bannerTx = getEl("importBannerText");
+        if (banner && bannerTx) {
+            bannerTx.innerHTML = `Đã xóa cột <strong>${ten} — Lần ${lan}</strong>. Nhấn <strong>Lưu dữ liệu</strong> để xác nhận.`;
+            banner.style.display = "flex";
+            setTimeout(() => { banner.style.display = "none"; }, 7000);
+        }
+    });
+}
+// ======================
+function getCKExamType() {
+    return state.examTypes.reduce((best, t) =>
+        (t.HeSo > (best?.HeSo || 0)) ? t : best, null
+    );
+}
+
+function hasCKScore(maHS) {
+    const ck = getCKExamType();
+    if (!ck) return false;
+    return state.scoreColumns
+        .filter(c => c.MaLoaiHinhKT === ck.MaLoaiHinhKT)
+        .some(c => {
+            const key = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
+            const val = (state.scoreMap[key] ?? "").toString().trim();
+            return val !== "";
+        });
+}
+
+function getDTBForStudent(maHS) {
+    if (!hasCKScore(maHS)) return "";
+    if (state.dtbMap[maHS] != null) return parseFloat(state.dtbMap[maHS]).toFixed(2);
+    return tinhDTB(maHS);
+}
+
 function tinhDTB(maHS) {
     let tongDiem = 0;
     let tongHeSo = 0;
 
     state.scoreColumns.forEach(c => {
         const heSo = state.examTypes.find(t => t.MaLoaiHinhKT === c.MaLoaiHinhKT)?.HeSo ?? 1;
-        tongHeSo += heSo; // luôn cộng hệ số dù ô trống
+        tongHeSo += heSo;
 
         const key = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
         const raw = (state.scoreMap[key] ?? "").toString().trim();
-        if (raw === "") return; // điểm = 0 nếu trống (không cộng vào tổng điểm)
+        if (raw === "") return;
 
         const diem = parseFloat(raw.replace(",", "."));
         if (isNaN(diem)) return;

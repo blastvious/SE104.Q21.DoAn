@@ -21,8 +21,6 @@ export const init = async () => {
   await loadFilters();
   bindFilterEvents();
   bindEvents();
-
-  await reloadAll(); // 🔥 quan trọng: init đúng state
 };
 
 /* =========================================
@@ -76,6 +74,7 @@ async function loadFilters() {
       `,
         )
         .join("");
+    if (semesters.length > 0) semesterSelect.value = semesters[0].MaHocKy;
 
     const gradeSelect = document.getElementById("filterKhoi");
     gradeSelect.innerHTML =
@@ -179,11 +178,12 @@ function closeModal() {
 ========================================= */
 async function loadUnassigned() {
   const MaHocKy = document.getElementById("filterHocKy")?.value;
+  const grade = document.getElementById("filterKhoi")?.value;
 
   const tbody = document.getElementById("unassignedTable");
 
-  if (!MaHocKy) {
-    tbody.innerHTML = `<tr><td colspan="5">Vui lòng chọn học kỳ</td></tr>`;
+  if (!MaHocKy || !grade) {
+    tbody.innerHTML = `<tr><td colspan="5">Vui lòng chọn khối</td></tr>`;
     return;
   }
 
@@ -203,19 +203,28 @@ async function loadAssigned() {
   const MaHocKy = document.getElementById("filterHocKy")?.value;
 
   const tbody = document.getElementById("assignedTable");
+  const capacityEl = document.getElementById("classCapacity");
 
   if (!MaHocKy) {
     tbody.innerHTML = `<tr><td colspan="5">Vui lòng chọn học kỳ</td></tr>`;
+    if (capacityEl) capacityEl.style.display = "none";
     return;
   }
 
   if (!MaLop) {
     tbody.innerHTML = `<tr><td colspan="5">Chọn lớp để xem học sinh</td></tr>`;
+    if (capacityEl) capacityEl.style.display = "none";
     return;
   }
 
   const data = await getAssignedStudents(MaHocKy, MaLop);
   renderAssigned(data);
+
+  const cls = allClasses.find((c) => c.MaLop === MaLop);
+  if (cls && capacityEl) {
+    document.getElementById("capacityCurrent").textContent = data.length;
+    capacityEl.style.display = "block";
+  }
 }
 
 /* =========================================
@@ -276,7 +285,7 @@ function renderAssigned(data) {
       <td>${s.MaHS}</td>
       <td>${s.HOCSINH?.HoTen || ""}</td>
       <td>
-        <button class="action-btn edit" data-id="${s.MaHS}">
+        <button class="action-btn edit" data-id="${s.MaHS}" style="width:auto;height:auto;padding:2px 6px;font-size:13px;border-radius:4px;line-height:1.2;">
           ↔
         </button>
       </td>
@@ -328,6 +337,12 @@ function updateAssignButton() {
   const classSelected = document.getElementById("assignClassSelect").value;
 
   btn.disabled = !(selectedStudents.size > 0 && classSelected);
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const el = document.getElementById("selectedCount");
+  if (el) el.textContent = "Đã chọn: " + selectedStudents.size;
 }
 
 /* =========================================

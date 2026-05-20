@@ -15,18 +15,16 @@ export const studentSchema = Joi.object({
     
     DiaChi: Joi.string()
         .max(200)
-        .allow(null, "")
         .required(),
     
     Email: Joi.string()
         .email() 
         .max(100)
-        .allow(null, "")
         .required(),
 
     SoDienThoai: Joi.string()
-        .pattern(/^(0[3|5|7|8|9])([0-9]{8})$/) // Regex kiểm tra SĐT Việt Nam
-        .message('Số điện thoại không đúng định dạng VN')
+        .pattern(/^(0[3|5|7|8|9][0-9]{8})$/)
+        .message('Số điện thoại không đúng định dạng VN (phải 10 số, bắt đầu 03/05/07/08/09)')
         .required()
 });
 
@@ -37,7 +35,7 @@ export const validateStudent = (req, res, next) => {
     if (error) {
         return res.status(400).json({
             status: 'Error',
-            message: 'Invalid updated data',
+            message: 'Dữ liệu học sinh không hợp lệ',
             details: error.details.map(d => d.message)
         });
     }

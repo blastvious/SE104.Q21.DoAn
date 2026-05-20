@@ -5,12 +5,12 @@
         <p>Xếp học sinh vào lớp theo năm học</p>
     </div>
 
-    <div class="filter-group">
+    <div class="filter-group" style="justify-content:center;">
         <div class="filter-item">
             <label>Năm học:</label>
             <select id="filterNamHoc" class="qlsv-select"></select>
         </div>
-        <div class="filter-item">
+        <div class="filter-item" style="display:none;">
             <label>Học kỳ:</label>
             <select id="filterHocKy" class="qlsv-select"></select>
         </div>
@@ -23,12 +23,18 @@
                 <option value="12">Khối 12</option>
             </select>
         </div>
+        <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
+            <i class="fas fa-save"></i> Lưu danh sách lớp
+        </button>
     </div>
 
     <div class="assignment-grid">
 
-        <div class="assignment-card">
-            <h3 class="section-title">Học sinh chưa xếp lớp</h3>
+            <div class="assignment-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 class="section-title">Học sinh chưa xếp lớp</h3>
+                <span id="selectedCount" style="font-size:13px;color:#64748b;font-weight:600;">Đã chọn: 0</span>
+            </div>
             <div class="qlsv-table-card">
                 <table class="qlsv-table">
                     <thead>
@@ -46,16 +52,17 @@
         </div>
 
         <div class="assignment-card">
-            <div class="assign-header">
+            <div class="assign-header" style="flex-wrap:nowrap;">
                 <h3 class="section-title">Học sinh đã xếp lớp</h3>
-                <div class="assign-controls">
-                    <div class="filter-item" style="margin:0;flex-direction:row;align-items:center;gap:8px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div class="filter-item" style="flex-direction:row;align-items:center;gap:8px;">
                         <label style="font-size:0.82rem;white-space:nowrap;">Lớp:</label>
                         <select id="assignClassSelect" class="qlsv-select" disabled></select>
                     </div>
-                    <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
-                        <i class="fas fa-user-plus"></i> Xếp vào lớp
-                    </button>
+                    <div id="classCapacity" style="display:none;font-size:13px;color:#334155;">
+                        <i class="fas fa-users" style="margin-right:4px;color:#2563eb;"></i>
+                        Sĩ số: <strong id="capacityCurrent">0</strong>
+                    </div>
                 </div>
             </div>
             <div class="qlsv-table-card">

@@ -43,14 +43,14 @@ export const enrollStudent = async (req, res) => {
             }
 
             const count = await db.QUATRINHHOC.count({ where: { MaLop }, transaction: t });
-            if (classRecord.SiSo > 0 && count >= classRecord.SiSo) {
-                throwHttp(`Class has reached maximum capacity (${classRecord.SiSo} students)`, 400);
-            }
 
-            return db.QUATRINHHOC.create({ MaHS, MaLop, MaHocKy, DiemTBHocKy: 0.00 }, { transaction: t });
+            await db.QUATRINHHOC.create({ MaHS, MaLop, MaHocKy, DiemTBHocKy: 0.00 }, { transaction: t });
+
+            // cập nhật sĩ số thực tế
+            await classRecord.update({ SiSo: count + 1 }, { transaction: t });
         });
 
-        res.status(201).json(enrollment);
+        res.status(201).json({ message: "Enroll success" });
     } catch (error) {
         handleCatch(res, error);
     }
@@ -91,9 +91,6 @@ export const transferClass = async (req, res) => {
             if (!newClass) throwHttp("New class not found", 404);
 
             const count = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi }, transaction: t });
-            if (newClass.SiSo > 0 && count >= newClass.SiSo) {
-                throwHttp(`Target class has reached maximum capacity (${newClass.SiSo} students)`, 400);
-            }
 
             const existing = await db.QUATRINHHOC.findOne({
                 where: { MaHS, MaHocKy, MaLop: MaLopMoi }, transaction: t
@@ -101,11 +98,19 @@ export const transferClass = async (req, res) => {
             if (existing) throwHttp("Student already has an enrollment record in the target class for this semester", 409);
 
             const { DiemTBHocKy } = current;
+
+            // sĩ số lớp cũ trước khi xoá
+            const oldClass = await db.LOP.findByPk(current.MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+            const oldCount = await db.QUATRINHHOC.count({ where: { MaLop: current.MaLop }, transaction: t });
+
             await db.QUATRINHHOC.destroy({ where: { MaHS, MaHocKy, MaLop: current.MaLop }, transaction: t });
-            return db.QUATRINHHOC.create({ MaHS, MaHocKy, MaLop: MaLopMoi, DiemTBHocKy }, { transaction: t });
+            await oldClass.update({ SiSo: oldCount - 1 }, { transaction: t });
+
+            await db.QUATRINHHOC.create({ MaHS, MaHocKy, MaLop: MaLopMoi, DiemTBHocKy }, { transaction: t });
+            await newClass.update({ SiSo: count + 1 }, { transaction: t });
         });
 
-        res.json({ message: "Transfer successful", data: updated });
+        res.json({ message: "Transfer successful" });
     } catch (error) {
         handleCatch(res, error);
     }
@@ -188,10 +193,6 @@ export const assignStudentsBatch = async (req, res) => {
                 transaction: t
             });
 
-            if (classRecord.SiSo > 0 && currentCount + students.length > classRecord.SiSo) {
-                throwHttp("Class capacity exceeded", 400);
-            }
-
             // check đã tồn tại
             const existed = await db.QUATRINHHOC.findAll({
                 where: {
@@ -213,10 +214,13 @@ export const assignStudentsBatch = async (req, res) => {
                 DiemTBHocKy: 0.00
             }));
 
-            return db.QUATRINHHOC.bulkCreate(data, { transaction: t });
+            await db.QUATRINHHOC.bulkCreate(data, { transaction: t });
+
+            // cập nhật sĩ số thực tế
+            await classRecord.update({ SiSo: currentCount + students.length }, { transaction: t });
         });
 
-        res.json({ message: "Assign success", data: result });
+        res.json({ message: "Assign success" });
 
     } catch (error) {
         handleCatch(res, error);

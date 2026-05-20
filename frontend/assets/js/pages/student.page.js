@@ -12,9 +12,12 @@ let editingStudentId = null;
    FORMAT DATE
 ========================================= */
 function formatToDateOnly(dateStr) {
-  if (dateStr.includes("/")) {
-    const [day, month, year] = dateStr.split("/");
+  if (!dateStr) return "";
 
+  if (dateStr.includes("/")) {
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return dateStr;
+    const [day, month, year] = parts;
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   }
 
@@ -327,55 +330,150 @@ function setupSearch() {
   };
 }
 
+function cleanPhoneNumber(val) {
+  if (val == null) return "";
+  let s = typeof val === "number" ? String(val) : String(val).trim();
+  if (s === "" || s === "'") return "";
+  if (s.startsWith("'")) s = s.slice(1);
+  s = s.replace(/\D/g, "");
+  if (s.startsWith("84") && s.length > 9) s = "0" + s.slice(2);
+  return s;
+}
+
+function cleanDate(val) {
+  if (val == null) return "";
+  if (typeof val === "number") {
+    const d = XLSX.SSF.parse_date_code(val);
+    if (d) {
+      const y = d.y, m = String(d.m).padStart(2, "0"), day = String(d.d).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    return "";
+  }
+  const s = String(val).trim();
+  if (!s) return "";
+  const m1 = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (m1) return `${m1[3]}-${m1[2].padStart(2,"0")}-${m1[1].padStart(2,"0")}`;
+  const m2 = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (m2) return `${m2[1]}-${m2[2].padStart(2,"0")}-${m2[3].padStart(2,"0")}`;
+  return s;
+}
+
+const CHUNK_SIZE = 100;
+
+function showImportProgress(total) {
+  const modal = document.getElementById("importProgressModal");
+  if (modal) modal.style.display = "block";
+  document.getElementById("importProgressText").textContent = "Đang xử lý...";
+  document.getElementById("importProgressDetail").textContent = `0 / ${total} học sinh`;
+  document.getElementById("importProgressBar").style.width = "0%";
+  document.getElementById("importProgressPercent").textContent = "0%";
+}
+
+function updateImportProgress(processed, total, detail) {
+  const pct = total > 0 ? Math.min(Math.round((processed / total) * 100), 100) : 0;
+  const bar = document.getElementById("importProgressBar");
+  if (bar) bar.style.width = pct + "%";
+  const pctEl = document.getElementById("importProgressPercent");
+  if (pctEl) pctEl.textContent = pct + "%";
+  const detailEl = document.getElementById("importProgressDetail");
+  if (detailEl) detailEl.textContent = detail || `${processed} / ${total} học sinh`;
+}
+
+function hideImportProgress() {
+  const modal = document.getElementById("importProgressModal");
+  if (modal) modal.style.display = "none";
+}
+
 /* =========================================
    IMPORT EXCEL
 ========================================= */
 function setupExcelImport() {
-  const btnUpload = document.getElementById("btnUploadExcel");
-
   const fileInput = document.getElementById("excelFile");
 
-  btnUpload.onclick = async () => {
+  if (!fileInput) {
+    console.error("setupExcelImport: Không tìm thấy input file");
+    return;
+  }
+
+  fileInput.onchange = async () => {
     const file = fileInput.files[0];
 
-    if (!file) {
-      Toast.warning("⚠️ Vui lòng chọn file Excel");
-
-      return;
-    }
+    if (!file) return;
 
     const reader = new FileReader();
 
     reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-
-        const workbook = XLSX.read(data, {
-          type: "array",
-        });
-
-        const firstSheetName = workbook.SheetNames[0];
-
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
         if (jsonData.length === 0) {
           throw new Error("File Excel rỗng");
         }
 
-        const result = await bulkCreateStudents(jsonData);
+        jsonData = jsonData.map((row) => {
+          const item = { ...row };
 
-        Toast.success("✅ " + result.message);
+          item.NgaySinh = cleanDate(item.NgaySinh);
+          item.SoDienThoai = cleanPhoneNumber(item.SoDienThoai);
+
+          return item;
+        });
+
+        const chunks = [];
+        for (let i = 0; i < jsonData.length; i += CHUNK_SIZE) {
+          chunks.push(jsonData.slice(i, i + CHUNK_SIZE));
+        }
+
+        showImportProgress(jsonData.length);
+
+        let totalInserted = 0;
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          const processed = Math.min((i + 1) * CHUNK_SIZE, jsonData.length);
+          updateImportProgress(processed, jsonData.length, `Đang xử lý lô ${i + 1}/${chunks.length} (${chunk.length} học sinh)...`);
+
+          try {
+            const result = await bulkCreateStudents(chunk);
+            totalInserted += result.data?.length || 0;
+          } catch (chunkError) {
+            const msg = chunkError.message || "";
+            if (msg.includes("đều đã tồn tại")) {
+              // skip chunk — all duplicates
+            } else {
+              hideImportProgress();
+              Toast.error("Lỗi Import (lô " + (i + 1) + "): " + msg);
+              fileInput.value = "";
+              await renderTable();
+              return;
+            }
+          }
+        }
+
+        hideImportProgress();
+
+        const skipped = jsonData.length - totalInserted;
+        if (totalInserted > 0) {
+          Toast.success(`✅ Import thành công: thêm ${totalInserted} học sinh, bỏ qua ${skipped} bản ghi trùng.`);
+        } else {
+          Toast.warning("⚠️ Tất cả học sinh trong file đều đã tồn tại.");
+        }
 
         await renderTable();
-
         fileInput.value = "";
       } catch (error) {
+        hideImportProgress();
         console.error("Import Error:", error);
-
-        Toast.error("❌ Lỗi Import: " + error.message);
+        Toast.error("Lỗi Import: " + error.message);
       }
+    };
+
+    reader.onerror = () => {
+      Toast.error("Không thể đọc file Excel");
     };
 
     reader.readAsArrayBuffer(file);
