@@ -62,7 +62,7 @@ async function loadReport() {
     const TenNamHoc = document.getElementById("selNam").value;
 
     if (!MaHocKy || !TenNamHoc) {
-        alert("Vui lòng chọn đầy đủ Năm học, Học kỳ và Môn học");
+        Toast.warning("Vui lòng chọn đầy đủ Năm học, Học kỳ và Môn học");
         return;
     }
 
@@ -103,7 +103,7 @@ async function loadReport() {
 
     } catch (error) {
         console.error(error);
-        alert("Lỗi khi tải báo cáo: " + error.message);
+        Toast.error("Lỗi khi tải báo cáo: " + error.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-filter"></i> Xem báo cáo';
@@ -266,7 +266,7 @@ async function exportPDF() {
             .filter(r => r.querySelectorAll("td").length === 5);
 
         if (rows.length === 0) {
-            alert("Không có dữ liệu để xuất PDF");
+            Toast.warning("Không có dữ liệu để xuất PDF");
             return;
         }
 
@@ -419,7 +419,7 @@ async function exportPDF() {
 
     } catch (err) {
         console.error(err);
-        alert("Lỗi xuất PDF: " + err.message);
+        Toast.error("Lỗi xuất PDF: " + err.message);
 
     } finally {
         btn.disabled = false;

@@ -53,7 +53,6 @@ const state = {
 // ======================
 // UTIL
 // ======================
-function toast(msg) { alert(msg); }
 
 function isFilterComplete() {
     const f = state.filters;
@@ -462,7 +461,7 @@ function bindModalAddColumn() {
 
     getEl("confirmAddColumnBtn")?.addEventListener("click", () => {
         const maLoai = getEl("popupLoaiKTAdd")?.value;
-        if (!maLoai) { toast("Vui lòng chọn loại hình kiểm tra!"); return; }
+        if (!maLoai) { Toast.warning("Vui lòng chọn loại hình kiểm tra!"); return; }
 
         const tenLoai  = state.examTypes.find(t => t.MaLoaiHinhKT === maLoai)?.TenLoaiHinhKT || maLoai;
         const existing = state.scoreColumns.filter(c => c.MaLoaiHinhKT === maLoai);
@@ -502,7 +501,7 @@ function bindModalImportExcel() {
 
     getEl("confirmImportBtn")?.addEventListener("click", async () => {
         const file = getEl("scoreFileInput")?.files?.[0];
-        if (!file) { toast("Vui lòng chọn file Excel!"); return; }
+        if (!file) { Toast.warning("Vui lòng chọn file Excel!"); return; }
         await importExcelFile(file);
     });
 
@@ -715,7 +714,7 @@ function downloadExcelTemplate() {
 // ======================
 async function importExcelFile(file) {
     if (typeof XLSX === "undefined") {
-        toast("Thư viện SheetJS chưa được tải.");
+        Toast.error("Thư viện SheetJS chưa được tải.");
         return;
     }
 
@@ -725,7 +724,7 @@ async function importExcelFile(file) {
         const ws   = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-        if (rows.length < 2) { toast("File không có dữ liệu."); return; }
+        if (rows.length < 2) { Toast.warning("File không có dữ liệu."); return; }
 
         // Đọc header row để map cột → scoreColumn
         const headerRow = rows[0];
@@ -743,7 +742,7 @@ async function importExcelFile(file) {
         }
 
         const dataRows = rows.slice(1).filter(r => r.some(c => c !== "" && c !== undefined));
-        if (!dataRows.length) { toast("File không có dữ liệu hợp lệ."); return; }
+        if (!dataRows.length) { Toast.warning("File không có dữ liệu hợp lệ."); return; }
 
         let updatedCount = 0;
         let errorCount   = 0;
@@ -788,11 +787,11 @@ async function importExcelFile(file) {
         });
 
         if (errorCount > 0) {
-            toast(`Có ${errorCount} ô điểm không hợp lệ (ngoài 0–10) bị bỏ qua.`);
+            Toast.warningtoast(`Có ${errorCount} ô điểm không hợp lệ (ngoài 0–10) bị bỏ qua.`);
         }
 
         if (updatedCount === 0 && errorCount === 0) {
-            toast("Không có thay đổi nào so với dữ liệu hiện tại.");
+            Toast.info("Không có thay đổi nào so với dữ liệu hiện tại.");
             return;
         }
 
@@ -813,7 +812,7 @@ async function importExcelFile(file) {
 
     } catch (err) {
         console.error("Import Excel lỗi:", err);
-        toast("Lỗi đọc file: " + err.message);
+        Toast.error("Lỗi đọc file: " + err.message);
     }
 }
 
@@ -851,7 +850,7 @@ function bindSave() {
             const lines = errors.map(e =>
                 `• ${e.HoTen} — ${e.TenLoaiHinhKT} (Lần ${e.Lan}): "${e.val}"`
             ).join("\n");
-            toast(`Có ${errors.length} điểm không hợp lệ (phải từ 0–10). Vui lòng kiểm tra:\n\n${lines}`);
+            Toast.error(`Có ${errors.length} điểm không hợp lệ (phải từ 0–10). Vui lòng kiểm tra:\n\n${lines}`);
             return;
         }
 
@@ -877,7 +876,7 @@ function bindSave() {
             }
         });
 
-        if (!columnGroups.length) { toast("Chưa có điểm nào để lưu."); return; }
+        if (!columnGroups.length) { Toast.warning("Chưa có điểm nào để lưu."); return; }
 
         try {
             if (btnSave) {
@@ -903,10 +902,10 @@ function bindSave() {
             });
 
             markUnsavedRows();
-            toast(`✓ Lưu thành công!`);
+            Toast.success(`✓ Lưu thành công!`);
 
         } catch (err) {
-            toast("Lỗi lưu điểm: " + err.message);
+            Toast.error("Lỗi lưu điểm: " + err.message);
         } finally {
             if (btnSave) {
                 btnSave.disabled  = false;
@@ -991,7 +990,7 @@ function bindModalDeleteColumn() {
 
     getEl("confirmDeleteColumnBtn")?.addEventListener("click", () => {
         const checked = document.querySelector('input[name="deleteColChoice"]:checked');
-        if (!checked) { toast("Vui lòng chọn cột muốn xóa!"); return; }
+        if (!checked) { Toast.warning("Vui lòng chọn cột muốn xóa!"); return; }
 
         const [maLoai, lan] = checked.value.split("__");
         const lanNum = parseInt(lan);

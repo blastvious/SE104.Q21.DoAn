@@ -11,7 +11,7 @@ import {
 export async function init() {
     const token = getToken();
     if (!token) {
-        alert("Bạn chưa đăng nhập!");
+        Toast.warning("Bạn chưa đăng nhập!");
         window.location.href = "login.html";
         return;
     }
@@ -46,7 +46,7 @@ async function loadCurrentUserInfo() {
         }
     } catch (error) {
         console.error(error);
-        alert("Phiên đăng nhập hết hạn hoặc lỗi kết nối.");
+        Toast.error("Phiên đăng nhập hết hạn hoặc lỗi kết nối.");
     }
 }
 
@@ -98,20 +98,20 @@ function initAdminEventListeners() {
         const RoleName = document.getElementById("newRole").value;
 
         if (!Username || !Password) {
-            alert("Vui lòng điền đầy đủ thông tin!");
+            Toast.warning("Vui lòng điền đầy đủ thông tin!");
             return;
         }
 
         const response = await createUser(Username, Password, RoleName);
 
         if (response.status === 201) {
-            alert("Tạo tài khoản thành công!");
+            Toast.success("Tạo tài khoản thành công!");
             document.getElementById("newUsername").value = "";
             document.getElementById("newPassword").value = "";
             await loadAllUsers(); // Cập nhật lại bảng
         } else {
             const errData = await response.json();
-            alert(errData.message || "Không thể tạo tài khoản");
+            Toast.error(errData.message || "Không thể tạo tài khoản");
         }
     };
 }
@@ -127,10 +127,10 @@ function bindTableActions() {
 
             const isSuccess = await updateUserRole(userId, selectedRole);
             if (isSuccess) {
-                alert("Cập nhật vai trò thành công!");
+                Toast.success("Cập nhật vai trò thành công!");
                 await loadAllUsers();
             } else {
-                alert("Cập nhật thất bại.");
+                Toast.error("Cập nhật thất bại.");
             }
         };
     });
@@ -146,10 +146,10 @@ function bindTableActions() {
 
             const isSuccess = await deleteUser(userId);
             if (isSuccess) {
-                alert("Xóa thành công!");
-                row.remove(); // Xóa trực tiếp row khỏi DOM mượt mà
+                Toast.success("Xóa thành công!");
+                row.remove(); 
             } else {
-                alert("Xóa thất bại.");
+                Toast.error("Xóa thất bại.");
             }
         };
     });

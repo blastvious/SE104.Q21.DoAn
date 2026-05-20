@@ -90,7 +90,7 @@ export async function doSearch() {
     const ten = document.getElementById("inputTen").value.trim();
     const lop = document.getElementById("inputLop").value.trim();
 
-    if (!ten && !lop) { alert("Vui lòng nhập tên hoặc lớp để tìm kiếm"); return; }
+    if (!ten && !lop) { Toast.warning("Vui lòng nhập tên hoặc lớp để tìm kiếm"); return; }
 
     try {
         const params = new URLSearchParams();
@@ -101,13 +101,13 @@ export async function doSearch() {
         const data = await res.json();
         const results = data.data || [];
 
-        if (!results.length) { alert("Không tìm thấy học sinh phù hợp"); return; }
+        if (!results.length) { Toast.info("Không tìm thấy học sinh phù hợp"); return; }
 
         await renderStudent(results[0]);
 
     } catch (err) {
         console.error("Lỗi tìm kiếm:", err);
-        alert("Lỗi khi tìm kiếm: " + err.message);
+        Toast.error("Lỗi khi tìm kiếm: " + err.message);
     }
 }
 
@@ -251,7 +251,7 @@ export async function exportRowPDF(maLop, maHocKy, tenHocKy, tenNamHoc, dtb) {
 
     } catch (err) {
         console.error("Lỗi xuất PDF:", err);
-        alert("Lỗi xuất PDF: " + err.message);
+        Toast.error("Lỗi xuất PDF: " + err.message);
     }
 }
 
@@ -268,7 +268,7 @@ export async function exportModalPDF() {
         await doExportPDF(s, { tenHocKy, tenNamHoc, dtb, chiTiet });
     } catch (err) {
         console.error("Lỗi xuất PDF:", err);
-        alert("Lỗi xuất PDF: " + err.message);
+        Toast.error("Lỗi xuất PDF: " + err.message);
     }
 }
 

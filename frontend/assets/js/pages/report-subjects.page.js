@@ -45,7 +45,7 @@ async function loadReport() {
     const TenNamHoc = document.getElementById("reportYear").value;
 
     if (!MaMonHoc || !MaHocKy || !TenNamHoc) {
-        alert("Vui lòng chọn đầy đủ Năm học, Học kỳ và Môn học");
+        Toast.warning("Vui lòng chọn đầy đủ Năm học, Học kỳ và Môn học");
         return;
     }
 
@@ -108,7 +108,7 @@ async function loadReport() {
         drawPieChart(data.TongSoLuongDat, data.TongSiSo - data.TongSoLuongDat);
     } catch (error) {
         console.error(error);
-        alert("Lỗi khi tải báo cáo: " + error.message);
+        Toast.error("Lỗi khi tải báo cáo: " + error.message);
     }
 }
 
@@ -265,7 +265,7 @@ async function exportPDF() {
         pdf.save(`BaoCaoMonHoc_${TenMonHoc}_${TenNamHoc}.pdf`);
     } catch (err) {
         console.error("PDF error:", err);
-        alert("Lỗi xuất PDF: " + err.message);
+        Toast.error("Lỗi xuất PDF: " + err.message);
     }
 
     document.body.removeChild(wrapper);

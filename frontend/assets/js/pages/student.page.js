@@ -234,14 +234,14 @@ function setupForm() {
       if (editingStudentId) {
         await updateStudent(editingStudentId, student);
 
-        alert("🎉 Cập nhật học sinh thành công!");
+        Toast.success("🎉 Cập nhật học sinh thành công!");
       } else {
         /* =========================================
                CREATE
             ========================================= */
         await createStudent(student);
 
-        alert("🎉 Tiếp nhận học sinh thành công!");
+        Toast.success("🎉 Tiếp nhận học sinh thành công!");
       }
 
       form.reset();
@@ -252,7 +252,7 @@ function setupForm() {
 
       await renderTable();
     } catch (error) {
-      alert("❌ Lỗi: " + error.message);
+      Toast.error("❌ Lỗi: " + error.message);
     }
   };
 }
@@ -302,11 +302,11 @@ function bindActionButtons() {
       try {
         await deleteStudent(id);
 
-        alert("Xóa học sinh thành công");
+        Toast.success("Xóa học sinh thành công");
 
         await renderTable();
       } catch (error) {
-        alert(error.message);
+        Toast.error(error.message);
       }
     };
   });
@@ -339,7 +339,7 @@ function setupExcelImport() {
     const file = fileInput.files[0];
 
     if (!file) {
-      alert("⚠️ Vui lòng chọn file Excel");
+      Toast.warning("⚠️ Vui lòng chọn file Excel");
 
       return;
     }
@@ -366,7 +366,7 @@ function setupExcelImport() {
 
         const result = await bulkCreateStudents(jsonData);
 
-        alert("✅ " + result.message);
+        Toast.success("✅ " + result.message);
 
         await renderTable();
 
@@ -374,7 +374,7 @@ function setupExcelImport() {
       } catch (error) {
         console.error("Import Error:", error);
 
-        alert("❌ Lỗi Import: " + error.message);
+        Toast.error("❌ Lỗi Import: " + error.message);
       }
     };
 

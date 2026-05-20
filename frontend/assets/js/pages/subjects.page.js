@@ -106,7 +106,7 @@ async function loadSubjects(keyword = "") {
   } catch (error) {
     console.error(error);
 
-    alert("Không thể tải danh sách môn học");
+    Toast.error("Không thể tải danh sách môn học");
   }
 }
 
@@ -204,7 +204,7 @@ function setupForm() {
           HeSo,
         });
 
-        alert("Cập nhật môn học thành công");
+        Toast.success("Cập nhật môn học thành công");
       } else {
         /* =========================
              CREATE
@@ -214,7 +214,7 @@ function setupForm() {
           HeSo,
         });
 
-        alert("Thêm môn học thành công");
+        Toast.success("Thêm môn học thành công");
       }
 
       form.reset();
@@ -225,7 +225,7 @@ function setupForm() {
 
       await loadSubjects();
     } catch (error) {
-      alert(error.message);
+      Toast.error(error.message);
     } finally {
       isSubmitting = false;
     }
@@ -274,11 +274,11 @@ function setupTableActions() {
       try {
         await deleteSubject(id);
 
-        alert("Xóa môn học thành công");
+        Toast.success("Xóa môn học thành công");
 
         await loadSubjects();
       } catch (error) {
-        alert(error.message);
+        Toast.error(error.message);
       }
     }
   });

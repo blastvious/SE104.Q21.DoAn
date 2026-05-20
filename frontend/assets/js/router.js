@@ -1,5 +1,8 @@
 const mainContent = document.getElementById("main-content");
-import { logout } from "../js/service/auth.service.js";
+import { logout, getMe } from "../js/service/auth.service.js";
+import { canAccessPage } from "./permission.js";
+
+let currentUser = null; // 🔥 cache user
 
 const routes = {
     "dashboard.html": () => import("./pages/dashboard.page.js"),
@@ -12,11 +15,44 @@ const routes = {
     "account.html": () => import("./pages/account.page.js"),
     "report-semester.html": () => import("./pages/report-semester.page.js"),
     "class-assignment.html": () => import("./pages/class-assignment.page.js"),
-    "search.html":           () => import("./pages/search.page.js")
+    "search.html": () => import("./pages/search.page.js")
 };
 
+// 🔥 Ẩn menu theo quyền
+async function applyMenuPermission() {
+    document.querySelectorAll("[data-page]").forEach(el => {
+        const page = el.dataset.page;
+
+        if (!canAccessPage(currentUser, page)) {
+            el.style.display = "none";
+        }
+    });
+
+    // 🔥 Ẩn luôn menu cha nếu tất cả con bị ẩn
+    document.querySelectorAll(".has-submenu").forEach(parent => {
+        const children = parent.querySelectorAll("[data-page]");
+        const allHidden = [...children].every(c => c.style.display === "none");
+
+        if (allHidden) {
+            parent.style.display = "none";
+        }
+    });
+}
+
+// 🔥 load page có check quyền
 async function loadPage(page) {
     try {
+        // 🔥 check quyền
+        if (!canAccessPage(currentUser, page)) {
+            Toast.warning("Bạn không có quyền truy cập trang này!");
+
+            if (currentUser.role === "User") {
+                return loadPage("search.html");
+            }
+
+            return loadPage("dashboard.html");
+        }
+
         const res = await fetch(`pages/${page}`);
         if (!res.ok) throw new Error("Không tìm thấy file HTML");
 
@@ -29,17 +65,22 @@ async function loadPage(page) {
                 await module.init();
             }
         }
+
     } catch (err) {
         console.error("Lỗi router:", err);
-        mainContent.innerHTML = `<h2>Đang phát triển</h2><p>Tính năng này hiện chưa hoàn thiện.</p>`;
+        window.location.href = "login.html";
     }
 }
 
 function activateMenuItem(el) {
-    document.querySelectorAll('.sidebar-menu li, .submenu li').forEach(li => li.classList.remove('active'));
+    document.querySelectorAll('.sidebar-menu li, .submenu li')
+        .forEach(li => li.classList.remove('active'));
+
     if (el) el.classList.add('active');
 }
+
 document.getElementById("logoutBtn").addEventListener("click", logout);
+
 document.addEventListener('click', function (e) {
     const menuParent = e.target.closest('.menu-parent');
     if (menuParent) {
@@ -72,4 +113,22 @@ document.addEventListener('click', function (e) {
     }
 });
 
-loadPage("dashboard.html");
+// 🔥 INIT APP (QUAN TRỌNG NHẤT)
+(async () => {
+    try {
+        currentUser = await getMe(); // chỉ gọi 1 lần
+
+        await applyMenuPermission(); // ẩn menu
+
+        // 🔥 redirect theo role
+        if (currentUser.role === "User") {
+            await loadPage("search.html");
+        } else {
+            await loadPage("dashboard.html");
+        }
+
+    } catch (err) {
+        console.error("Lỗi khởi tạo app:", err);
+        window.location.href = "login.html";
+    }
+})();

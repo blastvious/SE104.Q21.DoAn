@@ -39,12 +39,12 @@ export const init = async () => {
                 NgayKetThuc: toISODate(document.getElementById('NgayKetThuc').value)
             };
             await settingsService.createYear(data);
-            alert("Thành công!");
+            Toast.success("Thành công!");
             e.target.reset();
             clearFlatpickr('NgayBatDau');
             clearFlatpickr('NgayKetThuc');
             await loadAllData();
-        } catch (err) { alert(err.message); }
+        } catch (err) { Toast.error(err.message); }
     };
 
     // 4. Xử lý Form Học Kỳ
@@ -54,7 +54,7 @@ export const init = async () => {
             const ten = document.getElementById('TenHocKy').value;
             await settingsService.createSemester(ten);
             await loadAllData();
-        } catch (err) { alert(err.message); }
+        } catch (err) { Toast.error(err.message); }
     };
 
     // 5. Xử lý Form Khối
@@ -65,7 +65,7 @@ export const init = async () => {
             await settingsService.createGrade(ten);
             e.target.reset();
             await loadAllData();
-        } catch (err) { alert(err.message); }
+        } catch (err) { Toast.error(err.message); }
     };
 
     // 6. Xử lý Form Lớp
@@ -81,7 +81,7 @@ export const init = async () => {
             await settingsService.createClass(data);
             e.target.reset();
             await loadAllData();
-        } catch (err) { alert(err.message); }
+        } catch (err) { Toast.error(err.message); }
     };
 };
 

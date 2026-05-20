@@ -112,16 +112,16 @@ function bindRowEvents() {
             try {
                 const success = await deleteParameter(name);
                 if (success) {
-                    alert("Xóa cấu hình tham số thành công!");
+                    Toast.success("Xóa cấu hình tham số thành công!");
                     row.remove();
                     // Tải lại để cập nhật chính xác số thứ tự STT
                     const searchInput = document.getElementById("searchParamInput");
                     await fetchAndRenderParams(searchInput ? searchInput.value.trim() : "");
                 } else {
-                    alert("Không thể xóa tham số cấu hình này.");
+                    Toast.error("Không thể xóa tham số cấu hình này.");
                 }
             } catch (err) {
-                alert("Xảy ra lỗi trong quá trình kết nối xóa dữ liệu.");
+                Toast.error("Xảy ra lỗi trong quá trình kết nối xóa dữ liệu.");
             }
         };
     });
@@ -178,7 +178,7 @@ function initControlPanel() {
 
             // Kiểm tra tính hợp lệ dữ liệu đầu vào (Validation)
             if (!tenThamSo || !giaTri) {
-                alert("Vui lòng nhập đầy đủ cả tên tham số và giá trị áp dụng!");
+                Toast.warning("Vui lòng nhập đầy đủ cả tên tham số và giá trị áp dụng!");
                 return;
             }
 
@@ -187,28 +187,28 @@ function initControlPanel() {
                     // Chế độ: CẬP NHẬT (UPDATE)
                     const success = await updateParameter(currentEditingName, tenThamSo, giaTri);
                     if (success) {
-                        alert("Cập nhật quy định hệ thống thành công!");
+                        Toast.success("Cập nhật quy định hệ thống thành công!");
                         closeModal();
                         await fetchAndRenderParams(searchInput ? searchInput.value.trim() : "");
                     } else {
-                        alert("Cập nhật thất bại. Vui lòng kiểm tra lại dữ liệu đầu vào.");
+                        Toast.error("Cập nhật thất bại. Vui lòng kiểm tra lại dữ liệu đầu vào.");
                     }
                 } else {
                     // Chế độ: TẠO MỚI (CREATE)
                     const response = await createParameter(tenThamSo, giaTri);
                     if (response.status === 201) {
-                        alert("Thêm mới cấu hình tham số thành công!");
+                        Toast.success("Thêm mới cấu hình tham số thành công!");
                         closeModal();
                         if (searchInput) searchInput.value = ""; // Reset thanh tìm kiếm về rỗng để hiển thị hàng mới thêm
                         await fetchAndRenderParams();
                     } else {
                         const errorData = await response.json();
-                        alert(errorData.message || "Tạo mới thất bại. Tên tham số có thể đã tồn tại!");
+                        Toast.error(errorData.message || "Tạo mới thất bại. Tên tham số có thể đã tồn tại!");
                     }
                 }
             } catch (err) {
                 console.error("Lỗi submit form tham số:", err);
-                alert("Lỗi đường truyền hệ thống không thể xử lý yêu cầu!");
+                Toast.error("Lỗi đường truyền hệ thống không thể xử lý yêu cầu!");
             }
         };
     }
