@@ -29,7 +29,6 @@ export const login = async (username, password) => {
 // 2. Lấy thông tin cá nhân (Me)
 export const getMe = async () => {
     const res = await fetch(`${API_URL}/me`, { headers: getHeaders() });
-    if (res.status === 401) throw new Error("401");
     if (!res.ok) throw new Error("Không thể xác thực tài khoản");
     return res.json();
 };
