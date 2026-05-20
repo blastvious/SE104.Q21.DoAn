@@ -68,7 +68,8 @@ async function loadPage(page) {
 
     } catch (err) {
         console.error("Lỗi router:", err);
-        window.location.href = "login.html";
+        if (err.message === "401") localStorage.removeItem("token");
+        window.location.href = "/frontend/pages/login.html";
     }
 }
 
@@ -129,6 +130,7 @@ document.addEventListener('click', function (e) {
 
     } catch (err) {
         console.error("Lỗi khởi tạo app:", err);
-        window.location.href = "login.html";
+        if (err.message === "401") localStorage.removeItem("token");
+        window.location.href = "/frontend/pages/login.html";
     }
 })();
