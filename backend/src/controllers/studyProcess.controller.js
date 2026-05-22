@@ -19,17 +19,29 @@ export const enrollStudent = async (req, res) => {
     try {
         const { MaHS, MaLop, MaHocKy } = req.body;
 
-        const [student, semester] = await Promise.all([
+        // Tối ưu: Lấy cấu hình SiSoToiDa ngay từ đầu bên ngoài transaction
+        const [student, semester, [paramRows]] = await Promise.all([
             db.HOCSINH.findByPk(MaHS),
-            db.HOCKY.findByPk(MaHocKy)
+            db.HOCKY.findByPk(MaHocKy),
+            db.sequelize.query(`SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'SiSoToiDa'`)
         ]);
 
         if (!student) return res.status(404).json({ message: "Student not found" });
         if (!semester) return res.status(404).json({ message: "Semester not found" });
 
-        const enrollment = await db.sequelize.transaction(async (t) => {
+        await db.sequelize.transaction(async (t) => {
             const classRecord = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
             if (!classRecord) throwHttp("Class not found", 404);
+
+            // Sửa lỗi: Đọc chính xác giá trị từ cấu trúc mảng hàng (paramRows)
+            if (paramRows && paramRows.length > 0) {
+                const siSoToiDa = parseInt(paramRows[0].GiaTri, 10);
+                const count = await db.QUATRINHHOC.count({ where: { MaLop, MaHocKy }, transaction: t });
+
+                if (count >= siSoToiDa) {
+                    throwHttp(`Lớp đã đạt sĩ số tối đa (${siSoToiDa} học sinh)`, 400);
+                }
+            }
 
             const enrolled = await db.QUATRINHHOC.findOne({ where: { MaHS, MaHocKy }, transaction: t, lock: t.LOCK.UPDATE });
             if (enrolled) {
@@ -42,12 +54,11 @@ export const enrollStudent = async (req, res) => {
                 );
             }
 
-            const count = await db.QUATRINHHOC.count({ where: { MaLop }, transaction: t });
-
             await db.QUATRINHHOC.create({ MaHS, MaLop, MaHocKy, DiemTBHocKy: 0.00 }, { transaction: t });
 
-            // cập nhật sĩ số thực tế
-            await classRecord.update({ SiSo: count + 1 }, { transaction: t });
+            // ĐỒNG BỘ SĨ SỐ
+            const finalCount = await db.QUATRINHHOC.count({ where: { MaLop, MaHocKy }, transaction: t });
+            await classRecord.update({ SiSo: finalCount }, { transaction: t });
         });
 
         res.status(201).json({ message: "Enroll success" });
@@ -77,10 +88,14 @@ export const transferClass = async (req, res) => {
     try {
         const { MaHS, MaHocKy, MaLopMoi } = req.body;
 
-        const semester = await db.HOCKY.findByPk(MaHocKy);
+        // Tối ưu: Đọc dữ liệu tham số tập trung ở Promise.all ngoài transaction
+        const [semester, [paramRows]] = await Promise.all([
+            db.HOCKY.findByPk(MaHocKy),
+            db.sequelize.query(`SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'SiSoToiDa'`)
+        ]);
         if (!semester) return res.status(404).json({ message: "Semester not found" });
 
-        const updated = await db.sequelize.transaction(async (t) => {
+        await db.sequelize.transaction(async (t) => {
             const current = await db.QUATRINHHOC.findOne({
                 where: { MaHS, MaHocKy }, transaction: t, lock: t.LOCK.UPDATE
             });
@@ -90,7 +105,15 @@ export const transferClass = async (req, res) => {
             const newClass = await db.LOP.findByPk(MaLopMoi, { transaction: t, lock: t.LOCK.UPDATE });
             if (!newClass) throwHttp("New class not found", 404);
 
-            const count = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi }, transaction: t });
+            // Sửa lỗi: Sử dụng biến paramRows gọn gàng và chính xác từ ngoài truyền vào
+            if (paramRows && paramRows.length > 0) {
+                const siSoToiDa = parseInt(paramRows[0].GiaTri, 10);
+                const countNewClassBefore = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
+
+                if (countNewClassBefore >= siSoToiDa) {
+                    throwHttp(`Lớp mới đã đạt sĩ số tối đa (${siSoToiDa} học sinh)`, 400);
+                }
+            }
 
             const existing = await db.QUATRINHHOC.findOne({
                 where: { MaHS, MaHocKy, MaLop: MaLopMoi }, transaction: t
@@ -98,16 +121,18 @@ export const transferClass = async (req, res) => {
             if (existing) throwHttp("Student already has an enrollment record in the target class for this semester", 409);
 
             const { DiemTBHocKy } = current;
-
-            // sĩ số lớp cũ trước khi xoá
             const oldClass = await db.LOP.findByPk(current.MaLop, { transaction: t, lock: t.LOCK.UPDATE });
-            const oldCount = await db.QUATRINHHOC.count({ where: { MaLop: current.MaLop }, transaction: t });
 
+            // THỰC HIỆN THAO TÁC: Xóa lớp cũ, Thêm lớp mới
             await db.QUATRINHHOC.destroy({ where: { MaHS, MaHocKy, MaLop: current.MaLop }, transaction: t });
-            await oldClass.update({ SiSo: oldCount - 1 }, { transaction: t });
-
             await db.QUATRINHHOC.create({ MaHS, MaHocKy, MaLop: MaLopMoi, DiemTBHocKy }, { transaction: t });
-            await newClass.update({ SiSo: count + 1 }, { transaction: t });
+
+            // ĐỒNG BỘ SĨ SỐ 2 LỚP
+            const finalOldClassCount = await db.QUATRINHHOC.count({ where: { MaLop: current.MaLop, MaHocKy }, transaction: t });
+            await oldClass.update({ SiSo: finalOldClassCount }, { transaction: t });
+
+            const finalNewClassCount = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
+            await newClass.update({ SiSo: finalNewClassCount }, { transaction: t });
         });
 
         res.json({ message: "Transfer successful" });
@@ -183,17 +208,28 @@ export const assignStudentsBatch = async (req, res) => {
             throwHttp("No students selected", 400);
         }
 
-        const result = await db.sequelize.transaction(async (t) => {
+        await db.sequelize.transaction(async (t) => {
+            // Sửa cấu trúc bóc tách mảng hàng [paramRows] đồng bộ đồng nhất với các hàm trên
+            const [paramRows] = await db.sequelize.query(
+                `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'SiSoToiDa'`,
+                { transaction: t }
+            );
+
             const classRecord = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
             if (!classRecord) throwHttp("Class not found", 404);
 
-            // kiểm tra sĩ số
-            const currentCount = await db.QUATRINHHOC.count({
-                where: { MaLop, MaHocKy },
-                transaction: t
-            });
+            if (paramRows && paramRows.length > 0) {
+                const siSoToiDa = parseInt(paramRows[0].GiaTri, 10);
+                const currentCount = await db.QUATRINHHOC.count({
+                    where: { MaLop, MaHocKy },
+                    transaction: t
+                });
 
-            // check đã tồn tại
+                if (currentCount + students.length > siSoToiDa) {
+                    throwHttp(`Không thể thêm. Lớp hiện có ${currentCount} học sinh, nếu thêm ${students.length} học sinh sẽ vượt quá sĩ số tối đa (${siSoToiDa})`, 400);
+                }
+            }
+
             const existed = await db.QUATRINHHOC.findAll({
                 where: {
                     MaHS: { [Op.in]: students },
@@ -206,7 +242,6 @@ export const assignStudentsBatch = async (req, res) => {
                 throwHttp("Some students already assigned", 409);
             }
 
-            // insert hàng loạt
             const data = students.map(MaHS => ({
                 MaHS,
                 MaLop,
@@ -216,8 +251,9 @@ export const assignStudentsBatch = async (req, res) => {
 
             await db.QUATRINHHOC.bulkCreate(data, { transaction: t });
 
-            // cập nhật sĩ số thực tế
-            await classRecord.update({ SiSo: currentCount + students.length }, { transaction: t });
+            // ĐỒNG BỘ SĨ SỐ
+            const finalCount = await db.QUATRINHHOC.count({ where: { MaLop, MaHocKy }, transaction: t });
+            await classRecord.update({ SiSo: finalCount }, { transaction: t });
         });
 
         res.json({ message: "Assign success" });
