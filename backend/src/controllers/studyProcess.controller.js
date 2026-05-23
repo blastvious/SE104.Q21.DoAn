@@ -84,11 +84,86 @@ export const getClassList = async (req, res) => {
     }
 };
 
+// export const transferClass = async (req, res) => {
+//     try {
+//         const { MaHS, MaHocKy, MaLopMoi } = req.body;
+
+//         // Tối ưu: Đọc dữ liệu tham số tập trung ở Promise.all ngoài transaction
+//         const [semester, [paramRows]] = await Promise.all([
+//             db.HOCKY.findByPk(MaHocKy),
+//             db.sequelize.query(`SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'SiSoToiDa'`)
+//         ]);
+//         if (!semester) return res.status(404).json({ message: "Semester not found" });
+
+//         await db.sequelize.transaction(async (t) => {
+//             const current = await db.QUATRINHHOC.findOne({
+//                 where: { MaHS, MaHocKy }, transaction: t, lock: t.LOCK.UPDATE
+//             });
+//             if (!current) throwHttp("Enrollment not found for this student and semester", 404);
+//             if (current.MaLop === MaLopMoi) throwHttp("Student is already in this class", 400);
+
+//             const newClass = await db.LOP.findByPk(MaLopMoi, { transaction: t, lock: t.LOCK.UPDATE });
+//             if (!newClass) throwHttp("New class not found", 404);
+
+//             // Sửa lỗi: Sử dụng biến paramRows gọn gàng và chính xác từ ngoài truyền vào
+//             if (paramRows && paramRows.length > 0) {
+//                 const siSoToiDa = parseInt(paramRows[0].GiaTri, 10);
+//                 const countNewClassBefore = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
+
+//                 if (countNewClassBefore >= siSoToiDa) {
+//                     throwHttp(`Lớp mới đã đạt sĩ số tối đa (${siSoToiDa} học sinh)`, 400);
+//                 }
+//             }
+
+//             const existing = await db.QUATRINHHOC.findOne({
+//                 where: { MaHS, MaHocKy, MaLop: MaLopMoi }, transaction: t
+//             });
+//             if (existing) throwHttp("Student already has an enrollment record in the target class for this semester", 409);
+
+//             const { DiemTBHocKy } = current;
+//             const oldClass = await db.LOP.findByPk(current.MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+
+//             // THỰC HIỆN THAO TÁC: Xóa lớp cũ, Thêm lớp mới
+//             await db.QUATRINHHOC.destroy({ where: { MaHS, MaHocKy, MaLop: current.MaLop }, transaction: t });
+//             await db.QUATRINHHOC.create({ MaHS, MaHocKy, MaLop: MaLopMoi, DiemTBHocKy }, { transaction: t });
+
+//             // ĐỒNG BỘ SĨ SỐ 2 LỚP
+//             const finalOldClassCount = await db.QUATRINHHOC.count({ where: { MaLop: current.MaLop, MaHocKy }, transaction: t });
+//             await oldClass.update({ SiSo: finalOldClassCount }, { transaction: t });
+
+//             const finalNewClassCount = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
+//             await newClass.update({ SiSo: finalNewClassCount }, { transaction: t });
+//         });
+
+//         res.json({ message: "Transfer successful" });
+//     } catch (error) {
+//         handleCatch(res, error);
+//     }
+// };
+
+
+// Hàm sinh mã tự động có hỗ trợ Transaction để tránh trùng lặp dữ liệu
+
+
+const CreateMa = async (model, truongMa, prefix, transaction = null) => {
+    const last = await model.findOne({ 
+        order: [[truongMa, "DESC"]],
+        transaction,
+        lock: transaction ? transaction.LOCK.UPDATE : undefined
+    });
+    
+    let stt = 1;
+    if (last) {
+        const lastNumber = parseInt(last[truongMa].replace(/\D/g, ""));
+        stt = lastNumber + 1;
+    }
+    return `${prefix}${String(stt).padStart(3, "0")}`;
+};
+
 export const transferClass = async (req, res) => {
     try {
         const { MaHS, MaHocKy, MaLopMoi } = req.body;
 
-        // Tối ưu: Đọc dữ liệu tham số tập trung ở Promise.all ngoài transaction
         const [semester, [paramRows]] = await Promise.all([
             db.HOCKY.findByPk(MaHocKy),
             db.sequelize.query(`SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'SiSoToiDa'`)
@@ -102,10 +177,11 @@ export const transferClass = async (req, res) => {
             if (!current) throwHttp("Enrollment not found for this student and semester", 404);
             if (current.MaLop === MaLopMoi) throwHttp("Student is already in this class", 400);
 
+            const MaLopCu = current.MaLop;
+
             const newClass = await db.LOP.findByPk(MaLopMoi, { transaction: t, lock: t.LOCK.UPDATE });
             if (!newClass) throwHttp("New class not found", 404);
 
-            // Sửa lỗi: Sử dụng biến paramRows gọn gàng và chính xác từ ngoài truyền vào
             if (paramRows && paramRows.length > 0) {
                 const siSoToiDa = parseInt(paramRows[0].GiaTri, 10);
                 const countNewClassBefore = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
@@ -114,32 +190,54 @@ export const transferClass = async (req, res) => {
                     throwHttp(`Lớp mới đã đạt sĩ số tối đa (${siSoToiDa} học sinh)`, 400);
                 }
             }
-
-            const existing = await db.QUATRINHHOC.findOne({
-                where: { MaHS, MaHocKy, MaLop: MaLopMoi }, transaction: t
+            // =========================================================
+            // XỬ LÝ DỊCH CHUYỂN ĐẦU ĐIỂM SANG LỚP MỚI
+            // =========================================================
+            const studentScores = await db.CT_BANGDIEMMON_HS.findAll({
+                where: { MaHS },
+                include: [{
+                    model: db.BANGDIEMMON,
+                    where: { MaLop: MaLopCu, MaHocKy }
+                }],
+                transaction: t,
+                lock: t.LOCK.UPDATE
             });
-            if (existing) throwHttp("Student already has an enrollment record in the target class for this semester", 409);
+
+            for (const ctHS of studentScores) {
+                const oldBDM = ctHS.BANGDIEMMON; 
+                const MaMonHoc = oldBDM.MaMonHoc;
+
+                const [newBDM] = await db.BANGDIEMMON.findOrCreate({
+                    where: { MaLop: MaLopMoi, MaMonHoc, MaHocKy },
+                    defaults: {
+
+                        MaBangDiemMon: await CreateMa(db.BANGDIEMMON, "MaBangDiemMon", "BDM", t),
+                    },
+                    transaction: t,
+                });
+
+                await ctHS.update({ MaBangDiemMon: newBDM.MaBangDiemMon }, { transaction: t });
+            }
 
             const { DiemTBHocKy } = current;
-            const oldClass = await db.LOP.findByPk(current.MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+            const oldClass = await db.LOP.findByPk(MaLopCu, { transaction: t, lock: t.LOCK.UPDATE });
 
-            // THỰC HIỆN THAO TÁC: Xóa lớp cũ, Thêm lớp mới
-            await db.QUATRINHHOC.destroy({ where: { MaHS, MaHocKy, MaLop: current.MaLop }, transaction: t });
+            await db.QUATRINHHOC.destroy({ where: { MaHS, MaHocKy, MaLop: MaLopCu }, transaction: t });
             await db.QUATRINHHOC.create({ MaHS, MaHocKy, MaLop: MaLopMoi, DiemTBHocKy }, { transaction: t });
 
-            // ĐỒNG BỘ SĨ SỐ 2 LỚP
-            const finalOldClassCount = await db.QUATRINHHOC.count({ where: { MaLop: current.MaLop, MaHocKy }, transaction: t });
+            const finalOldClassCount = await db.QUATRINHHOC.count({ where: { MaLop: MaLopCu, MaHocKy }, transaction: t });
             await oldClass.update({ SiSo: finalOldClassCount }, { transaction: t });
 
             const finalNewClassCount = await db.QUATRINHHOC.count({ where: { MaLop: MaLopMoi, MaHocKy }, transaction: t });
             await newClass.update({ SiSo: finalNewClassCount }, { transaction: t });
         });
 
-        res.json({ message: "Transfer successful" });
+        res.json({ message: "Transfer class and migrated scores successful" });
     } catch (error) {
         handleCatch(res, error);
     }
 };
+
 
 export const semesterSummary = async (req, res) => {
     try {
