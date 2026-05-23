@@ -5,16 +5,32 @@ import { Op, where } from "sequelize"
 /* =========================================
    GET STUDENT 
 ========================================= */
-export const getAllStudent = async (req, res) =>{
+export const getAllStudent = async (req, res) => {
     try {
-        const student = await db.HOCSINH.findAll();
+        const student = await db.HOCSINH.findAll({
+            order: [
+               
+                [
+                    db.sequelize.literal(`
+                        CASE 
+                            WHEN CHARINDEX(' ', REVERSE(RTRIM([HoTen]))) > 0 
+                            THEN RIGHT(RTRIM([HoTen]), CHARINDEX(' ', REVERSE(RTRIM([HoTen]))) - 1)
+                            ELSE [HoTen]
+                        END COLLATE Vietnamese_CI_AS
+                    `), 
+                    'ASC'
+                ],
+             
+                [db.sequelize.literal('[HoTen] COLLATE Vietnamese_CI_AS'), 'ASC']
+            ]
+        });
+        
         res.json(student);
     } catch (error) {
         console.log(error);
-        res.status(500).json({message: "Error from server"});
-        
+        res.status(500).json({ message: "Error from server" });
     }
-}
+};
 /* =========================================
    GET STUDENT BY ID
 ========================================= */
