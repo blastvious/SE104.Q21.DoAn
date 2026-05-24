@@ -4,3 +4,25 @@
     gap: 25px;
     animation: fadeIn 0.4s ease;
 }
+
+.parameter-page .students-table td {
+    padding: 14px 16px;
+    color: var(--text-table);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+}
+
+.parameter-page .students-table td.param-name-cell {
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.parameter-page .students-table td.param-value-cell {
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.parameter-page .students-table td:first-child {
+    font-weight: 600;
+    color: var(--text-table);
+}

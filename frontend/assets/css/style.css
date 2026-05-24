@@ -34,6 +34,7 @@ table {
 table th {
     position: sticky;
     top: 0;
+    z-index: 2;
     background: var(--surface-section);
     padding: 16px;
     text-align: center;
@@ -89,6 +90,13 @@ table td {
 .qlsv-btn--blue:hover {
     background: #2c5f7a;
     transform: translateY(-1px);
+}
+
+.qlsv-btn:disabled,
+.qlsv-btn--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .qlsv-btn--outline {
@@ -252,6 +260,7 @@ table td {
 /* ACTION */
 .action-group {
     display: flex;
+    justify-content: center;
     gap: 10px;
 }
 

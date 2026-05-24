@@ -82,6 +82,7 @@ function activateMenuItem(el) {
 }
 
 document.getElementById("logoutBtn").addEventListener("click", logout);
+document.getElementById("logoutBtnTopbar")?.addEventListener("click", logout);
 
 document.addEventListener("click", function (e) {
   const menuParent = e.target.closest(".menu-parent");
@@ -119,14 +120,24 @@ document.addEventListener("click", function (e) {
 (async () => {
   try {
     currentUser = await getMe(); // chỉ gọi 1 lần
+    window.currentUser = currentUser;
 
     await applyMenuPermission(); // ẩn menu
 
     // 🔥 redirect theo role
     if (currentUser.role === "User") {
-      await loadPage("search.html");
+        // Ẩn sidebar, show topbar
+        const sidebar = document.querySelector(".sidebar");
+        const header = document.querySelector(".header");
+        const userTopbar = document.getElementById("userTopbar");
+        if (sidebar) sidebar.style.display = "none";
+        if (header) header.style.display = "none";
+        if (userTopbar) userTopbar.style.display = "flex";
+
+        document.getElementById("logoutBtnTopbar")?.addEventListener("click", logout);
+        await loadPage("search.html");
     } else {
-      await loadPage("dashboard.html");
+        await loadPage("dashboard.html");
     }
   } catch (err) {
     console.error("Lỗi router:", err);

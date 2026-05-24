@@ -4,9 +4,14 @@
         <p>Thiết lập thông số nền tảng cho quản lý học sinh</p>
     </div>
 
+    <div class="collapsed-bar"></div>
+
     <div class="settings-grid">
-        <section class="config-card">
-            <div class="card-title">Năm Học</div>
+        <section class="config-card" data-index="0">
+            <div class="card-title">
+                <span>Năm Học</span>
+                <button class="card-minimize-btn" title="Thu nhỏ">−</button>
+            </div>
             <form id="form-year" class="modern-form">
                 <input type="text" id="TenNamHoc" placeholder="Tên năm học (2025-2026)" required>
 
@@ -42,8 +47,11 @@
             </div>
         </section>
 
-        <section class="config-card">
-            <div class="card-title">Học Kỳ</div>
+        <section class="config-card" data-index="1">
+            <div class="card-title">
+                <span>Học Kỳ</span>
+                <button class="card-minimize-btn" title="Thu nhỏ">−</button>
+            </div>
             <form id="form-semester" class="modern-form">
                 <select id="TenHocKy" required>
                     <option value="" disabled selected>Chọn học kỳ...</option>
@@ -66,8 +74,11 @@
             </div>
         </section>
 
-        <section class="config-card">
-            <div class="card-title">Khối Lớp</div>
+        <section class="config-card" data-index="2">
+            <div class="card-title">
+                <span>Khối Lớp</span>
+                <button class="card-minimize-btn" title="Thu nhỏ">−</button>
+            </div>
             <form id="form-grade" class="modern-form">
                 <input type="text" id="TenKhoiLop" placeholder="Tên khối (VD: 10, 11, 12)" required>
                 <button type="submit" class="btn-add">Thêm Khối</button>
@@ -86,8 +97,11 @@
             </div>
         </section>
 
-        <section class="config-card">
-            <div class="card-title">Lớp Học</div>
+        <section class="config-card" data-index="3">
+            <div class="card-title">
+                <span>Lớp Học</span>
+                <button class="card-minimize-btn" title="Thu nhỏ">−</button>
+            </div>
             <form id="form-class" class="modern-form">
                 <input type="text" id="TenLop" placeholder="Tên lớp (VD: 10A1)" required>
                 <div class="row">

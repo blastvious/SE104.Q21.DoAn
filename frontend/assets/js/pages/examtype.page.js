@@ -4,6 +4,7 @@ import {
   updateExamType,
   deleteExamType,
 } from "../service/examtype.service.js";
+import { can } from "../permission.js";
 
 let editingId = null;
 let isSubmitting = false;
@@ -48,9 +49,10 @@ async function loadExamTypes(keyword = "") {
                 data-heso="${t.HeSo}">
                 <i class="fas fa-pen"></i>
               </button>
+              ${can(window.currentUser, "delete") ? `
               <button class="action-btn delete" data-id="${t.MaLoaiHinhKT}">
                 <i class="fas fa-trash"></i>
-              </button>
+              </button>` : ''}
             </div>
           </td>
         </tr>`;

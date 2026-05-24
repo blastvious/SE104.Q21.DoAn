@@ -7,7 +7,18 @@ import { Op, where } from "sequelize"
 ========================================= */
 export const getAllStudent = async (req, res) => {
     try {
+        const { keyword } = req.query;
+        const whereClause = keyword
+            ? {
+                [Op.or]: [
+                    { HoTen: { [Op.like]: `%${keyword}%` } },
+                    { SoDienThoai: { [Op.like]: `%${keyword}%` } },
+                ]
+            }
+            : {};
+
         const student = await db.HOCSINH.findAll({
+            where: whereClause,
             order: [
                
                 [

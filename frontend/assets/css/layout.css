@@ -61,12 +61,12 @@ body.dark-mode {
     --text-body: #c8dce8;
     --border-light: #2a4a60;
 
-    --surface-card: #1e3a4f;
-    --surface-hover: #254458;
-    --surface-section: #152839;
-    --surface-section-hover: #1c3145;
-    --text-heading: #7faec4;
-    --text-table: #b0cbd9;
+    --surface-card: #162b3d;
+    --surface-hover: #1c3348;
+    --surface-section: #0f2030;
+    --surface-section-hover: #142638;
+    --text-heading: #94c8e0;
+    --text-table: #d6e6f0;
     --border: #2a4a60;
     --shadow-card: 0 4px 15px rgba(0,0,0,0.2);
     --blue-gradient: linear-gradient(135deg, #6d9db4, #2c5f7a);
@@ -270,6 +270,94 @@ body.dark-mode {
 .sidebar-menu li.active::before {
     height: 24px;
     background: var(--accent);
+}
+
+/* USER TOPBAR (User role only) */
+.user-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 28px;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.user-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.topbar-logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+
+.user-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-topbar .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.05rem;
+    transition: all 0.25s;
+    backdrop-filter: blur(4px);
+    margin-left: 0;
+}
+
+.user-topbar .theme-toggle:hover {
+    background: rgba(255,255,255,0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.topbar-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 20px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.25s;
+    backdrop-filter: blur(4px);
+}
+
+.topbar-logout-btn i {
+    font-size: 0.95rem;
+}
+
+.topbar-logout-btn:hover {
+    background: rgba(255,255,255,0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+body.dark-mode .user-topbar {
+    background: #1a2a36;
+    border-bottom-color: rgba(255,255,255,0.06);
 }
 
 /* CONTENT AREA */

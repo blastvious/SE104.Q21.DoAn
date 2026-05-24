@@ -1,4 +1,5 @@
 import { settingsService } from "../service/settings.service.js"
+import { can } from "../permission.js";
 
 const toISODate = (vnDate) => {
     const parts = vnDate.split("/");
@@ -90,6 +91,35 @@ export const init = async () => {
 
     document.querySelectorAll('#table-year, #table-semester, #table-grade, #table-class').forEach(table => {
         table.addEventListener('click', handleTableClick);
+    });
+
+    const collapsedBar = document.querySelector('.collapsed-bar');
+    const settingsGrid = document.querySelector('.settings-grid');
+
+    document.querySelectorAll('.card-minimize-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.config-card');
+            const isCollapsed = card.parentElement === collapsedBar;
+            if (isCollapsed) {
+                const index = parseInt(card.dataset.index);
+                let insertBefore = null;
+                for (const child of settingsGrid.children) {
+                    if (parseInt(child.dataset.index) > index) {
+                        insertBefore = child;
+                        break;
+                    }
+                }
+                if (insertBefore) {
+                    settingsGrid.insertBefore(card, insertBefore);
+                } else {
+                    settingsGrid.appendChild(card);
+                }
+                btn.textContent = '−';
+            } else {
+                collapsedBar.appendChild(card);
+                btn.textContent = '+';
+            }
+        });
     });
 };
 
@@ -239,7 +269,7 @@ async function loadAllData() {
     const actionBtns = (id) => `
         <div class="action-group">
             <button class="action-btn edit" title="Chỉnh sửa"><i class="fas fa-pen"></i></button>
-            <button class="action-btn delete" title="Xóa"><i class="fas fa-trash"></i></button>
+            ${can(window.currentUser, "delete") ? `<button class="action-btn delete" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
         </div>
     `;
 

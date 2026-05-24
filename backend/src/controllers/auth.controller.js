@@ -2,8 +2,20 @@ import db from "../../libs/db.js"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt";
 
-export const getMe = (req, res) => {
-    res.json(req.user);
+export const getMe = async (req, res) => {
+    try {
+        const user = await db.PHANQUYEN.findByPk(req.user.id, {
+            attributes: ["Id", "Username", "RoleName"]
+        });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json({
+            id: user.Id,
+            username: user.Username,
+            role: user.RoleName
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
 };
 
 export const getUsers = async (req, res) => {

@@ -95,9 +95,22 @@
         <div class="content-area">
             <div class="bg-bubbles" id="bgBubbles"></div>
 
+            <div id="userTopbar" class="user-topbar" style="display:none">
+                <div class="user-topbar-left">
+                    <img src="assets/images/LOGO-new.png" class="topbar-logo">
+                </div>
+                <div class="user-topbar-right">
+                    <button id="themeToggleTopbar" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="logoutBtnTopbar" class="topbar-logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </div>
+            </div>
+
             <header class="header">
                 <button id="toggle-btn" class="hamburger">☰</button>
-                <h1>Hệ Thống Quản Lý Học Sinh</h1>
                 <button id="themeToggle" class="theme-toggle">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -183,17 +196,21 @@
         };
 
         // Dark mode
-        const themeToggle = document.getElementById('themeToggle');
-        if (localStorage.getItem('darkMode') === 'true') {
-            document.body.classList.add('dark-mode');
-            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        function initThemeToggle(btn) {
+            if (!btn) return;
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                btn.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            btn.onclick = () => {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', isDark);
+            };
         }
-        themeToggle.onclick = () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-            localStorage.setItem('darkMode', isDark);
-        };
+        initThemeToggle(document.getElementById('themeToggle'));
+        initThemeToggle(document.getElementById('themeToggleTopbar'));
 
         // Logo click
         document.getElementById('logoHome').onclick = () => {

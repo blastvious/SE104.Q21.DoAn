@@ -10,12 +10,26 @@ export async function init() {
         loadSemesters(),
     ]);
     setupEventListeners();
+    updateButtons();
     drawDoughnutChart(0, 0);
 }
 
 function setupEventListeners() {
     document.getElementById("reportFilterBtn").addEventListener("click", loadReport);
     document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
+
+    const selects = [document.getElementById("selNam"), document.getElementById("selHK")];
+    selects.forEach(sel => {
+        sel.addEventListener("change", updateButtons);
+    });
+}
+
+function updateButtons() {
+    const year = document.getElementById("selNam").value;
+    const sem = document.getElementById("selHK").value;
+    const ok = year && sem;
+    document.getElementById("reportFilterBtn").disabled = !ok;
+    document.getElementById("exportPdfBtn").disabled = !ok;
 }
 
 async function loadYears() {
@@ -146,6 +160,7 @@ function renderBarChart(details) {
     const ctx    = document.getElementById("chartBar").getContext("2d");
     const labels = details.map(d => d.TenLop);
     const values = details.map(d => d.TiLeDat);
+    const isDark = document.body.classList.contains("dark-mode");
 
     const backgroundColors = values.map(v =>
         v >= 80 ? "rgba(34,197,94,0.75)"
@@ -180,10 +195,16 @@ function renderBarChart(details) {
                 y: {
                     beginAtZero: true,
                     max: 100,
-                    ticks: { callback: v => `${v}%` },
-                    grid: { color: "rgba(0,0,0,0.06)" }
+                    ticks: {
+                        callback: v => `${v}%`,
+                        color: isDark ? "#b0cbd9" : "#64748b"
+                    },
+                    grid: { color: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }
                 },
-                x: { grid: { display: false } }
+                x: {
+                    grid: { display: false },
+                    ticks: { color: isDark ? "#b0cbd9" : "#64748b" }
+                }
             }
         }
     });
@@ -191,6 +212,7 @@ function renderBarChart(details) {
 
 function renderDoughnutChart(soLuongDat, soLuongKhongDat) {
     const ctx = document.getElementById("chartDoughnut").getContext("2d");
+    const isDark = document.body.classList.contains("dark-mode");
 
     if (doughnutChart) doughnutChart.destroy();
 
@@ -214,7 +236,11 @@ function renderDoughnutChart(soLuongDat, soLuongKhongDat) {
             plugins: {
                 legend: {
                     position: "bottom",
-                    labels: { padding: 12, font: { size: 12 } }
+                    labels: {
+                        padding: 12,
+                        font: { size: 12 },
+                        color: isDark ? "#d6e6f0" : "#475569"
+                    }
                 },
                 tooltip: {
                     callbacks: {

@@ -4,6 +4,7 @@ import {
   updateSubject,
   deleteSubject,
 } from "../service/subject.service.js";
+import { can } from "../permission.js";
 
 let editingSubjectId = null;
 
@@ -89,12 +90,13 @@ async function loadSubjects(keyword = "") {
                 <i class="fas fa-pen"></i>
               </button>
 
+              ${can(window.currentUser, "delete") ? `
               <button
                 class="action-btn delete"
                 data-id="${subject.MaMonHoc}"
               >
                 <i class="fas fa-trash"></i>
-              </button>
+              </button>` : ''}
 
             </div>
 
@@ -120,9 +122,10 @@ function updateStats(subjects) {
      SUBJECT HIGHEST HESO
   ========================= */
   if (subjects.length > 0) {
-    const highest = [...subjects].sort((a, b) => b.HeSo - a.HeSo)[0];
+    const maxHeSo = Math.max(...subjects.map(s => Number(s.HeSo)));
+    const highestSubjects = subjects.filter(s => Number(s.HeSo) === maxHeSo);
 
-    document.getElementById("highestSubject").textContent = highest.TenMonHoc;
+    document.getElementById("highestSubjectCount").textContent = highestSubjects.length;
 
     /* =========================
        AVG HESO

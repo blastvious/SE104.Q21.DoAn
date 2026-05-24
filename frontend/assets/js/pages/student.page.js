@@ -5,8 +5,13 @@ import {
   updateStudent,
   deleteStudent,
 } from "../service/student.service.js";
+import { can } from "../permission.js";
 
 let editingStudentId = null;
+
+const ADMISSION_MAP_KEY = "studentAdmissionMap";
+const ADMISSION_MODE_KEY = "studentFilterMode";
+const RECENT_DAYS = 7;
 
 /* =========================================
    FORMAT DATE
@@ -36,6 +41,95 @@ function formatDisplayDate(dateString) {
 }
 
 /* =========================================
+   ADMISSION DATE (localStorage)
+========================================= */
+function getAdmissionMap() {
+  try {
+    return JSON.parse(localStorage.getItem(ADMISSION_MAP_KEY) || "{}");
+  } catch { return {}; }
+}
+
+function saveAdmissionMap(map) {
+  localStorage.setItem(ADMISSION_MAP_KEY, JSON.stringify(map));
+}
+
+function getStudentAdmission(maHS) {
+  return getAdmissionMap()[maHS] || null;
+}
+
+function setStudentAdmission(maHS, dateStr) {
+  const map = getAdmissionMap();
+  map[maHS] = dateStr;
+  saveAdmissionMap(map);
+}
+
+function daysSinceAdmission(maHS) {
+  const dateStr = getStudentAdmission(maHS);
+  if (!dateStr) return Infinity;
+  const then = new Date(dateStr + "T00:00:00");
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.floor((now - then) / (1000 * 60 * 60 * 24));
+}
+
+function isWithinRecentDays(maHS) {
+  return daysSinceAdmission(maHS) < RECENT_DAYS;
+}
+
+function getFilterMode() {
+  return localStorage.getItem(ADMISSION_MODE_KEY) || "recent";
+}
+
+function setFilterMode(mode) {
+  localStorage.setItem(ADMISSION_MODE_KEY, mode);
+}
+
+function initAdmissionMap(students) {
+  const map = getAdmissionMap();
+  let changed = false;
+  const defaultDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() - 8);
+  const dateStr = defaultDate.toISOString().slice(0, 10);
+  students.forEach(s => {
+    if (!map[s.MaHS]) {
+      map[s.MaHS] = dateStr;
+      changed = true;
+    }
+  });
+  if (changed) saveAdmissionMap(map);
+}
+
+function setupAdmissionFilter() {
+  const toggle = document.getElementById("admissionFilterToggle");
+  const text = document.getElementById("admissionFilterText");
+  if (!toggle || !text) return;
+
+  const mode = getFilterMode();
+  if (mode === "all") {
+    text.textContent = "Đang hiển thị tất cả học sinh";
+    toggle.textContent = "Chỉ hiển thị 7 ngày";
+  } else {
+    text.textContent = "Đang hiển thị học sinh được tiếp nhận trong 7 ngày gần đây";
+    toggle.textContent = "Hiển thị tất cả";
+  }
+
+  toggle.onclick = (e) => {
+    e.preventDefault();
+    const current = getFilterMode();
+    if (current === "all") {
+      setFilterMode("recent");
+      text.textContent = "Đang hiển thị học sinh được tiếp nhận trong 7 ngày gần đây";
+      toggle.textContent = "Hiển thị tất cả";
+    } else {
+      setFilterMode("all");
+      text.textContent = "Đang hiển thị tất cả học sinh";
+      toggle.textContent = "Chỉ hiển thị 7 ngày";
+    }
+    renderTable(document.getElementById("studentSearch")?.value.trim() || "");
+  };
+}
+
+/* =========================================
    INIT
 ========================================= */
 export async function init() {
@@ -48,6 +142,10 @@ export async function init() {
   setupSearch();
 
   setupDatePicker();
+
+  const students = await getAllStudents();
+  initAdmissionMap(students);
+  setupAdmissionFilter();
 
   await renderTable();
 }
@@ -65,13 +163,20 @@ function setupDatePicker() {
 ========================================= */
 async function renderTable(keyword = "") {
   try {
-    const students = await getAllStudents(keyword);
+    let students = await getAllStudents(keyword);
 
     const tableBody = document.getElementById("studentTable");
 
     if (!tableBody) return;
 
     tableBody.innerHTML = "";
+
+    /* =========================================
+           FILTER BY ADMISSION DATE
+        ========================================= */
+    if (getFilterMode() === "recent") {
+      students = students.filter(s => isWithinRecentDays(s.MaHS));
+    }
 
     /* =========================================
            EMPTY TABLE
@@ -140,12 +245,13 @@ async function renderTable(keyword = "") {
                                 <i class="fas fa-pen"></i>
                             </button>
 
+                            ${can(window.currentUser, "delete") ? `
                             <button
                                 class="action-btn delete"
                                 data-id="${s.MaHS}"
                             >
                                 <i class="fas fa-trash"></i>
-                            </button>
+                            </button>` : ''}
 
                         </div>
 
@@ -242,8 +348,13 @@ function setupForm() {
         /* =========================================
                CREATE
             ========================================= */
-        await createStudent(student);
-
+        const result = await createStudent(student);
+        const created = result?.data || result;
+        const maHS = created?.MaHS;
+        if (maHS) {
+          const today = new Date().toISOString().slice(0, 10);
+          setStudentAdmission(maHS, today);
+        }
         Toast.success("🎉 Tiếp nhận học sinh thành công!");
       }
 
@@ -389,95 +500,142 @@ function hideImportProgress() {
    IMPORT EXCEL
 ========================================= */
 function setupExcelImport() {
+  const modal = document.getElementById("importExcelModal");
+  const openBtn = document.getElementById("btnImportExcel");
+  const closeBtn = document.getElementById("closeModalImport");
+  const cancelBtn = document.getElementById("cancelModalImport");
+  const confirmBtn = document.getElementById("confirmImportBtn");
   const fileInput = document.getElementById("excelFile");
+  const fileDisplay = document.getElementById("fileDisplay");
+  const fileNameText = document.getElementById("fileNameText");
 
-  if (!fileInput) {
-    console.error("setupExcelImport: Không tìm thấy input file");
-    return;
+  if (!modal || !fileInput) return;
+
+  const openModal = () => { modal.style.display = "block"; };
+  const closeModal = () => {
+    modal.style.display = "none";
+    fileInput.value = "";
+    if (fileDisplay) fileDisplay.style.display = "none";
+  };
+
+  if (openBtn) openBtn.onclick = openModal;
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  document.addEventListener("change", (e) => {
+    if (e.target === fileInput) {
+      const file = fileInput.files?.[0];
+      if (file && fileDisplay && fileNameText) {
+        fileNameText.textContent = file.name;
+        fileDisplay.style.display = "flex";
+      }
+    }
+  });
+
+  if (confirmBtn) {
+    confirmBtn.onclick = async () => {
+      const file = fileInput.files?.[0];
+      if (!file) {
+        Toast.warning("Vui lòng chọn file Excel!");
+        return;
+      }
+      closeModal();
+      await processExcelFile(file);
+    };
   }
+}
 
-  fileInput.onchange = async () => {
-    const file = fileInput.files[0];
+async function processExcelFile(file) {
+  const fileInput = document.getElementById("excelFile");
+  const fileDisplay = document.getElementById("fileDisplay");
 
-    if (!file) return;
+  const reader = new FileReader();
 
-    const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-    reader.onload = async (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      if (jsonData.length === 0) {
+        throw new Error("File Excel rỗng");
+      }
 
-        if (jsonData.length === 0) {
-          throw new Error("File Excel rỗng");
-        }
+      jsonData = jsonData.map((row) => {
+        const item = { ...row };
+        item.NgaySinh = cleanDate(item.NgaySinh);
+        item.SoDienThoai = cleanPhoneNumber(item.SoDienThoai);
+        return item;
+      });
 
-        jsonData = jsonData.map((row) => {
-          const item = { ...row };
+      const chunks = [];
+      for (let i = 0; i < jsonData.length; i += CHUNK_SIZE) {
+        chunks.push(jsonData.slice(i, i + CHUNK_SIZE));
+      }
 
-          item.NgaySinh = cleanDate(item.NgaySinh);
-          item.SoDienThoai = cleanPhoneNumber(item.SoDienThoai);
+      showImportProgress(jsonData.length);
 
-          return item;
-        });
+      let totalInserted = 0;
 
-        const chunks = [];
-        for (let i = 0; i < jsonData.length; i += CHUNK_SIZE) {
-          chunks.push(jsonData.slice(i, i + CHUNK_SIZE));
-        }
+      const today = new Date().toISOString().slice(0, 10);
 
-        showImportProgress(jsonData.length);
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const processed = Math.min((i + 1) * CHUNK_SIZE, jsonData.length);
+        updateImportProgress(processed, jsonData.length, `Đang xử lý lô ${i + 1}/${chunks.length} (${chunk.length} học sinh)...`);
 
-        let totalInserted = 0;
-
-        for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
-          const processed = Math.min((i + 1) * CHUNK_SIZE, jsonData.length);
-          updateImportProgress(processed, jsonData.length, `Đang xử lý lô ${i + 1}/${chunks.length} (${chunk.length} học sinh)...`);
-
-          try {
-            const result = await bulkCreateStudents(chunk);
-            totalInserted += result.data?.length || 0;
-          } catch (chunkError) {
-            const msg = chunkError.message || "";
-            if (msg.includes("đều đã tồn tại")) {
-              // skip chunk — all duplicates
-            } else {
-              hideImportProgress();
-              Toast.error("Lỗi Import (lô " + (i + 1) + "): " + msg);
-              fileInput.value = "";
-              await renderTable();
-              return;
-            }
+        try {
+          const result = await bulkCreateStudents(chunk);
+          const inserted = result?.data || [];
+          totalInserted += inserted.length;
+          inserted.forEach(s => {
+            if (s.MaHS) setStudentAdmission(s.MaHS, today);
+          });
+        } catch (chunkError) {
+          const msg = chunkError.message || "";
+          if (msg.includes("đều đã tồn tại")) {
+            // skip chunk — all duplicates
+          } else {
+            hideImportProgress();
+            Toast.error("Lỗi Import (lô " + (i + 1) + "): " + msg);
+            fileInput.value = "";
+            if (fileDisplay) fileDisplay.style.display = "none";
+            await renderTable();
+            return;
           }
         }
-
-        hideImportProgress();
-
-        const skipped = jsonData.length - totalInserted;
-        if (totalInserted > 0) {
-          Toast.success(`✅ Import thành công: thêm ${totalInserted} học sinh, bỏ qua ${skipped} bản ghi trùng.`);
-        } else {
-          Toast.warning("⚠️ Tất cả học sinh trong file đều đã tồn tại.");
-        }
-
-        await renderTable();
-        fileInput.value = "";
-      } catch (error) {
-        hideImportProgress();
-        console.error("Import Error:", error);
-        Toast.error("Lỗi Import: " + error.message);
       }
-    };
 
-    reader.onerror = () => {
-      Toast.error("Không thể đọc file Excel");
-    };
+      hideImportProgress();
 
-    reader.readAsArrayBuffer(file);
+      const skipped = jsonData.length - totalInserted;
+      if (totalInserted > 0) {
+        Toast.success(`✅ Import thành công: thêm ${totalInserted} học sinh, bỏ qua ${skipped} bản ghi trùng.`);
+      } else {
+        Toast.warning("⚠️ Tất cả học sinh trong file đều đã tồn tại.");
+      }
+
+      await renderTable();
+      fileInput.value = "";
+      if (fileDisplay) fileDisplay.style.display = "none";
+    } catch (error) {
+      hideImportProgress();
+      fileInput.value = "";
+      if (fileDisplay) fileDisplay.style.display = "none";
+      console.error("Import Error:", error);
+      Toast.error("Lỗi Import: " + error.message);
+    }
   };
+
+  reader.onerror = () => {
+    fileInput.value = "";
+    if (fileDisplay) fileDisplay.style.display = "none";
+    Toast.error("Không thể đọc file Excel");
+  };
+
+  reader.readAsArrayBuffer(file);
 }
 
 /* =========================================

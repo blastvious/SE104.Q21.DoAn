@@ -1,6 +1,7 @@
 // ======================
 // CONFIG
 // ======================
+import { can } from "../permission.js";
 const API_BASE = "http://localhost:5001/api/school";
 
 // ======================
@@ -1215,6 +1216,12 @@ export async function init() {
         bindColumnContextMenu();
         bindColumnHeaderClick();
         bindSave();
+        bindModalDeleteColumn();
+        if (!can(window.currentUser, "delete")) {
+            getEl("colContextDelete")?.classList.add("hidden");
+            const modal = getEl("modalDeleteColumn");
+            if (modal) modal.style.display = "none";
+        }
     });
 }
 

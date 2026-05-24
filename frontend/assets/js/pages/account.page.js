@@ -1,11 +1,12 @@
-import { 
-    getToken, 
-    getMe, 
-    getUsers, 
-    createUser, 
-    updateUserRole, 
-    deleteUser 
+import {
+    getToken,
+    getMe,
+    getUsers,
+    createUser,
+    updateUserRole,
+    deleteUser
 } from "../service/auth.service.js";
+import { can } from "../permission.js";
 
 // Hàm khởi tạo chính được gọi bởi router.js
 export async function init() {
@@ -28,12 +29,8 @@ async function loadCurrentUserInfo() {
         // Render thông tin của chính mình
         const userNameEl = document.querySelector("#userInfo .user-name");
         const userRoleEl = document.querySelector("#userInfo .user-role span");
-        const metaUsername = document.getElementById("metaUsername");
-        const metaRole = document.getElementById("metaRole");
         if (userNameEl) userNameEl.textContent = currentUser.username || currentUser.Username || "--";
         if (userRoleEl) userRoleEl.textContent = currentUser.role || currentUser.RoleName || "--";
-        if (metaUsername) metaUsername.textContent = currentUser.username || currentUser.Username || "--";
-        if (metaRole) metaRole.textContent = currentUser.role || currentUser.RoleName || "--";
 
         // Nếu là Admin thì mở chặn hiển thị khu vực quản lý và load danh sách
         if (currentUser.role === "Admin") {
@@ -74,7 +71,7 @@ async function loadAllUsers() {
                 </td>
                 <td>
                     <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-check"></i></button>
-                    <button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>
+                    ${can(window.currentUser, "delete") ? `<button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
                 </td>
             `;
             tbody.appendChild(tr);

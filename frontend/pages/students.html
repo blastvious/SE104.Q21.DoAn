@@ -5,14 +5,20 @@
     </div>
 
     <div class="filter-group" style="display: flex; justify-content: center; gap: 12px; align-items: center;">
+        <div class="toolbar-search">
+            <input type="text" id="studentSearch" placeholder="Tìm theo tên hoặc số điện thoại...">
+        </div>
         <button class="qlsv-btn qlsv-btn--primary" id="openModalBtn">
             <i class="fas fa-plus"></i> Thêm học sinh mới
         </button>
-        <input type="file" id="excelFile" accept=".xlsx, .xls" hidden />
-        <button type="button" class="qlsv-btn qlsv-btn--blue"
-            onclick="document.getElementById('excelFile').click()">
+        <button class="qlsv-btn qlsv-btn--blue" id="btnImportExcel">
             <i class="fas fa-folder-open"></i> Chọn File Excel
         </button>
+    </div>
+
+    <div class="admission-filter-bar" id="admissionFilterBar">
+        <span id="admissionFilterText">Đang hiển thị học sinh trong 7 ngày gần đây</span>
+        — <a href="#" id="admissionFilterToggle">Hiển thị tất cả</a>
     </div>
 
     <div class="qlsv-table-card">
@@ -84,6 +90,39 @@
                     <button type="submit" class="qlsv-btn qlsv-btn--primary">Lưu học sinh</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="qlsv-modal" id="importExcelModal">
+        <div class="qlsv-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-excel" style="color:#16a34a;margin-right:8px;"></i>Nhập học sinh từ Excel</h3>
+                <span class="close-modal" id="closeModalImport">&times;</span>
+            </div>
+            <div class="modal-form">
+                <div class="info-chip" style="margin-bottom: 16px;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>File Excel phải đúng định dạng. Học sinh trùng mã sẽ được bỏ qua tự động.</span>
+                </div>
+                <div class="file-import-section">
+                    <div class="file-drop-area" id="fileDropArea">
+                        <input type="file" id="excelFile" accept=".xlsx,.xls">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <div>Kéo thả file hoặc <strong>nhấn để chọn</strong></div>
+                        <div style="font-size:12px;margin-top:4px;">Hỗ trợ .xlsx, .xls</div>
+                    </div>
+                    <div class="file-name-display" id="fileDisplay">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="fileNameText"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancelModalImport">Hủy</button>
+                    <button type="button" class="qlsv-btn qlsv-btn--primary" id="confirmImportBtn">
+                        <i class="fas fa-upload"></i> Import
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

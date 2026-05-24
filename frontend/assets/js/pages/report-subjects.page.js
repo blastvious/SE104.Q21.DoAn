@@ -7,12 +7,27 @@ export async function init() {
         loadSubjects().catch(() => {}),
     ]);
     setupEventListeners();
+    updateButtons();
     drawPieChart(0, 0);
 }
 
 function setupEventListeners() {
     document.getElementById("reportFilterBtn").addEventListener("click", loadReport);
     document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
+
+    const selects = [document.getElementById("reportYear"), document.getElementById("reportSemester"), document.getElementById("reportSubject")];
+    selects.forEach(sel => {
+        sel.addEventListener("change", updateButtons);
+    });
+}
+
+function updateButtons() {
+    const year = document.getElementById("reportYear").value;
+    const sem = document.getElementById("reportSemester").value;
+    const sub = document.getElementById("reportSubject").value;
+    const ok = year && sem && sub;
+    document.getElementById("reportFilterBtn").disabled = !ok;
+    document.getElementById("exportPdfBtn").disabled = !ok;
 }
 
 async function loadYears() {
@@ -108,6 +123,13 @@ async function loadReport() {
         drawPieChart(data.TongSoLuongDat, data.TongSiSo - data.TongSoLuongDat);
     } catch (error) {
         console.error(error);
+        const tbody = document.getElementById("reportTableBody");
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-table">' + error.message + '</td></tr>';
+        document.getElementById("reportTableFoot").style.display = "none";
+        document.getElementById("summaryTotalSiSo").textContent = "--";
+        document.getElementById("summaryTotalDat").textContent = "--";
+        document.getElementById("summaryTiLe").textContent = "--";
+        drawPieChart(0, 0);
         Toast.error("Lỗi khi tải báo cáo: " + error.message);
     }
 }
