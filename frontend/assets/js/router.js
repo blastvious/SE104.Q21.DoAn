@@ -16,6 +16,7 @@ const routes = {
   "report-semester.html": () => import("./pages/report-semester.page.js"),
   "class-assignment.html": () => import("./pages/class-assignment.page.js"),
   "search.html": () => import("./pages/search.page.js"),
+  "examtype.html": () => import("./pages/examtype.page.js"),
 };
 
 // Ẩn menu theo quyền

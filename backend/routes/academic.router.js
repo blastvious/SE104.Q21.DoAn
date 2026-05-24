@@ -16,7 +16,10 @@ router.delete("/subject/:id", academicController.deleteSubject);
 
 //Router cho Loại hình kiểm tra
 router.get("/examtype", academicController.getAllExamTypes);
+router.get("/examtype/:id", academicController.getExamTypeById);
 router.post("/examtype", academicController.createExamType);
+router.put("/examtype/:id", academicController.updateExamType);
+router.delete("/examtype/:id", academicController.deleteExamType);
 
 //Router cho Quản lý quy định
 

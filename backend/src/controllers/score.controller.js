@@ -271,7 +271,7 @@ export const getBangDiemMon = async (req, res) => {
 };
 
 // -- Logic tinh DiemTBMon
-const updateDiemTBMon = async (MaCTBDMHS) => {
+export const updateDiemTBMon = async (MaCTBDMHS) => {
   const danhSachLHKT = await db.CT_BANGDIEMMON_LHKT.findAll({
     where: { MaCTBDMHS },
     include: [
@@ -304,4 +304,15 @@ const updateDiemTBMon = async (MaCTBDMHS) => {
     { DiemTBMon: diemTBMon },
     { where: { MaCTBDMHS } },
   );
+};
+
+export const recalculateDiemTBMonByExamType = async (maLoaiHinhKT) => {
+  const records = await db.CT_BANGDIEMMON_LHKT.findAll({
+    where: { MaLoaiHinhKT: maLoaiHinhKT },
+    attributes: ["MaCTBDMHS"],
+  });
+  const uniqueIds = [...new Set(records.map((r) => r.MaCTBDMHS))];
+  for (const maCTBDMHS of uniqueIds) {
+    await updateDiemTBMon(maCTBDMHS);
+  }
 };

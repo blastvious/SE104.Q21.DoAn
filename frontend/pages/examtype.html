@@ -1,0 +1,83 @@
+<div class="examtype-page">
+
+    <div class="page-header">
+        <h2>Quản Lý Loại Hình Kiểm Tra</h2>
+        <p>Thiết lập các loại hình kiểm tra và hệ số áp dụng</p>
+    </div>
+
+    <div class="examtype-stat-grid">
+        <div class="examtype-stat-card">
+            <div class="examtype-icon primary">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div>
+                <h3 id="totalExamTypes">0</h3>
+                <p>Tổng loại hình</p>
+            </div>
+        </div>
+        <div class="examtype-stat-card">
+            <div class="examtype-icon info">
+                <i class="fas fa-weight-hanging"></i>
+            </div>
+            <div>
+                <h3 id="highestHeSo">--</h3>
+                <p>Hệ số cao nhất</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-group">
+        <div class="toolbar-search">
+            <input type="text" id="examtypeSearchInput" placeholder="Tìm loại hình kiểm tra...">
+        </div>
+        <button class="qlsv-btn qlsv-btn--primary" id="openExamTypeModal">
+            <i class="fas fa-plus"></i> Thêm loại hình
+        </button>
+    </div>
+
+    <div class="examtype-table-wrapper">
+        <table class="examtype-table">
+            <thead>
+                <tr>
+                    <th>Mã loại</th>
+                    <th>Tên loại hình</th>
+                    <th>Hệ số</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="examtypeTableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<div class="qlsv-modal" id="examTypeModal">
+    <div class="qlsv-modal-content">
+        <div class="modal-header">
+            <h3 id="examTypeModalTitle">Thêm Loại Hình Kiểm Tra</h3>
+            <span class="close-modal" id="closeExamTypeModal">&times;</span>
+        </div>
+        <form class="modal-form" id="examTypeForm">
+            <input type="hidden" id="examTypeId">
+
+            <div class="form-group">
+                <label>Tên loại hình kiểm tra</label>
+                <input type="text" id="examTypeName" placeholder="VD: Kiểm tra miệng" required>
+            </div>
+
+            <div class="form-group">
+                <label>Hệ số</label>
+                <select id="examTypeHeSo">
+                    <option value="1">Hệ số 1</option>
+                    <option value="2">Hệ số 2</option>
+                    <option value="3">Hệ số 3</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" id="cancelExamTypeBtn">Hủy</button>
+                <button type="submit" class="qlsv-btn qlsv-btn--primary" id="saveExamTypeBtn">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>

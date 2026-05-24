@@ -1,5 +1,6 @@
 import db from "../../libs/db.js";
 import { Op } from "sequelize";
+import { recalculateDiemTBMonByExamType } from "./score.controller.js";
 //Các bảng liên quan: MONHOC, LOAIHINHKT.
 
 // ==================================== Môn học =======================================
@@ -381,10 +382,16 @@ export const updateExamType = async (req, res) => {
       });
     }
 
+    const heSoChanged = HeSo !== undefined && HeSo !== examType.HeSo;
+
     await examType.update({
       TenLoaiHinhKT: trimmedName,
       HeSo,
     });
+
+    if (heSoChanged) {
+      await recalculateDiemTBMonByExamType(id);
+    }
 
     res.json(examType);
 

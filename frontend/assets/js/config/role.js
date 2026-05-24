@@ -14,6 +14,7 @@ export const roles = {
             "regulations.html",
             "report-semester.html",
             "class-assignment.html",
+            "examtype.html",
             "search.html"
         ],
         permissions: ["read", "write"] // ❌ delete
