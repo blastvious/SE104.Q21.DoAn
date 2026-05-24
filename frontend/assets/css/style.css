@@ -292,6 +292,15 @@ table td {
     transform: scale(1.1);
 }
 
+body.dark-mode .action-btn.delete {
+    background: #4a1a1a;
+    color: #f87171;
+}
+
+body.dark-mode .action-btn.delete:hover {
+    background: #5c2020;
+}
+
 /* Toolbar Search (shared: subjects, regulations) */
 .toolbar-search input {
     padding: 10px 15px;
