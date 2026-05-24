@@ -15,7 +15,7 @@
     }
     .score-cell:focus {
         border-color: #2563eb;
-        background: white;
+        background: var(--surface-card);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
@@ -24,7 +24,7 @@
         align-items: center;
         gap: 10px;
         padding: 10px 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s;
@@ -32,7 +32,7 @@
     }
     .col-option:hover {
         border-color: #2563eb;
-        background: #eff6ff;
+        background: var(--surface-section);
     }
     .col-option input[type="radio"] {
         accent-color: #2563eb;
@@ -43,15 +43,15 @@
     }
     .col-option.selected {
         border-color: #2563eb;
-        background: #eff6ff;
+        background: var(--surface-section);
     }
     .col-option-label {
         display: flex;
         flex-direction: column;
         gap: 2px;
     }
-    .col-option-label span { font-weight: 600; color: #0f172a; }
-    .col-option-label small { color: #64748b; font-size: 12px; }
+    .col-option-label span { font-weight: 600; color: var(--text-heading); }
+    .col-option-label small { color: var(--text-table); font-size: 12px; }
     .col-option-new span { color: #16a34a; }
 
 
@@ -69,10 +69,10 @@
     }
 
     .score-table-wrapper {
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        background: var(--surface-card);
+        border: 1px solid var(--border);
         border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        box-shadow: var(--shadow-card);
         overflow-x: auto;
         overflow-y: auto;
         max-height: 70vh;
@@ -87,17 +87,17 @@
     }
     .score-table th,
     .score-table td {
-        border-right: 1px solid #e2e8f0;
+        border-right: 1px solid var(--border);
     }
     .score-table th:last-child,
     .score-table td:last-child {
         border-right: none;
     }
     .score-table th {
-        background: #f8fafc;
-        color: #64748b;
+        background: var(--surface-section);
+        color: var(--text-heading);
         font-weight: 600;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--border);
         font-size: 0.82rem;
         white-space: nowrap;
         overflow: visible;
@@ -114,11 +114,11 @@
     .score-table thead tr:first-child .col-stt,
     .score-table thead tr:first-child .col-name {
         z-index: 7;
-        background: #f8fafc;
+        background: var(--surface-section);
     }
     .score-table thead tr:first-child .last-exam-group,
     .score-table thead tr:last-child th:last-child {
-        border-right: 2px solid #fff;
+        border-right: 2px solid var(--surface-card);
     }
     .score-table thead tr:first-child .col-stt {
         left: 0;
@@ -128,8 +128,8 @@
         box-shadow: 2px 0 4px rgba(0,0,0,0.06);
     }
     .score-table td {
-        border-bottom: 1px solid #e2e8f0;
-        color: #0f172a;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-body);
         vertical-align: middle;
         text-align: center;
     }
@@ -137,22 +137,22 @@
         position: sticky;
         left: 0;
         z-index: 3;
-        background: #fff;
+        background: var(--surface-card);
     }
     .score-table td:nth-child(2) {
         position: sticky;
         left: 52px;
         z-index: 3;
-        background: #fff;
+        background: var(--surface-card);
         box-shadow: 2px 0 4px rgba(0,0,0,0.06);
     }
     .score-table tbody tr { cursor: text; transition: background .1s; }
-    .score-table tbody tr:hover { background-color: #f0f7ff; }
+    .score-table tbody tr:hover { background-color: var(--surface-hover); }
     .score-table tbody tr.row-unsaved:hover { background: #fef08a !important; }
     .score-table tbody tr.row-invalid:hover  { background: #fecaca !important; }
     .score-table tbody tr:last-child td { border-bottom: none; }
     .score-table tbody tr:hover td:nth-child(1),
-    .score-table tbody tr:hover td:nth-child(2) { background: #f0f7ff; }
+    .score-table tbody tr:hover td:nth-child(2) { background: var(--surface-hover); }
     .score-table tbody tr.row-unsaved td:nth-child(1),
     .score-table tbody tr.row-unsaved td:nth-child(2) { background: #fef9c3 !important; }
     .score-table tbody tr.row-unsaved:hover td:nth-child(1),
@@ -165,9 +165,9 @@
     .score-alert {
         padding: 14px 18px;
         border-radius: 8px;
-        border: 1px solid #bfdbfe;
-        background: #eff6ff;
-        color: #1d4ed8;
+        border: 1px solid var(--border);
+        background: var(--surface-section);
+        color: var(--text-heading);
         font-size: 14px;
         display: flex;
         align-items: center;
@@ -195,11 +195,11 @@
         gap: 10px;
     }
     .file-drop-area {
-        border: 2px dashed #e2e8f0;
+        border: 2px dashed var(--border);
         border-radius: 8px;
         padding: 24px;
         text-align: center;
-        color: #64748b;
+        color: var(--text-table);
         font-size: 14px;
         cursor: pointer;
         transition: all 0.2s;
@@ -207,7 +207,7 @@
     }
     .file-drop-area:hover {
         border-color: #2563eb;
-        background: #eff6ff;
+        background: var(--surface-section);
         color: #2563eb;
     }
     .file-drop-area input[type="file"] {
@@ -245,9 +245,9 @@
     .info-chip {
         padding: 8px 12px;
         border-radius: 8px;
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        color: #166534;
+        background: var(--surface-section);
+        border: 1px solid var(--border);
+        color: var(--text-heading);
         font-size: 13px;
         display: flex;
         align-items: center;
@@ -262,8 +262,8 @@
         bottom: calc(100% + 5px);
         left: 50%;
         transform: translateX(-50%);
-        background: #1e293b;
-        color: #fff;
+        background: var(--text-heading);
+        color: var(--surface-card);
         font-size: 11.5px;
         font-weight: 600;
         padding: 4px 9px;
@@ -276,8 +276,8 @@
 
     .col-context-menu {
         position: fixed;
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        background: var(--surface-card);
+        border: 1px solid var(--border);
         border-radius: 8px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         z-index: 10000;
@@ -444,7 +444,7 @@
             <span class="close-modal" id="closeModalDeleteColumn">&times;</span>
         </div>
         <div class="modal-form">
-            <div class="info-chip" style="background:#fff5f5;border-color:#fecaca;color:#991b1b;margin-bottom: 16px;">
+            <div class="info-chip" style="background:var(--surface-section);border-color:var(--border);color:var(--text-heading);margin-bottom: 16px;">
                 <i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i>
                 <span>Cột bị xóa sẽ mất toàn bộ điểm. Hãy lưu dữ liệu sau khi xóa.</span>
             </div>

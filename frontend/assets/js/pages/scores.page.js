@@ -370,7 +370,7 @@ function renderTable() {
         const dtb = getDTBForStudent(s.MaHS);
         row += `
             <td class="dtb-cell" data-mahs="${s.MaHS}"
-                style="text-align:center;font-weight:700;color:#1d4ed8;background:#eff6ff;">
+                style="text-align:center;font-weight:700;">
                 ${dtb}
             </td>
         `;

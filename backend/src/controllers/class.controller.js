@@ -362,3 +362,114 @@ export const getAllClass = async (req, res) => {
         res.status(500).json({ message: "Error from server" });
     }
 }
+
+// ============ UPDATE ============
+
+export const updateYear = async (req, res) => {
+    try {
+        const { TenNamHoc } = req.params;
+        const { NgayBatDau, NgayKetThuc } = req.body;
+        if (!NgayBatDau || !NgayKetThuc) return res.status(400).json({ message: "Missing required fields" });
+        const year = await db.NAMHOC.findByPk(TenNamHoc);
+        if (!year) return res.status(404).json({ message: "Năm học không tồn tại" });
+        await year.update({ NgayBatDau, NgayKetThuc });
+        res.json(year);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error from server" });
+    }
+}
+
+export const updateSemester = async (req, res) => {
+    try {
+        const { MaHocKy } = req.params;
+        const { TenHocKy } = req.body;
+        if (!TenHocKy) return res.status(400).json({ message: "Missing required fields" });
+        const semester = await db.HOCKY.findByPk(MaHocKy);
+        if (!semester) return res.status(404).json({ message: "Học kỳ không tồn tại" });
+        const existing = await db.HOCKY.findOne({ where: { TenHocKy, MaHocKy: { [Op.ne]: MaHocKy } } });
+        if (existing) return res.status(400).json({ message: "Tên học kỳ đã tồn tại" });
+        await semester.update({ TenHocKy });
+        res.json(semester);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error from server" });
+    }
+}
+
+export const updateGrade = async (req, res) => {
+    try {
+        const { MaKhoiLop } = req.params;
+        const { TenKhoiLop } = req.body;
+        if (!TenKhoiLop) return res.status(400).json({ message: "Missing required fields" });
+        const grade = await db.KHOILOP.findByPk(MaKhoiLop);
+        if (!grade) return res.status(404).json({ message: "Khối lớp không tồn tại" });
+        const existing = await db.KHOILOP.findOne({ where: { TenKhoiLop, MaKhoiLop: { [Op.ne]: MaKhoiLop } } });
+        if (existing) return res.status(409).json({ message: "Khối lớp đã tồn tại" });
+        await grade.update({ TenKhoiLop });
+        res.json(grade);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error from server" });
+    }
+}
+
+export const updateClass = async (req, res) => {
+    try {
+        const { MaLop } = req.params;
+        const { TenLop, SiSo } = req.body;
+        const lop = await db.LOP.findByPk(MaLop);
+        if (!lop) return res.status(404).json({ message: "Lớp không tồn tại" });
+        const updateData = {};
+        if (TenLop !== undefined) updateData.TenLop = TenLop;
+        if (SiSo !== undefined) updateData.SiSo = SiSo;
+        await lop.update(updateData);
+        res.json(lop);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error from server" });
+    }
+}
+
+// ============ DELETE ============
+
+const handleDelete = async (res, promise, entityName) => {
+    try {
+        await promise;
+        res.json({ message: `Xóa ${entityName} thành công` });
+    } catch (error) {
+        if (error?.name === "SequelizeForeignKeyConstraintError" || error?.original?.number === 547) {
+            return res.status(409).json({ message: `Không thể xóa ${entityName} vì đã có dữ liệu liên quan` });
+        }
+        console.log(error);
+        res.status(500).json({ message: "Error from server" });
+    }
+}
+
+export const deleteYear = async (req, res) => {
+    const { TenNamHoc } = req.params;
+    const year = await db.NAMHOC.findByPk(TenNamHoc);
+    if (!year) return res.status(404).json({ message: "Năm học không tồn tại" });
+    handleDelete(res, year.destroy(), "năm học");
+}
+
+export const deleteSemester = async (req, res) => {
+    const { MaHocKy } = req.params;
+    const semester = await db.HOCKY.findByPk(MaHocKy);
+    if (!semester) return res.status(404).json({ message: "Học kỳ không tồn tại" });
+    handleDelete(res, semester.destroy(), "học kỳ");
+}
+
+export const deleteGrade = async (req, res) => {
+    const { MaKhoiLop } = req.params;
+    const grade = await db.KHOILOP.findByPk(MaKhoiLop);
+    if (!grade) return res.status(404).json({ message: "Khối lớp không tồn tại" });
+    handleDelete(res, grade.destroy(), "khối lớp");
+}
+
+export const deleteClass = async (req, res) => {
+    const { MaLop } = req.params;
+    const lop = await db.LOP.findByPk(MaLop);
+    if (!lop) return res.status(404).json({ message: "Lớp không tồn tại" });
+    handleDelete(res, lop.destroy(), "lớp");
+}

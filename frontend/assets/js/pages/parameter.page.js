@@ -48,12 +48,12 @@ async function fetchAndRenderParams(keyword = "") {
                 <td class="param-name-cell" style="padding: 14px 16px; font-weight: 600; color: #475569;">${item.TenThamSo}</td>
                 <td class="param-value-cell" style="padding: 14px 16px; font-weight: 500; color: #334155;">${item.GiaTri}</td>
                 <td style="text-align: right; padding: 14px 25px;">
-                    <div style="display: inline-flex; gap: 8px;">
-                        <button class="qlsv-btn btn-edit-param" style="background: #fef08a; color: #854d0e; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;" title="Chỉnh sửa">
-                            <i class="fas fa-edit"></i>
+                    <div class="action-group">
+                        <button class="action-btn edit" title="Chỉnh sửa">
+                            <i class="fas fa-pen"></i>
                         </button>
-                        <button class="qlsv-btn btn-delete-param" style="background: #fee2e2; color: #991b1b; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;" title="Xóa bỏ">
-                            <i class="fas fa-trash-alt"></i>
+                        <button class="action-btn delete" title="Xóa bỏ">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </td>
@@ -83,7 +83,7 @@ async function fetchAndRenderParams(keyword = "") {
  */
 function bindRowEvents() {
     // Xử lý sự kiện click nút SỬA
-    document.querySelectorAll(".btn-edit-param").forEach(btn => {
+    document.querySelectorAll(".action-btn.edit").forEach(btn => {
         btn.onclick = (e) => {
             const row = e.target.closest("tr");
             const name = row.querySelector(".param-name-cell").innerText;
@@ -102,7 +102,7 @@ function bindRowEvents() {
     });
 
     // Xử lý sự kiện click nút XÓA
-    document.querySelectorAll(".btn-delete-param").forEach(btn => {
+    document.querySelectorAll(".action-btn.delete").forEach(btn => {
         btn.onclick = async (e) => {
             const row = e.target.closest("tr");
             const name = row.querySelector(".param-name-cell").innerText;

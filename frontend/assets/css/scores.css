@@ -149,6 +149,15 @@
     pointer-events: auto;
 }
 
+.score-table td.dtb-cell {
+    color: var(--text-heading);
+    background: var(--surface-section);
+}
+
+.score-table tbody tr:hover td.dtb-cell {
+    background: var(--surface-hover);
+}
+
 @media (max-width: 768px) {
     .score-stats { grid-template-columns: 1fr; }
 }

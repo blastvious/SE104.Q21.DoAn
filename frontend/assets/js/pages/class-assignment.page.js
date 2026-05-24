@@ -285,8 +285,8 @@ function renderAssigned(data) {
       <td>${s.MaHS}</td>
       <td>${s.HOCSINH?.HoTen || ""}</td>
       <td>
-        <button class="action-btn edit" data-id="${s.MaHS}" style="width:auto;height:auto;padding:2px 6px;font-size:13px;border-radius:4px;line-height:1.2;">
-          ↔
+        <button class="action-btn edit" data-id="${s.MaHS}">
+          <i class="fas fa-pen"></i>
         </button>
       </td>
     </tr>

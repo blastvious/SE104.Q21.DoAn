@@ -34,6 +34,7 @@
                             <th>Tên</th>
                             <th>Bắt đầu</th>
                             <th>Kết thúc</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -57,6 +58,7 @@
                         <tr>
                             <th>Mã HK</th>
                             <th>Tên Học Kỳ</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -76,6 +78,7 @@
                         <tr>
                             <th>Mã Khối</th>
                             <th>Tên Khối</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -105,11 +108,29 @@
                             <th>Tên Lớp</th>
                             <th>Khối</th>
                             <th>Năm Học</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
+    </div>
+</div>
+
+<!-- Modal chỉnh sửa -->
+<div id="editModal" class="qlsv-modal">
+    <div class="qlsv-modal-content" style="width:450px;">
+        <div class="modal-header">
+            <h3 id="editModalTitle">Chỉnh sửa</h3>
+            <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+        </div>
+        <div class="modal-form">
+            <div id="editModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('editModal').style.display='none'">Hủy</button>
+                <button id="editSaveBtn" class="qlsv-btn qlsv-btn--primary">Lưu</button>
+            </div>
+        </div>
     </div>
 </div>

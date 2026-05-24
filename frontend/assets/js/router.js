@@ -89,7 +89,12 @@ document.addEventListener("click", function (e) {
     e.stopPropagation();
     const hasSub = menuParent.closest(".has-submenu");
     if (hasSub) {
-      hasSub.classList.toggle("open");
+      const opening = !hasSub.classList.contains("open");
+      document.querySelectorAll(".has-submenu.open").forEach((el) => {
+        if (el !== hasSub) el.classList.remove("open");
+      });
+      if (opening) hasSub.classList.add("open");
+      else hasSub.classList.remove("open");
     }
     return;
   }
