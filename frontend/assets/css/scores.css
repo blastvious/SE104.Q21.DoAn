@@ -143,6 +143,12 @@
 
 .input-score:focus { border-color: #2c5f7a; }
 
+.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+
 @media (max-width: 768px) {
     .score-stats { grid-template-columns: 1fr; }
 }
