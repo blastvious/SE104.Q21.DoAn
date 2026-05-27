@@ -71,6 +71,7 @@ export const getClassList = async (MaLop, MaHocKy) => {
     }
 };
 
+
 /* =========================================
    ENROLL STUDENT (Xếp lớp đơn lẻ)
    Endpoint: POST /study-process/enroll
@@ -171,6 +172,33 @@ export const semesterSummary = async (payload) => {
         return data;
     } catch (err) {
         console.error("semesterSummary error:", err);
+        throw err;
+    }
+};
+
+/* =========================================
+   PROMOTE STUDENTS
+========================================= */
+export const promoteStudents = async (payload) => {
+    try {
+        const res = await fetch(`${API_URL}/promote-students`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.message || "Lỗi khi lên lớp");
+        }
+
+        return data;
+
+    } catch (err) {
+        console.error("promoteStudents error:", err);
         throw err;
     }
 };

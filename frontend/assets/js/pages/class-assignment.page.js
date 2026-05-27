@@ -3,6 +3,7 @@ import {
   getAssignedStudents,
   assignStudentsBatch,
   transferClass,
+  promoteStudents,
 } from "../service/studyProcess.service.js";
 
 import { settingsService } from "../service/settings.service.js";
@@ -11,6 +12,7 @@ import { settingsService } from "../service/settings.service.js";
    STATE
 ========================================= */
 let selectedStudents = new Set();
+let selectedAssignedStudents = new Set();
 let allClasses = [];
 let currentStudentId = null;
 
@@ -28,9 +30,19 @@ export const init = async () => {
 ========================================= */
 async function reloadAll() {
   selectedStudents.clear();
+  selectedAssignedStudents.clear();
   currentStudentId = null;
 
+  // RESET CHECKBOX ALL
+  const checkUnassigned = document.getElementById("checkAllUnassigned");
+  const checkAssigned = document.getElementById("checkAllAssigned");
+
+  if (checkUnassigned) checkUnassigned.checked = false;
+  if (checkAssigned) checkAssigned.checked = false;
+
   updateAssignButton();
+  updatePromoteButton();
+
   await loadUnassigned();
   await loadAssigned();
 }
@@ -93,6 +105,37 @@ async function loadFilters() {
   }
 }
 
+function renderClassOptions() {
+  const grade = document.getElementById("filterKhoi").value;
+  const year = document.getElementById("filterNamHoc").value;
+  const classSelect = document.getElementById("assignClassSelect");
+
+  if (!grade || !year) {
+    classSelect.innerHTML = "";
+    classSelect.disabled = true;
+    return;
+  }
+
+  // FILTER THEO KHỐI + NĂM HỌC
+  const filtered = allClasses.filter(
+    (c) => c.MaKhoiLop === grade && c.TenNamHoc === year,
+  );
+
+  classSelect.innerHTML =
+    '<option value="">--Chọn lớp--</option>' +
+    filtered
+      .map(
+        (c) => `
+          <option value="${c.MaLop}">
+            ${c.TenLop}
+          </option>
+        `,
+      )
+      .join("");
+
+  classSelect.disabled = false;
+}
+
 /* =========================================
    FILTER EVENTS (FIX STATE ROOT BUG)
 ========================================= */
@@ -103,45 +146,45 @@ function bindFilterEvents() {
   const semesterSelect = document.getElementById("filterHocKy");
 
   const reload = async () => {
-    selectedStudents.clear();
-    updateAssignButton();
+  selectedStudents.clear();
+  selectedAssignedStudents.clear();
 
-    await loadUnassigned();
-    await loadAssigned();
-  };
+  // reset checkbox all
+  const checkUnassigned =
+    document.getElementById("checkAllUnassigned");
 
-  yearSelect.addEventListener("change", reload);
-  semesterSelect.addEventListener("change", reload);
+  const checkAssigned =
+    document.getElementById("checkAllAssigned");
 
-  gradeSelect.addEventListener("change", () => {
-    const grade = gradeSelect.value;
+  if (checkUnassigned)
+    checkUnassigned.checked = false;
 
-    if (!grade) {
-      classSelect.innerHTML = "";
-      classSelect.disabled = true;
-      reloadAll();
-      return;
-    }
+  if (checkAssigned)
+    checkAssigned.checked = false;
 
-    const filtered = allClasses.filter((c) => c.MaKhoiLop === grade);
+  updateAssignButton();
+  updatePromoteButton();
 
-    classSelect.innerHTML =
-      '<option value="">--Chọn lớp--</option>' +
-      filtered
-        .map(
-          (c) => `
-        <option value="${c.MaLop}">
-          ${c.TenLop}
-        </option>
-      `,
-        )
-        .join("");
+  await loadUnassigned();
+  await loadAssigned();
+};
 
-    classSelect.disabled = false;
-
-    reloadAll(); // 🔥 quan trọng
+  // YEAR CHANGE
+  yearSelect.addEventListener("change", async () => {
+    renderClassOptions();
+    await reload();
   });
 
+  // SEMESTER CHANGE
+  semesterSelect.addEventListener("change", reload);
+
+  // GRADE CHANGE
+  gradeSelect.addEventListener("change", async () => {
+    renderClassOptions();
+    await reload();
+  });
+
+  // CLASS CHANGE
   classSelect.addEventListener("change", reloadAll);
 }
 
@@ -160,6 +203,22 @@ function bindEvents() {
     updateAssignButton();
   };
 
+  // NEW
+  document.getElementById("checkAllAssigned").onchange = (e) => {
+    const checked = e.target.checked;
+
+    document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
+      cb.checked = checked;
+
+      if (checked) selectedAssignedStudents.add(cb.dataset.id);
+      else selectedAssignedStudents.delete(cb.dataset.id);
+    });
+
+    updatePromoteButton();
+  };
+
+  document.getElementById("promoteBtn").onclick = handlePromote;
+
   document.getElementById("assignBtn").onclick = handleAssign;
 
   document.getElementById("closeTransferModal").onclick = closeModal;
@@ -170,7 +229,7 @@ function bindEvents() {
 
 function closeModal() {
   document.getElementById("transferModal").style.display = "none";
-  currentStudentId = null; // 🔥 FIX
+  currentStudentId = null;
 }
 
 /* =========================================
@@ -189,7 +248,7 @@ async function loadUnassigned() {
 
   const data = await getUnassignedStudents(MaHocKy);
 
-  selectedStudents.clear(); // 🔥 FIX STATE
+  selectedStudents.clear();
   updateAssignButton();
 
   renderUnassigned(data);
@@ -257,7 +316,6 @@ function renderUnassigned(data) {
     .join("");
 
   document.querySelectorAll(".student-checkbox").forEach((cb) => {
-    // 🔥 sync UI với state
     cb.checked = selectedStudents.has(cb.dataset.id);
 
     cb.onchange = (e) => {
@@ -274,15 +332,20 @@ function renderAssigned(data) {
   const tbody = document.getElementById("assignedTable");
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="3">Chưa có học sinh</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Chưa có học sinh</td></tr>`;
     return;
   }
 
   tbody.innerHTML = data
     .map(
       (s) => `
-    <tr>
-      <td>${s.MaHS}</td>
+<tr>
+  <td>
+    <input type="checkbox"
+      class="assigned-checkbox"
+      data-id="${s.MaHS}">
+  </td>
+  <td>${s.MaHS}</td>
       <td>${s.HOCSINH?.HoTen || ""}</td>
       <td>
         <button class="action-btn edit" data-id="${s.MaHS}">
@@ -297,24 +360,54 @@ function renderAssigned(data) {
   document.querySelectorAll(".action-btn.edit").forEach((btn) => {
     btn.onclick = () => openTransferModal(btn.dataset.id);
   });
+  document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
+    cb.checked = selectedAssignedStudents.has(cb.dataset.id);
+
+    cb.onchange = (e) => {
+      if (e.target.checked) selectedAssignedStudents.add(cb.dataset.id);
+      else selectedAssignedStudents.delete(cb.dataset.id);
+
+      updatePromoteButton();
+    };
+  });
 }
 
 /* =========================================
    TRANSFER MODAL
 ========================================= */
+
+
 function openTransferModal(studentId) {
   currentStudentId = studentId;
 
   const modal = document.getElementById("transferModal");
   const select = document.getElementById("newClassSelect");
-  const currentClass = document.getElementById("assignClassSelect").value;
+
+  const currentClassId =
+    document.getElementById("assignClassSelect").value;
+
+  const currentClass = allClasses.find(
+    (c) => c.MaLop === currentClassId,
+  );
+
+  if (!currentClass) return;
+
+  // chỉ lấy lớp cùng khối + cùng năm học
+  const availableClasses = allClasses.filter(
+    (c) =>
+      c.MaKhoiLop === currentClass.MaKhoiLop &&
+      c.TenNamHoc === currentClass.TenNamHoc,
+  );
 
   select.innerHTML =
     '<option value="">--Chọn lớp--</option>' +
-    allClasses
+    availableClasses
       .map(
         (c) => `
-      <option value="${c.MaLop}" ${c.MaLop === currentClass ? "disabled" : ""}>
+      <option
+        value="${c.MaLop}"
+        ${c.MaLop === currentClassId ? "disabled" : ""}
+      >
         ${c.TenLop}
       </option>
     `,
@@ -323,13 +416,18 @@ function openTransferModal(studentId) {
 
   modal.style.display = "block";
 }
-
 /* =========================================
    STATE
 ========================================= */
 function toggleStudent(id, checked) {
   if (checked) selectedStudents.add(id);
   else selectedStudents.delete(id);
+}
+
+function updatePromoteButton() {
+  const btn = document.getElementById("promoteBtn");
+
+  btn.disabled = selectedAssignedStudents.size === 0;
 }
 
 function updateAssignButton() {
@@ -373,7 +471,7 @@ async function handleAssign() {
 
     Toast.success("Xếp lớp thành công!");
 
-    await reloadAll(); // 🔥 FIX CORE BUG
+    await reloadAll();
   } catch (err) {
     Toast.error(err.message);
   } finally {
@@ -417,11 +515,15 @@ async function handleTransfer(e) {
   if (!MaHocKy || !MaLopMoi) return;
 
   try {
-    await transferClass({
-      MaHS: currentStudentId,
-      MaHocKy,
-      MaLopMoi,
-    });
+  const MaLopCu =
+    document.getElementById("assignClassSelect").value;
+
+  await transferClass({
+    MaHS: currentStudentId,
+    MaHocKy,
+    MaLopCu,
+    MaLopMoi,
+  });
 
     Toast.success("Chuyển lớp thành công!");
 
@@ -437,4 +539,86 @@ async function handleTransfer(e) {
 ========================================= */
 function formatDate(dateStr) {
   return dateStr ? new Date(dateStr).toLocaleDateString("vi-VN") : "";
+}
+
+async function handlePromote() {
+  if (selectedAssignedStudents.size === 0) return;
+
+  const ok = await showConfirm(
+    `Bạn có muốn lên lớp ${selectedAssignedStudents.size} học sinh không?`,
+  );
+
+  if (!ok) return;
+
+  const MaLopCu = document.getElementById("assignClassSelect").value;
+
+  const MaHocKyCu = document.getElementById("filterHocKy").value;
+
+  const nextClass = getNextClass(MaLopCu);
+
+  if (!nextClass) {
+    Toast.error("Không tìm thấy lớp kế tiếp");
+    return;
+  }
+
+  const MaLopMoi = nextClass.MaLop;
+  const MaHocKyMoi = MaHocKyCu;
+
+  try {
+    await promoteStudents({
+      students: [...selectedAssignedStudents],
+      MaLopCu,
+      MaHocKyCu,
+      MaLopMoi,
+      MaHocKyMoi,
+    });
+
+    Toast.success("Lên lớp thành công!");
+
+    selectedAssignedStudents.clear();
+
+    await reloadAll();
+  } catch (err) {
+    Toast.error(err.message);
+  }
+}
+
+function getNextClass(currentClassId) {
+  const currentClass = allClasses.find((c) => c.MaLop === currentClassId);
+
+  if (!currentClass) return null;
+
+  // Ví dụ:
+  // KL01 -> KL02
+  // KL02 -> KL03
+
+  let nextKhoi = null;
+
+  if (currentClass.MaKhoiLop === "KL01") nextKhoi = "KL02";
+  else if (currentClass.MaKhoiLop === "KL02") nextKhoi = "KL03";
+  else return null; // lớp 12 không lên nữa
+
+  // năm học tiếp theo
+  const [start, end] = currentClass.TenNamHoc.split("-");
+
+  const nextYear = `${parseInt(start) + 1}-${parseInt(end) + 1}`;
+
+  // ví dụ:
+  // 10A1 -> 11A1
+  // 11A1 -> 12A1
+
+  let nextTenLop = currentClass.TenLop;
+
+  if (currentClass.MaKhoiLop === "KL01") {
+    nextTenLop = currentClass.TenLop.replace(/^10/, "11");
+  } else if (currentClass.MaKhoiLop === "KL02") {
+    nextTenLop = currentClass.TenLop.replace(/^11/, "12");
+  }
+
+  return allClasses.find(
+    (c) =>
+      c.MaKhoiLop === nextKhoi &&
+      c.TenNamHoc === nextYear &&
+      c.TenLop === nextTenLop,
+  );
 }
