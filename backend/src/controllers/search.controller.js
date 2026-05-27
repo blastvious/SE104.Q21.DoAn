@@ -8,12 +8,49 @@ const handleCatch = (res, error) => {
     res.status(500).json({ message: "Error from server" });
 };
  
+export const suggestStudent = async (req, res) => {
+    try {
+        const { ten, lop, sdt } = req.query;
+
+        if (!ten && !lop && !sdt) {
+            return res.status(400).json({ message: "Thiếu tham số tìm kiếm!" });
+        }
+
+        let whereClause = "WHERE 1=1";
+        const replacements = {};
+
+        if (ten) { whereClause += " AND hs.HoTen LIKE :ten"; replacements.ten = `%${ten}%`; }
+        if (lop) { whereClause += " AND l.TenLop LIKE :lop"; replacements.lop = `%${lop}%`; }
+        if (sdt) { whereClause += " AND hs.SoDienThoai LIKE :sdt"; replacements.sdt = `%${sdt}%`; }
+
+        const [results] = await db.sequelize.query(
+            `SELECT TOP 6           
+                hs.MaHS,
+                hs.HoTen,
+                hs.SoDienThoai,
+                MAX(l.TenLop) AS TenLop
+            FROM HOCSINH hs
+            JOIN QUATRINHHOC qth ON qth.MaHS = hs.MaHS
+            JOIN LOP l ON l.MaLop = qth.MaLop
+            ${whereClause}
+            GROUP BY hs.MaHS, hs.HoTen, hs.SoDienThoai
+            ORDER BY hs.HoTen`,
+            { replacements }
+        );
+
+        res.json({ success: true, data: results });
+
+    } catch (error) {
+        handleCatch(res, error);
+    }
+};
+
 export const searchStudent = async (req, res) => {
     try {
-        const { ten, lop } = req.query;
+        const { ten, lop, sdt } = req.query;
  
-        if (!ten && !lop) {
-            return res.status(400).json({ message: "Vui lòng nhập tên hoặc lớp để tìm kiếm" });
+        if (!ten || !lop || !sdt) {
+            return res.status(400).json({ message: "Vui lòng nhập đầy đủ họ tên, lớp và số điện thoại để tìm kiếm!" });
         }
  
         let whereClause = "WHERE 1=1";
@@ -29,6 +66,11 @@ export const searchStudent = async (req, res) => {
             replacements.lop = `%${lop}%`;
         }
  
+        if (sdt) {
+            whereClause += " AND hs.SoDienThoai LIKE :sdt";
+            replacements.sdt = `%${sdt}%`;
+        }
+
         const [results] = await db.sequelize.query(
             `SELECT
                 hs.MaHS,
@@ -98,29 +140,53 @@ export const getStudentDetail = async (req, res) => {
 
 
 
- 
+
 export const getStudentHistory = async (req, res) => {
     try {
         const { maHS } = req.params;
- 
-        const [results] = await db.sequelize.query(
+
+        // Lấy danh sách học kỳ
+        const [rows] = await db.sequelize.query(
             `SELECT
                 qth.MaLop,
                 l.TenLop,
                 qth.MaHocKy,
                 hk.TenHocKy,
-                l.TenNamHoc,
-                qth.DiemTBHocKy
+                l.TenNamHoc
              FROM QUATRINHHOC qth
-             JOIN LOP l       ON l.MaLop   = qth.MaLop
-             JOIN HOCKY hk    ON hk.MaHocKy = qth.MaHocKy
+             JOIN LOP l    ON l.MaLop    = qth.MaLop
+             JOIN HOCKY hk ON hk.MaHocKy = qth.MaHocKy
              WHERE qth.MaHS = :maHS
              ORDER BY l.TenNamHoc DESC, hk.MaHocKy ASC`,
             { replacements: { maHS } }
         );
- 
+
+        // Tính DiemTBHocKy realtime từ DiemTBMon
+        const results = await Promise.all(rows.map(async (row) => {
+            const [scoreRows] = await db.sequelize.query(
+                `SELECT cs.DiemTBMon
+                 FROM BANGDIEMMON bdm
+                 JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = bdm.MaBangDiemMon
+                 WHERE bdm.MaLop   = :maLop
+                   AND bdm.MaHocKy = :maHocKy
+                   AND cs.MaHS     = :maHS
+                   AND cs.DiemTBMon IS NOT NULL`,
+                { replacements: { maLop: row.MaLop, maHocKy: row.MaHocKy, maHS } }
+            );
+
+            const monCoDiem = scoreRows.filter(r => r.DiemTBMon != null && parseFloat(r.DiemTBMon) > 0);
+            const diemTBHocKy = monCoDiem.length > 0
+                ? Math.round(
+                    monCoDiem.reduce((acc, r) => acc + parseFloat(r.DiemTBMon), 0)
+                    / monCoDiem.length * 10
+                  ) / 10
+                : 0;
+
+            return { ...row, DiemTBHocKy: diemTBHocKy };
+        }));
+
         res.json({ success: true, data: results });
- 
+
     } catch (error) {
         handleCatch(res, error);
     }
@@ -226,6 +292,7 @@ export const getStudentScore = async (req, res) => {
                 m.TenMonHoc,
                 m.HeSo,
                 lhkt.TenLoaiHinhKT,
+                ct_lhkt.Lan,
                 ct_lhkt.Diem,
                 cs.DiemTBMon
              FROM BANGDIEMMON bdm
@@ -242,46 +309,49 @@ export const getStudentScore = async (req, res) => {
  
         // 3. Xử lý logic Pivot bằng Javascript để gom các dòng điểm thành cấu trúc môn học
         const monHocMap = {};
- 
+        const allColumns = []; // Thu thập tất cả tên cột theo thứ tự xuất hiện
+
         scoreRows.forEach(row => {
-            const { TenMonHoc, HeSo, TenLoaiHinhKT, Diem, DiemTBMon } = row;
- 
-            // Nếu môn học chưa có trong map thì khởi tạo cấu trúc mặc định
-            if (!monHocMap[TenMonHoc]) {
-                monHocMap[TenMonHoc] = {
-                    TenMonHoc,
-                    HeSo,
-                    DiemTBMon,
-                    // Định nghĩa sẵn các key để khớp với Frontend hiện tại của bạn
-                    TX1: null,
-                    TX2: null,
-                    GK: null,
-                    CK: null
-                };
+            const { TenMonHoc, HeSo, TenLoaiHinhKT, Lan, Diem, DiemTBMon } = row;
+
+            // Tạo key cột: nếu Lần > 1 thì thêm số (vd: "Miệng 2")
+            const colKey = Lan && Lan > 1 ? `${TenLoaiHinhKT} ${Lan}` : TenLoaiHinhKT;
+
+            if (!allColumns.includes(colKey)) {
+                allColumns.push(colKey);
             }
- 
-            // Ánh xạ linh hoạt dựa theo tên Loại hình kiểm tra trong Database
-            // Sau này nếu DB thêm loại hình gì, bạn chỉ cần bổ sung 1 dòng case ở đây là xong
-            const name = TenLoaiHinhKT.trim();
-            if (name === "Kiểm tra miệng" || name === "Thường xuyên 1") {
-                monHocMap[TenMonHoc].TX1 = Diem;
-            } else if (name === "15 phút" || name === "Thường xuyên 2") {
-                monHocMap[TenMonHoc].TX2 = Diem;
-            } else if (name === "1 Tiết" || name === "Giữa kỳ") {
-                monHocMap[TenMonHoc].GK = Diem;
-            } else if (name === "Cuối kỳ") {
-                monHocMap[TenMonHoc].CK = Diem;
+
+            if (!monHocMap[TenMonHoc]) {
+                monHocMap[TenMonHoc] = { TenMonHoc, HeSo, DiemTBMon };
+            }
+
+            if (monHocMap[TenMonHoc][colKey] === null || monHocMap[TenMonHoc][colKey] === undefined) {
+                monHocMap[TenMonHoc][colKey] = Diem;
             }
         });
- 
+
         // Chuyển Map thành mảng để trả về cho Frontend
         const chiTietDiem = Object.values(monHocMap);
- 
+
+        // 4. Tính ĐTB Học Kỳ trực tiếp từ DiemTBMon các môn
+        // Không dùng DiemTBHocKy trong QUATRINHHOC vì chỉ cập nhật khi chạy semesterSummary
+        const monCoĐiem = chiTietDiem.filter(m => m.DiemTBMon != null && parseFloat(m.DiemTBMon) > 0);
+        const diemTBHocKy = monCoĐiem.length > 0
+            ? Math.round(
+                monCoĐiem.reduce((acc, m) => acc + parseFloat(m.DiemTBMon), 0)
+                / monCoĐiem.length * 10
+              ) / 10
+            : 0;
+
         res.json({
             success: true,
             data: {
-                thongTinHocKy: qthRows[0] || null,
-                chiTietDiem: chiTietDiem
+                thongTinHocKy: {
+                    ...(qthRows[0] || {}),
+                    DiemTBHocKy: diemTBHocKy   // override giá trị 0 từ DB
+                },
+                columns: allColumns,   // danh sách cột động để frontend render header
+                chiTietDiem
             }
         });
  

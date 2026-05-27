@@ -284,25 +284,16 @@ export const updateDiemTBMon = async (MaCTBDMHS) => {
 
   if (!danhSachLHKT.length) return;
 
-  const loaiMap = {};
-  danhSachLHKT.forEach((lhkt) => {
-    const key = lhkt.MaLoaiHinhKT;
-    if (!loaiMap[key]) {
-      loaiMap[key] = { HeSo: lhkt.LOAIHINHKT.HeSo, diems: [] };
-    }
-    loaiMap[key].diems.push(lhkt.Diem);
-  });
-
-  const danhSachTBLoai = Object.values(loaiMap).map(({ HeSo, diems }) => ({
-    HeSo,
-    Diem: diems.reduce((a, b) => a + b, 0) / diems.length,
+  const danhSachDiem = danhSachLHKT.map((lhkt) => ({
+    HeSo: lhkt.LOAIHINHKT.HeSo,
+    Diem: parseFloat(lhkt.Diem),
   }));
 
-  const diemTBMon = tinhDiemTBMon(danhSachTBLoai);
+  const diemTBMon = tinhDiemTBMon(danhSachDiem);
 
   await db.CT_BANGDIEMMON_HS.update(
     { DiemTBMon: diemTBMon },
-    { where: { MaCTBDMHS } },
+    { where: { MaCTBDMHS } }
   );
 };
 
@@ -314,5 +305,23 @@ export const recalculateDiemTBMonByExamType = async (maLoaiHinhKT) => {
   const uniqueIds = [...new Set(records.map((r) => r.MaCTBDMHS))];
   for (const maCTBDMHS of uniqueIds) {
     await updateDiemTBMon(maCTBDMHS);
+  }
+};
+
+export const recalculateAllDiemTBMon = async (req, res) => {
+  try {
+    // Lấy tất cả MaLoaiHinhKT đang có trong hệ thống
+    const allLoai = await db.LOAIHINHKT.findAll({
+      attributes: ["MaLoaiHinhKT"],
+    });
+
+    for (const loai of allLoai) {
+      await recalculateDiemTBMonByExamType(loai.MaLoaiHinhKT);
+    }
+
+    res.status(200).json({ message: "Recalculate all DiemTBMon success!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error!" });
   }
 };

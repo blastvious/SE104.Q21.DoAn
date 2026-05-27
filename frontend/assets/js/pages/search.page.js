@@ -30,17 +30,19 @@ function setupEventListeners() {
 
 export async function onSearchInput(input, type) {
     const val = input.value.trim();
-    const acId = type === "ten" ? "acTen" : "acLop";
+    const acId = type === "ten" ? "acTen" : type === "lop" ? "acLop" : "acSdt";
     const ac = document.getElementById(acId);
 
     if (!val) { ac.classList.remove("show"); return; }
 
     try {
-        const param = type === "ten" 
-            ? `ten=${encodeURIComponent(val)}` 
-            : `lop=${encodeURIComponent(val)}`;
-        
-        const res = await fetch(`${API}/search?${param}`);
+        const param = type === "ten"
+            ? `ten=${encodeURIComponent(val)}`
+            : type === "lop"
+                ? `lop=${encodeURIComponent(val)}`
+                : `sdt=${encodeURIComponent(val)}`;
+
+        const res = await fetch(`${API}/search/suggest?${param}`);
         const data = await res.json();
         let results = data.data || [];
 
@@ -58,7 +60,15 @@ export async function onSearchInput(input, type) {
                     <span class="ac-name">${highlighted}</span>
                 </div>`;
             }).join("");
-        } else {
+        } else if (type === "sdt") {
+            ac.innerHTML = results.slice(0, 6).map(s => {
+                const highlighted = s.SoDienThoai.replace(regex, '<span class="ac-highlight">$1</span>');
+                return `<div class="ac-item" onclick="selectAC('${s.MaHS}','${type}')">
+                    <span class="ac-name">${s.HoTen}</span>
+                    <span class="ac-lop">${highlighted}</span>
+                </div>`;
+            }).join("");
+        }else {
             ac.innerHTML = results.slice(0, 6).map(s => {
                 const highlighted = s.HoTen.replace(regex, '<span class="ac-highlight">$1</span>');
                 return `<div class="ac-item" onclick="selectAC('${s.MaHS}','${type}')">
@@ -80,28 +90,39 @@ export function selectAC(maHS, type) {
     if (type === "ten") {
         document.getElementById("inputTen").value = s.HoTen;
         document.getElementById("acTen").classList.remove("show");
-    } else {
+    } else if (type === "lop") {
         document.getElementById("inputLop").value = s.TenLop;
         document.getElementById("acLop").classList.remove("show");
+    } else if (type === "sdt") {                              
+        document.getElementById("inputSdt").value = s.SoDienThoai;
+        document.getElementById("acSdt").classList.remove("show");
     }
 }
 
 export async function doSearch() {
     const ten = document.getElementById("inputTen").value.trim();
     const lop = document.getElementById("inputLop").value.trim();
-
-    if (!ten && !lop) { Toast.warning("Vui lòng nhập tên hoặc lớp để tìm kiếm"); return; }
+    const sdt = document.getElementById("inputSdt")?.value.trim() || "";
+    
+    if (!ten || !lop || !sdt) { 
+        Toast.warning("Vui lòng nhập đầy đủ họ tên, lớp và số điện thoại để tìm kiếm!"); 
+        return; 
+    }
 
     try {
         const params = new URLSearchParams();
         if (ten) params.append("ten", ten);
         if (lop) params.append("lop", lop);
+        if (sdt) params.append("sdt", sdt);
 
         const res = await fetch(`${API}/search?${params}`);
         const data = await res.json();
         const results = data.data || [];
 
-        if (!results.length) { Toast.info("Không tìm thấy học sinh phù hợp"); return; }
+        if (!results.length) { 
+            Toast.info("Không tìm thấy học sinh phù hợp"); 
+            return; 
+        }
 
         await renderStudent(results[0]);
 
@@ -197,6 +218,7 @@ export async function openDetail(maLop, maHocKy, tenHocKy, tenNamHoc, dtb) {
     document.getElementById("mNamHoc").textContent = tenNamHoc;
     document.getElementById("mDTB").textContent    = parseFloat(dtb).toFixed(1);
 
+    const thead = document.getElementById("modalTableHead");
     const tbody = document.getElementById("modalTableBody");
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Đang tải...</td></tr>`;
 
@@ -206,23 +228,42 @@ export async function openDetail(maLop, maHocKy, tenHocKy, tenNamHoc, dtb) {
         const res = await fetch(`${API}/search/${s.MaHS}/score?maLop=${maLop}&maHocKy=${maHocKy}`);
         const data = await res.json();
         const chiTiet = data.data?.chiTietDiem || [];
+        const columns = data.data?.columns || [];
+
+        // Cập nhật ĐTB Học Kỳ từ API (tính từ DiemTBMon, không phải QUATRINHHOC)
+        const diemTBFromAPI = data.data?.thongTinHocKy?.DiemTBHocKy;
+        if (diemTBFromAPI != null) {
+            document.getElementById("mDTB").textContent = parseFloat(diemTBFromAPI).toFixed(1);
+        }
+
+        // Render header động theo các cột trả về từ API
+        if (thead && columns.length > 0) {
+            thead.innerHTML = `
+                <th>STT</th>
+                <th>Môn học</th>
+                <th>Hệ số</th>
+                ${columns.map(col => `<th>${col}</th>`).join("")}
+                <th>ĐTB Môn</th>`;
+        }
+
+        const colspan = 3 + columns.length + 1;
 
         tbody.innerHTML = chiTiet.map((m, i) => {
             const dtbMon = parseFloat(m.DiemTBMon) || 0;
             const cls = dtbMon >= 8 ? "score-good" : dtbMon >= 6.5 ? "score-avg" : "score-bad";
+            const colCells = columns.map(col =>
+                `<td style="text-align:center">${m[col] ?? "--"}</td>`
+            ).join("");
             return `<tr>
                 <td style="text-align:center">${i + 1}</td>
                 <td><strong>${m.TenMonHoc}</strong></td>
                 <td style="text-align:center">${m.HeSo}</td>
-                <td style="text-align:center">${m.TX1 ?? "--"}</td>
-                <td style="text-align:center">${m.TX2 ?? "--"}</td>
-                <td style="text-align:center">${m.GK  ?? "--"}</td>
-                <td style="text-align:center">${m.CK  ?? "--"}</td>
+                ${colCells}
                 <td style="text-align:center">
                     <span class="score-badge ${cls}">${dtbMon.toFixed(1)}</span>
                 </td>
             </tr>`;
-        }).join("") || `<tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Không có dữ liệu</td></tr>`;
+        }).join("") || `<tr><td colspan="${colspan}" style="text-align:center;padding:20px;color:#aaa">Không có dữ liệu</td></tr>`;
 
     } catch (err) {
         console.error("Lỗi load điểm:", err);
@@ -245,8 +286,9 @@ export async function exportRowPDF(maLop, maHocKy, tenHocKy, tenNamHoc, dtb) {
         const res = await fetch(`${API}/search/${s.MaHS}/score?maLop=${maLop}&maHocKy=${maHocKy}`);
         const data = await res.json();
         const chiTiet = data.data?.chiTietDiem || [];
+        const columns = data.data?.columns || [];
 
-        const h = { maLop, maHocKy, tenHocKy, tenNamHoc, dtb, chiTiet };
+        const h = { maLop, maHocKy, tenHocKy, tenNamHoc, dtb, chiTiet, columns };
         await doExportPDF(s, h);
 
     } catch (err) {
@@ -265,7 +307,8 @@ export async function exportModalPDF() {
         const res = await fetch(`${API}/search/${s.MaHS}/score?maLop=${maLop}&maHocKy=${maHocKy}`);
         const data = await res.json();
         const chiTiet = data.data?.chiTietDiem || [];
-        await doExportPDF(s, { tenHocKy, tenNamHoc, dtb, chiTiet });
+        const columns = data.data?.columns || [];
+        await doExportPDF(s, { tenHocKy, tenNamHoc, dtb, chiTiet, columns });
     } catch (err) {
         console.error("Lỗi xuất PDF:", err);
         Toast.error("Lỗi xuất PDF: " + err.message);
@@ -276,19 +319,21 @@ async function doExportPDF(s, h) {
     const d = new Date();
     const today = `Ngày ${d.getDate()} tháng ${d.getMonth() + 1} năm ${d.getFullYear()}`;
 
-    const rows = (h.chiTiet || []).map((m, i) => `
-        <tr>
+    const pdfColumns = h.columns || [];
+    const rows = (h.chiTiet || []).map((m, i) => {
+        const colCells = pdfColumns.map(col =>
+            `<td style="text-align:center;border:1px solid #000;padding:6px">${m[col] ?? "--"}</td>`
+        ).join("");
+        return `<tr>
             <td style="text-align:center;border:1px solid #000;padding:6px">${i + 1}</td>
             <td style="border:1px solid #000;padding:6px">${m.TenMonHoc}</td>
             <td style="text-align:center;border:1px solid #000;padding:6px">${m.HeSo}</td>
-            <td style="text-align:center;border:1px solid #000;padding:6px">${m.TX1 ?? "--"}</td>
-            <td style="text-align:center;border:1px solid #000;padding:6px">${m.TX2 ?? "--"}</td>
-            <td style="text-align:center;border:1px solid #000;padding:6px">${m.GK  ?? "--"}</td>
-            <td style="text-align:center;border:1px solid #000;padding:6px">${m.CK  ?? "--"}</td>
+            ${colCells}
             <td style="text-align:center;border:1px solid #000;padding:6px;font-weight:bold">
                 ${parseFloat(m.DiemTBMon || 0).toFixed(1)}
             </td>
-        </tr>`).join("");
+        </tr>`;
+    }).join("");
 
     const pdfHtml = `
         <div style="width:794px;background:#fff;color:#000;padding:40px;font-family:'Times New Roman',serif;font-size:14px;line-height:1.6;box-sizing:border-box">
@@ -319,17 +364,14 @@ async function doExportPDF(s, h) {
                         <th style="border:1px solid #000;padding:8px;text-align:center">STT</th>
                         <th style="border:1px solid #000;padding:8px;text-align:center">Môn học</th>
                         <th style="border:1px solid #000;padding:8px;text-align:center">Hệ số</th>
-                        <th style="border:1px solid #000;padding:8px;text-align:center">TX1</th>
-                        <th style="border:1px solid #000;padding:8px;text-align:center">TX2</th>
-                        <th style="border:1px solid #000;padding:8px;text-align:center">Giữa Kỳ</th>
-                        <th style="border:1px solid #000;padding:8px;text-align:center">Cuối Kỳ</th>
+                        ${pdfColumns.map(col => `<th style="border:1px solid #000;padding:8px;text-align:center">${col}</th>`).join("")}
                         <th style="border:1px solid #000;padding:8px;text-align:center">ĐTB Môn</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
                 <tfoot>
                     <tr style="font-weight:bold">
-                        <td colspan="7" style="border:1px solid #000;padding:8px;text-align:right">ĐTB Học kỳ:</td>
+                        <td colspan="${3 + pdfColumns.length}" style="border:1px solid #000;padding:8px;text-align:right">ĐTB Học kỳ:</td>
                         <td style="border:1px solid #000;padding:8px;text-align:center">${parseFloat(h.dtb).toFixed(1)}</td>
                     </tr>
                 </tfoot>

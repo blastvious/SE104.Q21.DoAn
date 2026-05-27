@@ -409,3 +409,79 @@ export const getAssignedStudents = async (req, res) => {
         handleCatch(res, error);
     }
 };
+
+export const semesterSummaryAll = async (req, res) => {
+    try {
+        const { MaHocKy } = req.body;
+
+        if (!MaHocKy) {
+            return res.status(400).json({ message: "Thiếu MaHocKy" });
+        }
+
+        // Lấy tất cả lớp có học sinh trong học kỳ này
+        const dsLop = await db.QUATRINHHOC.findAll({
+            where: { MaHocKy },
+            attributes: ["MaLop"],
+            group: ["MaLop"],
+        });
+
+        if (!dsLop.length) {
+            return res.status(404).json({ message: "Không có lớp nào trong học kỳ này" });
+        }
+
+        const results = [];
+
+        for (const { MaLop } of dsLop) {
+            // Tái dùng logic của semesterSummary
+            const [records, bangDiemMonList] = await Promise.all([
+                db.QUATRINHHOC.findAll({ where: { MaLop, MaHocKy } }),
+                db.BANGDIEMMON.findAll({
+                    where: { MaLop, MaHocKy },
+                    include: [{ model: db.MONHOC, attributes: ["MaMonHoc", "HeSo"] }],
+                }),
+            ]);
+
+            if (!records.length || !bangDiemMonList.length) continue;
+
+            const maBangDiemMonList = bangDiemMonList.map((b) => b.MaBangDiemMon);
+            const maHSList = records.map((r) => r.MaHS);
+
+            const allScores = await db.CT_BANGDIEMMON_HS.findAll({
+                where: {
+                    MaBangDiemMon: { [Op.in]: maBangDiemMonList },
+                    MaHS: { [Op.in]: maHSList },
+                },
+            });
+
+            const scoreMap = new Map(allScores.map((s) => [`${s.MaBangDiemMon}_${s.MaHS}`, s]));
+            const heSoMap = new Map(bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC.HeSo ?? 1]));
+
+            for (const record of records) {
+                let totalScore = 0;
+                let totalWeight = 0;
+
+                for (const bdm of bangDiemMonList) {
+                    const score = scoreMap.get(`${bdm.MaBangDiemMon}_${record.MaHS}`);
+                    if (score?.DiemTBMon != null) {
+                        const weight = heSoMap.get(bdm.MaBangDiemMon);
+                        totalScore += parseFloat(score.DiemTBMon) * weight;
+                        totalWeight += weight;
+                    }
+                }
+
+                const diemTB = totalWeight > 0 ? Math.round((totalScore / totalWeight) * 100) / 100 : 0.0;
+
+                await db.QUATRINHHOC.update(
+                    { DiemTBHocKy: diemTB },
+                    { where: { MaHS: record.MaHS, MaLop, MaHocKy } }
+                );
+
+                results.push({ MaLop, MaHS: record.MaHS, DiemTBHocKy: diemTB });
+            }
+        }
+
+        res.json({ message: "Tính điểm TB học kỳ tất cả lớp thành công", total: results.length, data: results });
+    } catch (error) {
+        handleCatch(res, error);
+    }
+};

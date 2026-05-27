@@ -21,6 +21,16 @@
             <div class="autocomplete-list" id="acLop"></div>
         </div>
         
+        <div class="filter-item">
+            <label>Số điện thoại</label>
+            <input type="text" id="inputSdt" class="qlsv-select"
+                placeholder="Nhập SĐT..."
+                autocomplete="off"
+                oninput="onSearchInput(this, 'sdt')"
+                style="width:140px"/>
+            <div class="autocomplete-list" id="acSdt"></div>
+        </div>
+
         <button class="qlsv-btn qlsv-btn--primary" onclick="doSearch()">
             <i class="fas fa-search"></i> Tìm kiếm
         </button>
@@ -108,11 +118,10 @@
         
                 <table class="detail-table">
                     <thead>
-                    <tr>
+                    <tr id="modalTableHead">
                         <th>STT</th>
                         <th>Môn học</th>
                         <th>Hệ số</th>
-                        <th>TX1</th><th>TX2</th><th>Giữa Kỳ</th><th>Cuối Kỳ</th>
                         <th>ĐTB Môn</th>
                     </tr>
                     </thead>
