@@ -84,6 +84,7 @@ function bindRowEvents() {
             // Cập nhật lại giao diện Modal sang trạng thái "Chỉnh sửa"
             document.getElementById("modalTitle").innerText = "Chỉnh Sửa Tham Số Quy Định";
             document.getElementById("paramNameInput").value = name;
+            document.getElementById("paramNameInput").disabled = true;
             document.getElementById("paramValueInput").value = val;
             
             document.getElementById("paramModal").style.display = "block";
@@ -105,7 +106,10 @@ function initControlPanel() {
     if (!modal) return;
 
     // Cơ chế đóng Modal
-    const closeModal = () => { modal.style.display = "none"; };
+    const closeModal = () => {
+        modal.style.display = "none";
+        document.getElementById("paramNameInput").disabled = false;
+    };
     if (closeBtn) closeBtn.onclick = closeModal;
     if (cancelBtn) cancelBtn.onclick = closeModal;
     
@@ -125,16 +129,16 @@ function initControlPanel() {
     // Xử lý nút LƯU THAY ĐỔI
     if (saveBtn) {
         saveBtn.onclick = async () => {
-            const tenThamSo = document.getElementById("paramNameInput").value.trim();
+            const tenThamSo = currentEditingName;
             const giaTri = document.getElementById("paramValueInput").value.trim();
 
-            if (!tenThamSo || !giaTri) {
-                Toast.warning("Vui lòng nhập đầy đủ cả tên tham số và giá trị áp dụng!");
+            if (!giaTri) {
+                Toast.warning("Vui lòng nhập giá trị áp dụng!");
                 return;
             }
 
             try {
-                const success = await updateParameter(currentEditingName, tenThamSo, giaTri);
+                const success = await updateParameter(tenThamSo, tenThamSo, giaTri);
                 if (success) {
                     Toast.success("Cập nhật quy định hệ thống thành công!");
                     closeModal();

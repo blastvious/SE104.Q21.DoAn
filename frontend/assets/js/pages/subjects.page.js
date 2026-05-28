@@ -30,16 +30,20 @@ export async function init() {
 ========================= */
 async function loadSubjects(keyword = "") {
   try {
-    const subjects = await getAllSubjects(keyword);
+    // Luôn lấy full list để cập nhật stats (card không đổi khi search)
+    const fullList = await getAllSubjects("");
+
+    /* =========================
+       UPDATE STATS (luôn dùng full list)
+    ========================= */
+    updateStats(fullList);
+
+    // Lấy danh sách đã lọc để render bảng
+    const subjects = keyword ? await getAllSubjects(keyword) : fullList;
 
     const tbody = document.getElementById("subjectTableBody");
 
     tbody.innerHTML = "";
-
-    /* =========================
-       UPDATE STATS
-    ========================= */
-    updateStats(subjects);
 
     /* =========================
        EMPTY TABLE
@@ -106,9 +110,7 @@ async function loadSubjects(keyword = "") {
       `;
     });
   } catch (error) {
-    console.error(error);
-
-    Toast.error("Không thể tải danh sách môn học");
+    console.warn("loadSubjects error:", error);
   }
 }
 
@@ -292,11 +294,12 @@ function setupTableActions() {
 ========================= */
 function setupSearch() {
   const input = document.getElementById("subjectSearchInput");
+  let debounceTimer;
 
-  input.addEventListener("input", async function () {
+  input.addEventListener("input", function () {
+    clearTimeout(debounceTimer);
     const keyword = this.value.trim();
-
-    await loadSubjects(keyword);
+    debounceTimer = setTimeout(() => loadSubjects(keyword), 300);
   });
 }
 

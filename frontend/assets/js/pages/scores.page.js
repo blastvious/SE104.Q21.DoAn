@@ -1136,15 +1136,41 @@ function bindSave() {
             return;
         }
 
-        // Nhóm theo cột
+        // Kiểm tra có thay đổi so với dữ liệu gốc không
+        let hasChanges = false;
+        state.scoreColumns.forEach(c => {
+            state.students.forEach(s => {
+                const key = `${s.MaHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
+                const current = (state.scoreMap[key] ?? "").toString().trim();
+                const original = (state.originalScoreMap[key] ?? "").toString().trim();
+                if (current !== original) hasChanges = true;
+            });
+        });
+        if (!hasChanges) {
+            Toast.info("Dữ liệu điểm số chưa có thay đổi để lưu.");
+            return;
+        }
+
+        // Nhóm theo cột (gồm cả điểm mới và điểm bị xóa)
         const columnGroups = [];
         state.scoreColumns.forEach(c => {
             const danhSachDiem = [];
             state.students.forEach(s => {
                 const key = `${s.MaHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
                 const raw = (state.scoreMap[key] ?? "").toString().trim();
-                if (raw === "") return;
-                danhSachDiem.push({ MaHS: s.MaHS, Diem: parseFloat(raw.replace(",", ".")) });
+                const original = (state.originalScoreMap[key] ?? "").toString().trim();
+
+                // Nếu không có gì thay đổi → bỏ qua
+                if (raw === original) return;
+
+                if (raw === "") {
+                    // Đã từng có điểm, giờ xóa → gửi null để backend xóa
+                    if (original !== "") {
+                        danhSachDiem.push({ MaHS: s.MaHS, Diem: null });
+                    }
+                } else {
+                    danhSachDiem.push({ MaHS: s.MaHS, Diem: parseFloat(raw.replace(",", ".")) });
+                }
             });
             if (danhSachDiem.length > 0) {
                 columnGroups.push({
@@ -1158,7 +1184,7 @@ function bindSave() {
             }
         });
 
-        if (!columnGroups.length) { Toast.warning("Chưa có điểm nào để lưu."); return; }
+        if (!columnGroups.length) { Toast.info("Dữ liệu điểm số chưa có thay đổi để lưu."); return; }
 
         try {
             if (btnSave) {
@@ -1177,8 +1203,11 @@ function bindSave() {
             state.scoreColumns.forEach(c => {
                 state.students.forEach(s => {
                     const key = `${s.MaHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
-                    if (state.scoreMap[key] !== undefined) {
-                        state.originalScoreMap[key] = state.scoreMap[key];
+                    const val = state.scoreMap[key];
+                    if (val !== undefined && val.toString().trim() !== "") {
+                        state.originalScoreMap[key] = val;
+                    } else {
+                        delete state.originalScoreMap[key];
                     }
                 });
             });
@@ -1466,18 +1495,34 @@ function getDTBForStudent(maHS) {
 }
 
 function tinhDTB(maHS) {
+    // Tìm loại hình cuối kỳ (HeSo cao nhất)
+    const ckType = state.examTypes.reduce((best, t) =>
+        t.HeSo > (best?.HeSo || 0) ? t : best, null
+    );
+
+    // Chỉ hiển thị ĐTB khi có điểm cuối kỳ
+    if (ckType) {
+        const hasCK = state.scoreColumns.some(c => {
+            if (c.MaLoaiHinhKT !== ckType.MaLoaiHinhKT) return false;
+            const key = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
+            return (state.scoreMap[key] ?? "").toString().trim() !== "";
+        });
+        if (!hasCK) return "";
+    }
+
     let tongDiem = 0;
     let tongHeSo = 0;
 
     state.scoreColumns.forEach(c => {
         const heSo = state.examTypes.find(t => t.MaLoaiHinhKT === c.MaLoaiHinhKT)?.HeSo ?? 1;
-        tongHeSo += heSo;
-
         const key = `${maHS}_${c.MaLoaiHinhKT}_${c.Lan}`;
         const raw = (state.scoreMap[key] ?? "").toString().trim();
-        const diem = raw === "" ? 0 : parseFloat(raw.replace(",", "."));
+        if (raw === "") return; // bỏ qua ô trống, không tính là 0
+
+        const diem = parseFloat(raw.replace(",", "."));
         if (isNaN(diem)) return;
 
+        tongHeSo += heSo;
         tongDiem += diem * heSo;
     });
 

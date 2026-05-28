@@ -351,7 +351,7 @@ export const semesterSummary = async (req, res) => {
       allScores.map((s) => [`${s.MaBangDiemMon}_${s.MaHS}`, s]),
     );
     const heSoMap = new Map(
-      bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC.HeSo ?? 1]),
+      bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC?.HeSo ?? 1]),
     );
 
     const results = records.map((record) => {
@@ -561,7 +561,7 @@ export const semesterSummaryAll = async (req, res) => {
         allScores.map((s) => [`${s.MaBangDiemMon}_${s.MaHS}`, s]),
       );
       const heSoMap = new Map(
-        bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC.HeSo ?? 1]),
+        bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC?.HeSo ?? 1]),
       );
 
       for (const record of records) {

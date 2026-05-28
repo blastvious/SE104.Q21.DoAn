@@ -1,6 +1,17 @@
 import db from "../../libs/db.js"
 import { Op, where } from "sequelize"
 
+const tinhTuoi = (ngaySinh) => {
+  const sinh = new Date(ngaySinh);
+  const homNay = new Date();
+  let tuoi = homNay.getFullYear() - sinh.getFullYear();
+  const thang = homNay.getMonth() - sinh.getMonth();
+  if (thang < 0 || (thang === 0 && homNay.getDate() < sinh.getDate())) {
+    tuoi--;
+  }
+  return tuoi;
+};
+
 
 /* =========================================
    GET STUDENT 
@@ -102,6 +113,28 @@ export const createStudent = async (req, res) => {
             return res.status(400).json({ message: reason });
         }
 
+        // 2. Kiểm tra tuổi
+        const [tuoiThieuRows] = await db.sequelize.query(
+          `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiThieu'`
+        );
+        const [tuoiDaRows] = await db.sequelize.query(
+          `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiDa'`
+        );
+        const tuoiToiThieu = parseInt(tuoiThieuRows[0]?.GiaTri);
+        const tuoiToiDa = parseInt(tuoiDaRows[0]?.GiaTri);
+
+        if (!isNaN(tuoiToiThieu) || !isNaN(tuoiToiDa)) {
+          const tuoi = tinhTuoi(NgaySinh);
+          if (!isNaN(tuoiToiThieu) && tuoi < tuoiToiThieu) {
+            await t.rollback();
+            return res.status(400).json({ message: `Tuổi học sinh phải >= ${tuoiToiThieu}` });
+          }
+          if (!isNaN(tuoiToiDa) && tuoi > tuoiToiDa) {
+            await t.rollback();
+            return res.status(400).json({ message: `Tuổi học sinh phải <= ${tuoiToiDa}` });
+          }
+        }
+
         const khoa = "2652";
         const lastStudent = await db.HOCSINH.findOne({
             where: { MaHS: { [Op.like]: `${khoa}%` } },
@@ -150,8 +183,20 @@ export const bulkCreateStudents = async (req, res) => {
             })
         );
 
+        // Đọc tham số tuổi
+        const [tuoiThieuRows] = await db.sequelize.query(
+          `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiThieu'`
+        );
+        const [tuoiDaRows] = await db.sequelize.query(
+          `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiDa'`
+        );
+        const tuoiToiThieu = parseInt(tuoiThieuRows[0]?.GiaTri);
+        const tuoiToiDa = parseInt(tuoiDaRows[0]?.GiaTri);
+        const kiemTraTuoi = !isNaN(tuoiToiThieu) || !isNaN(tuoiToiDa);
+
         const uniqueStudentsToInsert = [];
         const seen = new Set();
+        let biLoaiTuoi = 0;
 
         for (const s of studentData) {
             const dob = s.NgaySinh instanceof Date
@@ -165,14 +210,27 @@ export const bulkCreateStudents = async (req, res) => {
                 existingNameDobAddr.has(key) ||
                 seen.has(key);
 
-            if (!isDuplicate) {
-                seen.add(key);
-                uniqueStudentsToInsert.push(s);
+            if (isDuplicate) continue;
+
+            // Kiểm tra tuổi
+            if (kiemTraTuoi && s.NgaySinh) {
+              const tuoi = tinhTuoi(s.NgaySinh);
+              if ((!isNaN(tuoiToiThieu) && tuoi < tuoiToiThieu) ||
+                  (!isNaN(tuoiToiDa) && tuoi > tuoiToiDa)) {
+                biLoaiTuoi++;
+                continue;
+              }
             }
+
+            seen.add(key);
+            uniqueStudentsToInsert.push(s);
         }
 
+        let msg = "";
+        if (biLoaiTuoi > 0) msg = ` (bỏ qua ${biLoaiTuoi} học sinh không đúng độ tuổi)`;
+
         if (uniqueStudentsToInsert.length === 0) {
-            return res.status(400).json({ message: "Tất cả học sinh trong danh sách đều đã tồn tại" });
+            return res.status(400).json({ message: "Tất cả học sinh đều đã tồn tại hoặc không đúng độ tuổi" + msg });
         }
 
         const lastStudent = await db.HOCSINH.findOne({
@@ -191,8 +249,11 @@ export const bulkCreateStudents = async (req, res) => {
         try {
             const result = await db.HOCSINH.bulkCreate(studentsWithIds, { transaction: t });
             await t.commit();
+            const daBoQua = studentData.length - result.length;
+            let successMsg = `Thành công: Đã thêm ${result.length} học sinh.`;
+            if (daBoQua > 0) successMsg += ` Bỏ qua ${daBoQua} bản ghi (trùng lặp/không đúng độ tuổi).`;
             res.status(201).json({
-                message: `Thành công: Đã thêm ${result.length} học sinh. Bỏ qua ${studentData.length - result.length} bản ghi trùng lặp.`,
+                message: successMsg,
                 data: result
             });
         } catch (err) {
@@ -232,6 +293,27 @@ export const updateStudent = async (req, res) => {
                 message: "Không tìm thấy học sinh"
             });
 
+        }
+
+        if (NgaySinh) {
+          const [tuoiThieuRows] = await db.sequelize.query(
+            `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiThieu'`
+          );
+          const [tuoiDaRows] = await db.sequelize.query(
+            `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiDa'`
+          );
+          const tuoiToiThieu = parseInt(tuoiThieuRows[0]?.GiaTri);
+          const tuoiToiDa = parseInt(tuoiDaRows[0]?.GiaTri);
+
+          if (!isNaN(tuoiToiThieu) || !isNaN(tuoiToiDa)) {
+            const tuoi = tinhTuoi(NgaySinh);
+            if (!isNaN(tuoiToiThieu) && tuoi < tuoiToiThieu) {
+              return res.status(400).json({ message: `Tuổi học sinh phải >= ${tuoiToiThieu}` });
+            }
+            if (!isNaN(tuoiToiDa) && tuoi > tuoiToiDa) {
+              return res.status(400).json({ message: `Tuổi học sinh phải <= ${tuoiToiDa}` });
+            }
+          }
         }
 
         await student.update({

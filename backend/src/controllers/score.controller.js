@@ -37,6 +37,22 @@ export const getScore = async (req, res) => {
       return res.status(400).json({ message: "Missing requied fields!" });
     }
 
+    // Kiểm tra điểm trong khoảng cho phép
+    const [diemThieuRows] = await db.sequelize.query(
+      `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemToiThieu'`
+    );
+    const [diemDaRows] = await db.sequelize.query(
+      `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemToiDa'`
+    );
+    const diemToiThieu = parseFloat(diemThieuRows[0]?.GiaTri);
+    const diemToiDa = parseFloat(diemDaRows[0]?.GiaTri);
+    if (!isNaN(diemToiThieu) && Diem < diemToiThieu) {
+      return res.status(400).json({ message: `Điểm phải >= ${diemToiThieu}` });
+    }
+    if (!isNaN(diemToiDa) && Diem > diemToiDa) {
+      return res.status(400).json({ message: `Điểm phải <= ${diemToiDa}` });
+    }
+
     // findOrCreate BANGDIEMMON
     const [bangDiemMon] = await db.BANGDIEMMON.findOrCreate({
       where: { MaLop, MaMonHoc, MaHocKy },
@@ -111,6 +127,25 @@ export const bulkImportScores = async (req, res) => {
       });
     }
 
+    // Kiểm tra tất cả điểm trong khoảng cho phép
+    const [diemThieuRows] = await db.sequelize.query(
+      `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemToiThieu'`
+    );
+    const [diemDaRows] = await db.sequelize.query(
+      `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemToiDa'`
+    );
+    const diemToiThieu = parseFloat(diemThieuRows[0]?.GiaTri);
+    const diemToiDa = parseFloat(diemDaRows[0]?.GiaTri);
+    for (const { MaHS, Diem } of danhSachDiem) {
+      if (Diem == null) continue;
+      if (!isNaN(diemToiThieu) && Diem < diemToiThieu) {
+        return res.status(400).json({ message: `Điểm của HS ${MaHS} phải >= ${diemToiThieu}` });
+      }
+      if (!isNaN(diemToiDa) && Diem > diemToiDa) {
+        return res.status(400).json({ message: `Điểm của HS ${MaHS} phải <= ${diemToiDa}` });
+      }
+    }
+
     const [bangDiemMon] = await db.BANGDIEMMON.findOrCreate({
       where: {
         MaLop,
@@ -129,7 +164,6 @@ export const bulkImportScores = async (req, res) => {
     const result = [];
 
     for (const { MaHS, Diem } of danhSachDiem) {
-
       const [ctBangDiemHS] =
         await db.CT_BANGDIEMMON_HS.findOrCreate({
           where: {
@@ -142,26 +176,36 @@ export const bulkImportScores = async (req, res) => {
               "MaCTBDMHS",
               "CTBDM"
             ),
-            DiemTBMon: 0,
+            DiemTBMon: null,
           },
         });
 
-      const [score, created] =
-        await db.CT_BANGDIEMMON_LHKT.findOrCreate({
+      if (Diem == null) {
+        await db.CT_BANGDIEMMON_LHKT.destroy({
           where: {
             MaCTBDMHS: ctBangDiemHS.MaCTBDMHS,
             MaLoaiHinhKT,
             Lan,
           },
-          defaults: {
-            Diem: Number(Diem)
-          },
         });
+      } else {
+        const [score, created] =
+          await db.CT_BANGDIEMMON_LHKT.findOrCreate({
+            where: {
+              MaCTBDMHS: ctBangDiemHS.MaCTBDMHS,
+              MaLoaiHinhKT,
+              Lan,
+            },
+            defaults: {
+              Diem: Number(Diem)
+            },
+          });
 
-      if (!created) {
-        await score.update({
-          Diem: Number(Diem)
-        });
+        if (!created) {
+          await score.update({
+            Diem: Number(Diem)
+          });
+        }
       }
 
       await updateDiemTBMon(
@@ -171,9 +215,7 @@ export const bulkImportScores = async (req, res) => {
       result.push({
         MaHS,
         Diem,
-        status: created
-          ? "created"
-          : "updated",
+        status: Diem == null ? "deleted" : created ? "created" : "updated",
       });
     }
 
@@ -238,12 +280,12 @@ export const getBangDiemMon = async (req, res) => {
 
         const loaiDiemMap = {};
         danhSachLHKT.forEach((lkht) => {
-          const tenLoai = lkht.LOAIHINHKT.TenLoaiHinhKT;
+          const tenLoai = lkht.LOAIHINHKT?.TenLoaiHinhKT ?? "Không xác định";
           if (!loaiDiemMap[tenLoai]) {
             loaiDiemMap[tenLoai] = {
               MaLoaiHinhKT: lkht.MaLoaiHinhKT,
               TenLoaiHinhKT: tenLoai,
-              HeSo: lkht.LOAIHINHKT.HeSo,
+              HeSo: lkht.LOAIHINHKT?.HeSo ?? 1,
               danhSachDiem: [],
             };
           }
@@ -282,10 +324,34 @@ export const updateDiemTBMon = async (MaCTBDMHS) => {
     ],
   });
 
-  if (!danhSachLHKT.length) return;
+  if (!danhSachLHKT.length) {
+    await db.CT_BANGDIEMMON_HS.update(
+      { DiemTBMon: null },
+      { where: { MaCTBDMHS } }
+    );
+    return;
+  }
+
+  // Xác định loại hình cuối kỳ (có HeSo cao nhất)
+  const allExamTypes = await db.LOAIHINHKT.findAll({
+    attributes: ["MaLoaiHinhKT", "HeSo"],
+  });
+  const ckType = allExamTypes.reduce((max, t) =>
+    t.HeSo > (max?.HeSo || 0) ? t : max, null
+  );
+
+  // Chỉ tính ĐTB khi có điểm cuối kỳ
+  const hasCK = ckType && danhSachLHKT.some(lhkt => lhkt.MaLoaiHinhKT === ckType.MaLoaiHinhKT);
+  if (!hasCK) {
+    await db.CT_BANGDIEMMON_HS.update(
+      { DiemTBMon: null },
+      { where: { MaCTBDMHS } }
+    );
+    return;
+  }
 
   const danhSachDiem = danhSachLHKT.map((lhkt) => ({
-    HeSo: lhkt.LOAIHINHKT.HeSo,
+    HeSo: lhkt.LOAIHINHKT?.HeSo ?? 1,
     Diem: parseFloat(lhkt.Diem),
   }));
 

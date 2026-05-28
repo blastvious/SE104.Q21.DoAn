@@ -50,20 +50,13 @@ async function loadTotalSubjects() {
 
 async function loadPassRate() {
     try {
-        const res = await fetch(`${API}/report-subjects`);
-        const reports = await res.json();
-        
-        if (reports.length === 0) {
+        const res = await fetch(`${API}/dashboard/pass-rate`);
+        const { TongHS, SoDat } = await res.json();
+        if (!TongHS || TongHS === 0) {
             document.getElementById("passRate").textContent = "--";
             return;
         }
-        const latest = reports[0];
-        const { TongSiSo, TongSoLuongDat } = latest;
-        if (!TongSiSo || TongSiSo === 0) {
-            document.getElementById("passRate").textContent = "--";
-            return;
-        }
-        const tiLe = ((TongSoLuongDat / TongSiSo) * 100).toFixed(1);
+        const tiLe = ((SoDat / TongHS) * 100).toFixed(1);
         document.getElementById("passRate").textContent = `${tiLe}%`;
     } catch {
         document.getElementById("passRate").textContent = "--";
