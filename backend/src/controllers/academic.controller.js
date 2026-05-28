@@ -326,6 +326,16 @@ export const deleteExamType = async (req, res) => {
       });
     }
 
+    const scoreCount = await db.CT_BANGDIEMMON_LHKT.count({
+      where: { MaLoaiHinhKT: id }
+    });
+
+    if (scoreCount > 0) {
+      return res.status(409).json({
+        message: `Không thể xóa loại hình kiểm tra vì đã có ${scoreCount} điểm thuộc loại hình này`
+      });
+    }
+
     await examType.destroy();
 
     res.json({
