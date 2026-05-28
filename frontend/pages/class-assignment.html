@@ -31,9 +31,32 @@
     <div class="assignment-grid">
 
         <div class="assignment-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <h3 class="section-title">Học sinh chưa xếp lớp</h3>
-                <span id="selectedCount" style="font-size:13px;color:#64748b;font-weight:600;">Đã chọn: 0</span>
+            <div class="assign-header">
+
+                <div class="unassigned-header-left">
+
+                    <div class="title-row">
+
+                        <h3 class="section-title">
+                            Học sinh chưa xếp lớp
+                        </h3>
+
+                        <div class="assignment-search">
+
+                            <i class="fas fa-search"></i>
+
+                            <input type="text" id="searchUnassigned" placeholder="Tìm học sinh..." />
+
+                        </div>
+
+                    </div>
+
+                    <span id="selectedCount">
+                        Đã chọn: 0
+                    </span>
+
+                </div>
+
             </div>
             <div class="qlsv-table-card">
                 <table class="qlsv-table">

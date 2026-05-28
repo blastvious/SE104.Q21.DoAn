@@ -125,3 +125,110 @@
     from { transform: scale(0.88); opacity: 0; }
     to   { transform: scale(1);    opacity: 1; }
 }
+
+.assign-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+
+    flex-wrap: nowrap !important;
+}
+
+.unassigned-header-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.title-row .section-title {
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* SEARCH */
+.assignment-search {
+    position: relative;
+    width: 240px;
+    flex-shrink: 0;
+}
+
+.assignment-search input {
+    width: 100%;
+    height: 40px;
+
+    padding: 0 14px 0 40px;
+
+    border-radius: 10px;
+    border: 1px solid var(--border);
+
+    background: var(--surface-section);
+
+    color: var(--text-heading);
+    font-size: 0.88rem;
+
+    outline: none;
+
+    box-sizing: border-box;
+}
+
+.assignment-search i {
+    position: absolute;
+
+    left: 14px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: #94a3b8;
+    font-size: 0.9rem;
+
+    pointer-events: none;
+}
+
+/* FIX TABLE */
+.assignment-card {
+    overflow: hidden;
+}
+
+.qlsv-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.qlsv-table th,
+.qlsv-table td {
+    padding: 14px 12px !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+
+    .assignment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assign-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .title-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .assignment-search {
+        width: 100%;
+    }
+
+}

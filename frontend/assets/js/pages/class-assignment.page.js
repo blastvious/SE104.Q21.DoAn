@@ -15,6 +15,8 @@ let selectedStudents = new Set();
 let selectedAssignedStudents = new Set();
 let allClasses = [];
 let currentStudentId = null;
+let unassignedStudents = [];
+let filteredUnassignedStudents = [];
 
 /* =========================================
    INIT
@@ -225,6 +227,9 @@ function bindEvents() {
   document.getElementById("cancelTransferBtn").onclick = closeModal;
 
   document.getElementById("transferForm").onsubmit = handleTransfer;
+  document
+  .getElementById("searchUnassigned")
+  .addEventListener("input", handleSearchUnassigned);
 }
 
 function closeModal() {
@@ -232,6 +237,23 @@ function closeModal() {
   currentStudentId = null;
 }
 
+
+function handleSearchUnassigned(e) {
+  const keyword = e.target.value.toLowerCase().trim();
+
+  if (!keyword) {
+    filteredUnassignedStudents = unassignedStudents;
+  } else {
+    filteredUnassignedStudents = unassignedStudents.filter((s) => {
+      return (
+        s.MaHS?.toLowerCase().includes(keyword) ||
+        s.HoTen?.toLowerCase().includes(keyword)
+      );
+    });
+  }
+
+  renderUnassigned(filteredUnassignedStudents);
+}
 /* =========================================
    LOAD UNASSIGNED
 ========================================= */
@@ -248,10 +270,13 @@ async function loadUnassigned() {
 
   const data = await getUnassignedStudents(MaHocKy);
 
-  selectedStudents.clear();
-  updateAssignButton();
+unassignedStudents = data;
+filteredUnassignedStudents = data;
 
-  renderUnassigned(data);
+selectedStudents.clear();
+updateAssignButton();
+
+renderUnassigned(filteredUnassignedStudents);
 }
 
 /* =========================================
