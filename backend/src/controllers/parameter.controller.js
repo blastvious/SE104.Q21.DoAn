@@ -3,13 +3,11 @@ import { Op } from "sequelize";
 //bảng THAMSO 
 
 const isSchoolYearActive = async () => {
-    const today = new Date().toISOString().split('T')[0];
     const [years] = await db.sequelize.query(`
         SELECT COUNT(*) AS cnt FROM NAMHOC
-        WHERE NgayBatDau <= :today
-          AND NgayKetThuc >= :today
-          AND (DaKetThuc IS NULL OR DaKetThuc = 0)
-    `, { replacements: { today } });
+        WHERE NgayBatDau <= CAST(GETDATE() AS DATE)
+          AND NgayKetThuc >= CAST(GETDATE() AS DATE)
+    `);
     return parseInt(years[0]?.cnt) > 0;
 };
 

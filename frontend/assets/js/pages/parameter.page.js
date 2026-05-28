@@ -22,10 +22,9 @@ async function checkLockStatus() {
         const years = await res.json();
         const today = new Date().toISOString().split('T')[0];
 
-        const active = years.find(y => {
-            if (y.DaKetThuc) return false;
-            return y.NgayBatDau <= today && y.NgayKetThuc >= today;
-        });
+        const active = years.find(y =>
+            y.NgayBatDau <= today && y.NgayKetThuc >= today
+        );
         isLocked = !!active;
         activeYearName = active ? active.TenNamHoc : "";
     } catch (e) {
