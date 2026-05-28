@@ -12,13 +12,11 @@ router.delete("/year/:TenNamHoc", classController.deleteYear);
 //Router cho học kỳ.
 router.get("/semester", classController.getAllSemester);
 router.post("/semester", classController.createSemester);
-router.put("/semester/:MaHocKy", classController.updateSemester);
 router.delete("/semester/:MaHocKy", classController.deleteSemester);
 
 //Router cho khối lớp.
 router.get('/grades', classController.getAllGrade);
 router.post('/grades', classController.createGrade);
-router.put('/grades/:MaKhoiLop', classController.updateGrade);
 router.delete('/grades/:MaKhoiLop', classController.deleteGrade);
 
 //Router cho lớp.

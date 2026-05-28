@@ -46,15 +46,6 @@ export const settingsService = {
         if (!res.ok) throw await res.json();
         return await res.json();
     },
-    async updateSemester(MaHocKy, data) {
-        const res = await fetch(`${API_URL}/semester/${encodeURIComponent(MaHocKy)}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        if (!res.ok) throw await res.json();
-        return await res.json();
-    },
     async deleteSemester(MaHocKy) {
         const res = await fetch(`${API_URL}/semester/${encodeURIComponent(MaHocKy)}`, {
             method: 'DELETE'
@@ -73,15 +64,6 @@ export const settingsService = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ TenKhoiLop })
-        });
-        if (!res.ok) throw await res.json();
-        return await res.json();
-    },
-    async updateGrade(MaKhoiLop, data) {
-        const res = await fetch(`${API_URL}/grades/${encodeURIComponent(MaKhoiLop)}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
         });
         if (!res.ok) throw await res.json();
         return await res.json();

@@ -1,6 +1,31 @@
 import { settingsService } from "../service/settings.service.js"
 import { can } from "../permission.js";
 
+const translateError = (err) => {
+    const msg = err?.message || "";
+    const map = {
+        "Missing required fields": "Vui lòng điền đầy đủ thông tin",
+        "Year already exists": "Năm học đã tồn tại",
+        "School year must use format YYYY-YYYY": "Năm học phải đúng định dạng YYYY-YYYY",
+        "School year must be consecutive years": "Năm học phải là 2 năm liên tiếp",
+        "Invalid date format": "Định dạng ngày không hợp lệ",
+        "Start date must be before end date": "Ngày bắt đầu phải trước ngày kết thúc",
+        "Date range must match school year": "Khoảng ngày phải khớp với năm học",
+        "Class already exists for this grade and school year": "Lớp đã tồn tại trong khối và năm học này",
+        "Class code already exists": "Mã lớp đã tồn tại",
+        "School year not found": "Không tìm thấy năm học",
+        "Grade not found": "Không tìm thấy khối lớp",
+        "Class name must not exceed 15 characters": "Tên lớp không được quá 15 ký tự",
+        "Grade id must not exceed 10 characters": "Mã khối không được quá 10 ký tự",
+        "School year must not exceed 10 characters": "Năm học không được quá 10 ký tự",
+        "Invalid SiSo": "Sĩ số không hợp lệ",
+        "Error from server": "Lỗi từ máy chủ",
+        "Grade already exists": "Khối lớp đã tồn tại",
+        "Học kỳ đã tồn tại": "Học kỳ đã tồn tại",
+    };
+    return map[msg] || msg || "Lỗi không xác định";
+};
+
 const toISODate = (vnDate) => {
     const parts = vnDate.split("/");
     if (parts.length !== 3) return null;
@@ -43,31 +68,12 @@ export const init = async () => {
                 NgayKetThuc: toISODate(document.getElementById('NgayKetThuc').value)
             };
             await settingsService.createYear(data);
-            Toast.success("Thành công!");
+            Toast.success("Thêm năm học thành công");
             e.target.reset();
             clearFlatpickr('NgayBatDau');
             clearFlatpickr('NgayKetThuc');
             await loadAllData();
-        } catch (err) { Toast.error(err.message); }
-    };
-
-    document.getElementById('form-semester').onsubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const ten = document.getElementById('TenHocKy').value;
-            await settingsService.createSemester(ten);
-            await loadAllData();
-        } catch (err) { Toast.error(err.message); }
-    };
-
-    document.getElementById('form-grade').onsubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const ten = document.getElementById('TenKhoiLop').value;
-            await settingsService.createGrade(ten);
-            e.target.reset();
-            await loadAllData();
-        } catch (err) { Toast.error(err.message); }
+        } catch (err) { Toast.error(translateError(err)); }
     };
 
     document.getElementById('form-class').onsubmit = async (e) => {
@@ -80,16 +86,17 @@ export const init = async () => {
                 SiSo: 0
             };
             await settingsService.createClass(data);
+            Toast.success("Thêm lớp thành công");
             e.target.reset();
             await loadAllData();
-        } catch (err) { Toast.error(err.message); }
+        } catch (err) { Toast.error(translateError(err)); }
     };
 
     document.getElementById('editSaveBtn').onclick = async () => {
         await saveEdit();
     };
 
-    document.querySelectorAll('#table-year, #table-semester, #table-grade, #table-class').forEach(table => {
+    document.querySelectorAll('#table-year, #table-class').forEach(table => {
         table.addEventListener('click', handleTableClick);
     });
 
@@ -137,19 +144,24 @@ async function handleTableClick(e) {
         if (!id) return;
         if (!confirm("Bạn có chắc chắn muốn xóa?")) return;
         try {
+            let msg = "";
             if (table.id === 'table-year') {
                 await settingsService.deleteYear(id);
+                msg = "Xóa năm học thành công";
             } else if (table.id === 'table-semester') {
                 await settingsService.deleteSemester(id);
+                msg = "Xóa học kỳ thành công";
             } else if (table.id === 'table-grade') {
                 await settingsService.deleteGrade(id);
+                msg = "Xóa khối lớp thành công";
             } else if (table.id === 'table-class') {
                 await settingsService.deleteClass(id);
+                msg = "Xóa lớp thành công";
             }
-            Toast.success("Xóa thành công!");
+            Toast.success(msg);
             await loadAllData();
         } catch (err) {
-            Toast.error(err.message || "Không thể xóa");
+            Toast.error(translateError(err));
         }
     }
 }
@@ -185,30 +197,6 @@ function openEditModal(tableId, tr) {
             setupFlatpickr('editNgayBatDau');
             setupFlatpickr('editNgayKetThuc');
         }, 100);
-    } else if (tableId === 'table-semester') {
-        const ma = cells[0].textContent;
-        const ten = cells[1].textContent;
-        title.textContent = "Chỉnh sửa học kỳ";
-        body.innerHTML = `
-            <div class="form-group">
-                <label>Tên học kỳ</label>
-                <input type="text" id="editTenHocKy" value="${ten}">
-            </div>
-        `;
-        editingContext = { tableId, id: ma };
-        modal.style.display = "block";
-    } else if (tableId === 'table-grade') {
-        const ma = cells[0].textContent;
-        const ten = cells[1].textContent;
-        title.textContent = "Chỉnh sửa khối lớp";
-        body.innerHTML = `
-            <div class="form-group">
-                <label>Tên khối lớp</label>
-                <input type="text" id="editTenKhoiLop" value="${ten}">
-            </div>
-        `;
-        editingContext = { tableId, id: ma };
-        modal.style.display = "block";
     } else if (tableId === 'table-class') {
         const ma = cells[0].textContent;
         const ten = cells[1].textContent;
@@ -238,23 +226,18 @@ async function saveEdit() {
                 NgayKetThuc: toISODate(document.getElementById('editNgayKetThuc').value)
             };
             await settingsService.updateYear(id, data);
-        } else if (tableId === 'table-semester') {
-            const ten = document.getElementById('editTenHocKy').value;
-            await settingsService.updateSemester(id, { TenHocKy: ten });
-        } else if (tableId === 'table-grade') {
-            const ten = document.getElementById('editTenKhoiLop').value;
-            await settingsService.updateGrade(id, { TenKhoiLop: ten });
         } else if (tableId === 'table-class') {
             const ten = document.getElementById('editTenLop').value;
             const siSo = parseInt(document.getElementById('editSiSo').value) || 0;
             await settingsService.updateClass(id, { TenLop: ten, SiSo: siSo });
         }
-        Toast.success("Cập nhật thành công!");
+        const editMsgs = { 'table-year': 'Cập nhật năm học thành công', 'table-class': 'Cập nhật lớp thành công' };
+        Toast.success(editMsgs[tableId] || "Cập nhật thành công");
         document.getElementById('editModal').style.display = 'none';
         editingContext = null;
         await loadAllData();
     } catch (err) {
-        Toast.error(err.message || "Không thể cập nhật");
+        Toast.error(translateError(err));
     }
 }
 
@@ -266,10 +249,10 @@ async function loadAllData() {
         settingsService.fetchClasses()
     ]);
 
-    const actionBtns = (id) => `
+    const actionBtns = (showEdit = true, showDelete = true) => `
         <div class="action-group">
-            <button class="action-btn edit" title="Chỉnh sửa"><i class="fas fa-pen"></i></button>
-            ${can(window.currentUser, "delete") ? `<button class="action-btn delete" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+            ${showEdit ? `<button class="action-btn edit" title="Chỉnh sửa"><i class="fas fa-pen"></i></button>` : ''}
+            ${showDelete && can(window.currentUser, "delete") ? `<button class="action-btn delete" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
         </div>
     `;
 
@@ -283,30 +266,20 @@ async function loadAllData() {
     `).join('');
 
     document.querySelector('#table-semester tbody').innerHTML = semesters.map(s => `
-        <tr data-id="${s.MaHocKy}">
+        <tr>
             <td>${s.MaHocKy}</td>
             <td>${s.TenHocKy}</td>
-            <td>${actionBtns()}</td>
         </tr>
     `).join('');
 
     document.querySelector('#table-grade tbody').innerHTML = grades.map(g => `
-        <tr data-id="${g.MaKhoiLop}">
+        <tr>
             <td>${g.MaKhoiLop}</td>
             <td>${g.TenKhoiLop}</td>
-            <td>${actionBtns()}</td>
         </tr>
     `).join('');
 
-    document.querySelector('#table-class tbody').innerHTML = classes.map(c => `
-        <tr data-id="${c.MaLop}">
-            <td data-siso="${c.SiSo}">${c.MaLop}</td>
-            <td>${c.TenLop}</td>
-            <td>${c.MaKhoiLop}</td>
-            <td>${c.TenNamHoc}</td>
-            <td>${actionBtns()}</td>
-        </tr>
-    `).join('');
+    renderClassTable(classes);
 
     const selectNam = document.getElementById('SelectNamHoc');
     selectNam.innerHTML = '<option value="">Chọn năm...</option>' + 
@@ -315,4 +288,37 @@ async function loadAllData() {
     const selectKhoi = document.getElementById('SelectKhoi');
     selectKhoi.innerHTML = '<option value="">Chọn khối...</option>' + 
         grades.map(g => `<option value="${g.MaKhoiLop}">${g.TenKhoiLop}</option>`).join('');
+
+    selectNam.onchange = () => renderClassTable(classes);
+    selectKhoi.onchange = () => renderClassTable(classes);
 }
+
+function renderClassTable(classes) {
+    const actionBtns = (showEdit = true, showDelete = true) => `
+        <div class="action-group">
+            ${showEdit ? `<button class="action-btn edit" title="Chỉnh sửa"><i class="fas fa-pen"></i></button>` : ''}
+            ${showDelete && can(window.currentUser, "delete") ? `<button class="action-btn delete" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+        </div>
+    `;
+
+    const namFilter = document.getElementById('SelectNamHoc').value;
+    const khoiFilter = document.getElementById('SelectKhoi').value;
+
+    let filtered = [...classes];
+    if (namFilter) filtered = filtered.filter(c => c.TenNamHoc === namFilter);
+    if (khoiFilter) filtered = filtered.filter(c => c.MaKhoiLop === khoiFilter);
+
+    filtered.sort((a, b) => b.TenNamHoc.localeCompare(a.TenNamHoc));
+
+    document.querySelector('#table-class tbody').innerHTML = filtered.map(c => `
+        <tr data-id="${c.MaLop}">
+            <td data-siso="${c.SiSo}">${c.MaLop}</td>
+            <td>${c.TenLop}</td>
+            <td>${c.MaKhoiLop}</td>
+            <td>${c.TenNamHoc}</td>
+            <td>${actionBtns()}</td>
+        </tr>
+    `).join('');
+}
+
+
