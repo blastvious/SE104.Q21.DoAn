@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from '../libs/db.js'; 
+import { autoFinalizeYears } from './finalizeYear.js';
 import studentRoute from '../routes/student.route.js'
 import classRoute from "../routes/class.router.js"
 import studyProcessRoute from '../routes/studyProcess.router.js'
@@ -48,4 +49,5 @@ app.listen(PORT, async () => {
     console.log(`Server is running at http://localhost:${PORT}`);
     
     await connectDB();
+    await autoFinalizeYears();
 });

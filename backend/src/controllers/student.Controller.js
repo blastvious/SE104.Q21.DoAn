@@ -99,9 +99,9 @@ export const createStudent = async (req, res) => {
         const duplicate = await db.HOCSINH.findOne({
             where: {
                 [Op.or]: [
-                    { [Op.and]: [{ HoTen }, { NgaySinh }, { DiaChi }] }, 
-                    { Email: Email || null }, 
-                    { SoDienThoai: SoDienThoai || null } 
+                    { [Op.and]: [{ HoTen }, { NgaySinh }, { DiaChi }] },
+                    { Email: Email || null },
+                    { SoDienThoai: SoDienThoai || null }
                 ]
             },
             transaction: t
@@ -109,7 +109,14 @@ export const createStudent = async (req, res) => {
 
         if (duplicate) {
             await t.rollback();
-            let reason = "Học sinh đã tồn tại ";
+            let reason;
+            if (Email && duplicate.Email === Email) {
+                reason = `Email "${Email}" đã được sử dụng bởi học sinh khác`;
+            } else if (SoDienThoai && duplicate.SoDienThoai === SoDienThoai) {
+                reason = `Số điện thoại "${SoDienThoai}" đã được sử dụng bởi học sinh khác`;
+            } else {
+                reason = "Học sinh đã tồn tại (trùng họ tên, ngày sinh và địa chỉ)";
+            }
             return res.status(400).json({ message: reason });
         }
 

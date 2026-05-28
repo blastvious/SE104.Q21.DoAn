@@ -2,8 +2,10 @@ import db from "../../libs/db.js";
 // Các bảng được dùng: BANGDIEMMON, CT_BANGDIEMMON_HS, CT_BANGDIEMMON_LHKT
 
 const tinhDiemTBMon = (danhSachDiem) => {
-  const tongHeSo = danhSachDiem.reduce((acc, d) => acc + d.HeSo, 0);
-  const tongDiem = danhSachDiem.reduce((acc, d) => acc + d.HeSo * d.Diem, 0);
+  const dsLoc = danhSachDiem.filter((d) => d.Diem != null && !isNaN(d.Diem));
+  if (!dsLoc.length) return 0;
+  const tongHeSo = dsLoc.reduce((acc, d) => acc + d.HeSo, 0);
+  const tongDiem = dsLoc.reduce((acc, d) => acc + d.HeSo * d.Diem, 0);
   if (tongHeSo == 0) return 0;
   return Math.round((tongDiem / tongHeSo) * 10) / 10;
 };
@@ -35,6 +37,16 @@ export const getScore = async (req, res) => {
       Diem === undefined
     ) {
       return res.status(400).json({ message: "Missing requied fields!" });
+    }
+
+    // Kiểm tra năm học đã kết thúc chưa
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể nhập điểm cho năm học đã kết thúc" });
     }
 
     // Kiểm tra điểm trong khoảng cho phép
@@ -176,9 +188,11 @@ export const bulkImportScores = async (req, res) => {
               "MaCTBDMHS",
               "CTBDM"
             ),
-            DiemTBMon: null,
+            DiemTBMon: 0,
           },
         });
+
+      let status;
 
       if (Diem == null) {
         await db.CT_BANGDIEMMON_LHKT.destroy({
@@ -188,6 +202,7 @@ export const bulkImportScores = async (req, res) => {
             Lan,
           },
         });
+        status = "deleted";
       } else {
         const [score, created] =
           await db.CT_BANGDIEMMON_LHKT.findOrCreate({
@@ -206,6 +221,7 @@ export const bulkImportScores = async (req, res) => {
             Diem: Number(Diem)
           });
         }
+        status = created ? "created" : "updated";
       }
 
       await updateDiemTBMon(
@@ -215,7 +231,7 @@ export const bulkImportScores = async (req, res) => {
       result.push({
         MaHS,
         Diem,
-        status: Diem == null ? "deleted" : created ? "created" : "updated",
+        status,
       });
     }
 
@@ -324,36 +340,20 @@ export const updateDiemTBMon = async (MaCTBDMHS) => {
     ],
   });
 
-  if (!danhSachLHKT.length) {
+  const danhSachDiem = danhSachLHKT
+    .map((lhkt) => ({
+      HeSo: lhkt.LOAIHINHKT?.HeSo ?? 1,
+      Diem: parseFloat(lhkt.Diem),
+    }))
+    .filter((d) => !isNaN(d.Diem));
+
+  if (!danhSachDiem.length) {
     await db.CT_BANGDIEMMON_HS.update(
-      { DiemTBMon: null },
+      { DiemTBMon: 0 },
       { where: { MaCTBDMHS } }
     );
     return;
   }
-
-  // Xác định loại hình cuối kỳ (có HeSo cao nhất)
-  const allExamTypes = await db.LOAIHINHKT.findAll({
-    attributes: ["MaLoaiHinhKT", "HeSo"],
-  });
-  const ckType = allExamTypes.reduce((max, t) =>
-    t.HeSo > (max?.HeSo || 0) ? t : max, null
-  );
-
-  // Chỉ tính ĐTB khi có điểm cuối kỳ
-  const hasCK = ckType && danhSachLHKT.some(lhkt => lhkt.MaLoaiHinhKT === ckType.MaLoaiHinhKT);
-  if (!hasCK) {
-    await db.CT_BANGDIEMMON_HS.update(
-      { DiemTBMon: null },
-      { where: { MaCTBDMHS } }
-    );
-    return;
-  }
-
-  const danhSachDiem = danhSachLHKT.map((lhkt) => ({
-    HeSo: lhkt.LOAIHINHKT?.HeSo ?? 1,
-    Diem: parseFloat(lhkt.Diem),
-  }));
 
   const diemTBMon = tinhDiemTBMon(danhSachDiem);
 
@@ -364,10 +364,17 @@ export const updateDiemTBMon = async (MaCTBDMHS) => {
 };
 
 export const recalculateDiemTBMonByExamType = async (maLoaiHinhKT) => {
-  const records = await db.CT_BANGDIEMMON_LHKT.findAll({
-    where: { MaLoaiHinhKT: maLoaiHinhKT },
-    attributes: ["MaCTBDMHS"],
-  });
+  const [records] = await db.sequelize.query(`
+    SELECT DISTINCT lhkt.MaCTBDMHS
+    FROM CT_BANGDIEMMON_LHKT lhkt
+    JOIN CT_BANGDIEMMON_HS hs ON hs.MaCTBDMHS = lhkt.MaCTBDMHS
+    JOIN BANGDIEMMON bdm ON bdm.MaBangDiemMon = hs.MaBangDiemMon
+    JOIN LOP l ON l.MaLop = bdm.MaLop
+    JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+    WHERE lhkt.MaLoaiHinhKT = :maLoaiHinhKT
+      AND nh.NgayKetThuc >= CAST(GETDATE() AS DATE)
+  `, { replacements: { maLoaiHinhKT } });
+
   const uniqueIds = [...new Set(records.map((r) => r.MaCTBDMHS))];
   for (const maCTBDMHS of uniqueIds) {
     await updateDiemTBMon(maCTBDMHS);

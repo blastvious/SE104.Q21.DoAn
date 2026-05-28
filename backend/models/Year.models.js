@@ -15,6 +15,11 @@ const Yearmodel = (sequelize) =>{
             type: DataTypes.DATEONLY,
             allowNull: false
         },
+        DaKetThuc: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
     }, {
         tableName: 'NAMHOC',
         timestamps: false

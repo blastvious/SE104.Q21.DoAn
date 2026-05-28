@@ -183,6 +183,16 @@ export const deleteSubject = async (req, res) => {
       });
     }
 
+    const scoreCount = await db.BANGDIEMMON.count({
+      where: { MaMonHoc: id }
+    });
+
+    if (scoreCount > 0) {
+      return res.status(409).json({
+        message: `Không thể xóa môn học "${subject.TenMonHoc}" vì đã có ${scoreCount} bảng điểm liên quan`
+      });
+    }
+
     await subject.destroy();
 
     res.json({
@@ -194,7 +204,7 @@ export const deleteSubject = async (req, res) => {
     console.log(error);
 
     res.status(500).json({
-      message: "Error from server",
+      message: "Lỗi máy chủ, không thể xóa môn học",
     });
 
   }

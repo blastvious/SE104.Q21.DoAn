@@ -2,6 +2,16 @@ import db from "../../libs/db.js";
 import { Op } from "sequelize";
 //bảng THAMSO 
 
+const isSchoolYearActive = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const [years] = await db.sequelize.query(`
+        SELECT COUNT(*) AS cnt FROM NAMHOC
+        WHERE NgayBatDau <= :today
+          AND NgayKetThuc >= :today
+          AND (DaKetThuc IS NULL OR DaKetThuc = 0)
+    `, { replacements: { today } });
+    return parseInt(years[0]?.cnt) > 0;
+};
 
 export const createParameter = async (req, res) => {
     try {
@@ -126,6 +136,12 @@ export const getParameterByName = async (req, res) => {
 //===========Sua
 export const updateParameter = async (req, res) => {
     try {
+        if (await isSchoolYearActive()) {
+            return res.status(403).json({
+                message: "Không thể sửa quy định trong năm học đang diễn ra"
+            });
+        }
+
         const { name } = req.params;
         const { TenThamSo, GiaTri } = req.body;
 

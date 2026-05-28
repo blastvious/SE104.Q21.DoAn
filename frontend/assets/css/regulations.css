@@ -22,7 +22,24 @@
     color: var(--text-heading);
 }
 
+.param-notices {
+    margin-bottom: 8px;
+}
+
 .parameter-page .students-table td:first-child {
     font-weight: 600;
     color: var(--text-table);
+}
+
+.lock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    color: #d97706;
+    background: #fffbeb;
+    cursor: default;
+    font-size: 0.9rem;
 }

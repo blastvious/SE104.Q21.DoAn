@@ -32,6 +32,15 @@ export const enrollStudent = async (req, res) => {
     if (!semester)
       return res.status(404).json({ message: "Semester not found" });
 
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể tiếp nhận học sinh cho năm học đã kết thúc" });
+    }
+
     await db.sequelize.transaction(async (t) => {
       const classRecord = await db.LOP.findByPk(MaLop, {
         transaction: t,
@@ -203,6 +212,15 @@ export const transferClass = async (req, res) => {
     if (!semester)
       return res.status(404).json({ message: "Semester not found" });
 
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLopMoi AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLopMoi } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể chuyển lớp cho năm học đã kết thúc" });
+    }
+
     await db.sequelize.transaction(async (t) => {
       const current = await db.QUATRINHHOC.findOne({
         where: {
@@ -324,6 +342,15 @@ export const semesterSummary = async (req, res) => {
   try {
     const { MaLop, MaHocKy } = req.body;
 
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể tổng kết cho năm học đã kết thúc" });
+    }
+
     const [records, bangDiemMonList] = await Promise.all([
       db.QUATRINHHOC.findAll({ where: { MaLop, MaHocKy } }),
       db.BANGDIEMMON.findAll({
@@ -397,6 +424,15 @@ export const assignStudentsBatch = async (req, res) => {
 
     if (!students || students.length === 0) {
       throwHttp("No students selected", 400);
+    }
+
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể xếp lớp cho năm học đã kết thúc" });
     }
 
     await db.sequelize.transaction(async (t) => {
@@ -520,6 +556,17 @@ export const semesterSummaryAll = async (req, res) => {
       return res.status(400).json({ message: "Thiếu MaHocKy" });
     }
 
+    // Kiểm tra có lớp nào thuộc năm học đã kết thúc không
+    const [closedLop] = await db.sequelize.query(`
+      SELECT COUNT(*) AS sl FROM QUATRINHHOC qh
+      JOIN LOP l ON l.MaLop = qh.MaLop
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE qh.MaHocKy = :MaHocKy AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaHocKy } });
+    if (closedLop.length > 0 && parseInt(closedLop[0].sl) > 0) {
+      return res.status(403).json({ message: "Không thể tổng kết vì có lớp thuộc năm học đã kết thúc" });
+    }
+
     // Lấy tất cả lớp có học sinh trong học kỳ này
     const dsLop = await db.QUATRINHHOC.findAll({
       where: { MaHocKy },
@@ -611,6 +658,15 @@ export const promoteStudents = async (req, res) => {
 
     if (!MaLopCu || !MaHocKyCu || !MaLopMoi || !MaHocKyMoi) {
       throwHttp("Missing required fields", 400);
+    }
+
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLopMoi AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLopMoi } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể chuyển lớp cho năm học đã kết thúc" });
     }
 
     await db.sequelize.transaction(async (t) => {

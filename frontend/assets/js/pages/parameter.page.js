@@ -4,13 +4,34 @@ import {
 } from "../service/parameter.service.js";
 
 let currentEditingName = "";
+let isLocked = false;
+let activeYearName = "";
 
 /**
  * Hàm khởi tạo chính (Sẽ được Router gọi khi điều hướng vào trang này)
  */
 export async function init() {
+    await checkLockStatus();
     await fetchAndRenderParams();
     initControlPanel();
+}
+
+async function checkLockStatus() {
+    try {
+        const res = await fetch("http://localhost:5001/api/school/year");
+        const years = await res.json();
+        const today = new Date().toISOString().split('T')[0];
+
+        const active = years.find(y => {
+            if (y.DaKetThuc) return false;
+            return y.NgayBatDau <= today && y.NgayKetThuc >= today;
+        });
+        isLocked = !!active;
+        activeYearName = active ? active.TenNamHoc : "";
+    } catch (e) {
+        isLocked = false;
+        activeYearName = "";
+    }
 }
 
 /**
@@ -43,16 +64,20 @@ async function fetchAndRenderParams(keyword = "") {
                 <td class="param-name-cell" style="padding: 14px 16px; font-weight: 600;">${item.TenThamSo}</td>
                 <td class="param-value-cell" style="padding: 14px 16px; font-weight: 500;">${item.GiaTri}</td>
                 <td style="text-align: center; padding: 14px 16px;">
-                    <button class="action-btn edit" title="Chỉnh sửa">
-                        <i class="fas fa-pen"></i>
-                    </button>
+                    ${isLocked
+                        ? '<span class="lock-badge" title="Không thể sửa trong năm học"><i class="fas fa-lock"></i></span>'
+                        : `<button class="action-btn edit" title="Chỉnh sửa"><i class="fas fa-pen"></i></button>`
+                    }
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
+        // Hiển thị banner khóa nếu cần
+        showLockBanner();
+
         // Gán lại sự kiện trực tiếp cho các nút sửa/xóa vừa sinh ra
-        bindRowEvents();
+        if (!isLocked) bindRowEvents();
 
     } catch (err) {
         console.error("Lỗi khi render danh sách tham số:", err);
@@ -71,6 +96,24 @@ async function fetchAndRenderParams(keyword = "") {
 /**
  * 2. Gán sự kiện cho các nút hành động (Sửa / Xóa) nằm trên mỗi hàng của bảng
  */
+function showLockBanner() {
+    const container = document.getElementById("paramNotices");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const info = document.createElement("div");
+    info.style.cssText = "font-size:0.82rem;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;";
+    info.innerHTML = '<i class="fas fa-info-circle"></i> Lưu ý: Chỉ được phép chỉnh sửa quy định trước ngày bắt đầu năm học. Khi năm học đang diễn ra, quy định sẽ bị khóa.';
+    container.appendChild(info);
+
+    if (isLocked) {
+        const banner = document.createElement("div");
+        banner.style.cssText = "background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:0.9rem;color:#856404;";
+        banner.innerHTML = `<i class="fas fa-lock"></i><span>Hiện đang trong năm học <strong>${activeYearName}</strong>, quy định không được phép chỉnh sửa. Chỉ được phép chỉnh sửa quy định trước ngày bắt đầu năm học.</span>`;
+        container.appendChild(banner);
+    }
+}
+
 function bindRowEvents() {
     // Xử lý sự kiện click nút SỬA
     document.querySelectorAll(".action-btn.edit").forEach(btn => {
@@ -134,6 +177,12 @@ function initControlPanel() {
 
             if (!giaTri) {
                 Toast.warning("Vui lòng nhập giá trị áp dụng!");
+                return;
+            }
+
+            if (isLocked) {
+                Toast.error("Không thể sửa quy định trong năm học đang diễn ra");
+                closeModal();
                 return;
             }
 
