@@ -1,4 +1,5 @@
 import db from "../../libs/db.js";
+import { Op } from "sequelize";
 // Các bảng được dùng: BANGDIEMMON, CT_BANGDIEMMON_HS, CT_BANGDIEMMON_LHKT
 
 const tinhDiemTBMon = (danhSachDiem) => {
@@ -102,6 +103,9 @@ export const getScore = async (req, res) => {
 
     // Update DiemTBMon
     await updateDiemTBMon(ctBangDiemMonHS.MaCTBDMHS);
+
+    // Update DiemTBHocKy
+    await updateDiemTBHocKy(MaLop, MaHocKy);
 
     res.status(200).json({
       message: created ? "Score created!" : "Score updated!",
@@ -235,6 +239,8 @@ export const bulkImportScores = async (req, res) => {
       });
     }
 
+    await updateDiemTBHocKy(MaLop, MaHocKy);
+
     return res.status(200).json({
       message: "Bulk entry success",
       data: result,
@@ -360,6 +366,61 @@ export const updateDiemTBMon = async (MaCTBDMHS) => {
   await db.CT_BANGDIEMMON_HS.update(
     { DiemTBMon: diemTBMon },
     { where: { MaCTBDMHS } }
+  );
+};
+
+const updateDiemTBHocKy = async (MaLop, MaHocKy) => {
+  const records = await db.QUATRINHHOC.findAll({ where: { MaLop, MaHocKy } });
+  if (!records.length) return;
+
+  const bangDiemMonList = await db.BANGDIEMMON.findAll({
+    where: { MaLop, MaHocKy },
+    include: [{ model: db.MONHOC, attributes: ["MaMonHoc", "HeSo"] }],
+  });
+  if (!bangDiemMonList.length) return;
+
+  const maHSList = records.map((r) => r.MaHS);
+  const maBangDiemMonList = bangDiemMonList.map((b) => b.MaBangDiemMon);
+
+  const allScores = await db.CT_BANGDIEMMON_HS.findAll({
+    where: {
+      MaBangDiemMon: { [Op.in]: maBangDiemMonList },
+      MaHS: { [Op.in]: maHSList },
+    },
+  });
+
+  const scoreMap = new Map(
+    allScores.map((s) => [`${s.MaBangDiemMon}_${s.MaHS}`, s]),
+  );
+  const heSoMap = new Map(
+    bangDiemMonList.map((b) => [b.MaBangDiemMon, b.MONHOC?.HeSo ?? 1]),
+  );
+
+  const results = records.map((record) => {
+    let totalScore = 0;
+    let totalWeight = 0;
+    for (const bdm of bangDiemMonList) {
+      const score = scoreMap.get(`${bdm.MaBangDiemMon}_${record.MaHS}`);
+      if (score?.DiemTBMon != null) {
+        const weight = heSoMap.get(bdm.MaBangDiemMon);
+        totalScore += parseFloat(score.DiemTBMon) * weight;
+        totalWeight += weight;
+      }
+    }
+    const diemTB =
+      totalWeight > 0
+        ? Math.round((totalScore / totalWeight) * 100) / 100
+        : 0.0;
+    return { MaHS: record.MaHS, DiemTBHocKy: diemTB };
+  });
+
+  await Promise.all(
+    results.map((r) =>
+      db.QUATRINHHOC.update(
+        { DiemTBHocKy: r.DiemTBHocKy },
+        { where: { MaHS: r.MaHS, MaLop, MaHocKy } },
+      ),
+    ),
   );
 };
 
