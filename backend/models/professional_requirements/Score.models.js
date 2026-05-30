@@ -33,7 +33,11 @@ const Scoremodel = (sequelize) => {
         }
     }, {
         tableName: 'BANGDIEMMON',
-        timestamps: false
+        timestamps: false,
+        indexes: [{
+            unique: true,
+            fields: ['MaLop', 'MaMonHoc', 'MaHocKy']
+        }]
     }); 
 };
 

@@ -884,14 +884,26 @@ function applyImportData(dataRows, colMapRaw, mode) {
     let errorCount   = 0;
     let matchedCount = 0;
 
+    const nameMap = {};
+    state.students.forEach(s => {
+        const key = normalizeName(s.HoTen);
+        if (!nameMap[key]) nameMap[key] = [];
+        nameMap[key].push(s);
+    });
+
+    const nameCounter = {};
+
     dataRows.forEach(row => {
         const hoTen = normalizeName(row[1]);
         if (!hoTen) return;
 
-        const student = state.students.find(s =>
-            normalizeName(s.HoTen) === hoTen
-        );
-        if (!student) return;
+        const candidates = nameMap[hoTen];
+        if (!candidates) return;
+
+        if (!nameCounter[hoTen]) nameCounter[hoTen] = 0;
+        const student = candidates[nameCounter[hoTen] % candidates.length];
+        nameCounter[hoTen]++;
+
         matchedCount++;
 
         Object.entries(colMap).forEach(([excelIdx, col]) => {

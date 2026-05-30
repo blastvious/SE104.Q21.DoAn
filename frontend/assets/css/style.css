@@ -178,6 +178,7 @@ table td {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+    padding: 0 25px 25px;
 }
 
 .btn-cancel {

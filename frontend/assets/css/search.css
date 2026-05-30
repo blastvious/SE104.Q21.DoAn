@@ -138,7 +138,7 @@
 .modal {
     background: var(--surface-card);
     border-radius: 20px;
-    width: 720px;
+    width: 900px;
     max-width: 95vw;
     max-height: 90vh;
     overflow-y: auto;

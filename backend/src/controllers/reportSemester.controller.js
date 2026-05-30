@@ -59,6 +59,7 @@ export const reportSemester = async (req, res) => {
                      FROM CT_BANGDIEMMON_HS ct
                      JOIN BANGDIEMMON bdm ON ct.MaBangDiemMon = bdm.MaBangDiemMon
                      JOIN MONHOC mh       ON bdm.MaMonHoc     = mh.MaMonHoc
+                     JOIN QUATRINHHOC q   ON q.MaHS = ct.MaHS AND q.MaLop = bdm.MaLop AND q.MaHocKy = bdm.MaHocKy
                      WHERE bdm.MaLop   = :MaLop
                        AND bdm.MaHocKy = :MaHocKy
                      GROUP BY ct.MaHS

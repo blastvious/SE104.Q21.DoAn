@@ -38,38 +38,13 @@ export const createReport = async (req, res) => {
 
         const DiemDatMon = params.length > 0 ? parseFloat(params[0].GiaTri) : 5.0;
 
-        // backfill sĩ số thực tế cho các lớp chưa được cập nhật
-        await db.sequelize.query(
-            `UPDATE LOP
-             SET SiSo = (
-                 SELECT COUNT(*)
-                 FROM QUATRINHHOC
-                 WHERE QUATRINHHOC.MaLop = LOP.MaLop
-                 AND QUATRINHHOC.MaHocKy = :MaHocKy
-             )
-             WHERE SiSo = 0
-               AND EXISTS (
-                 SELECT 1
-                 FROM QUATRINHHOC
-                 WHERE QUATRINHHOC.MaLop = LOP.MaLop
-                 AND QUATRINHHOC.MaHocKy = :MaHocKy
-               )`,
-            { replacements: { MaHocKy } }
-        );
-
         const [classes] = await db.sequelize.query(
-            `SELECT l.MaLop, l.SiSo
-             FROM LOP l
-             JOIN BANGDIEMMON b ON b.MaLop = l.MaLop
-             WHERE l.TenNamHoc = :TenNamHoc
-               AND b.MaMonHoc = :MaMonHoc
-               AND b.MaHocKy = :MaHocKy`,
-            { replacements: { TenNamHoc, MaMonHoc, MaHocKy } }
+            `SELECT MaLop, TenLop, SiSo
+             FROM LOP
+             WHERE TenNamHoc = :TenNamHoc
+             ORDER BY TenLop`,
+            { replacements: { TenNamHoc } }
         );
-
-        if (classes.length === 0) {
-            throwHttp("Không tìm thấy dữ liệu lớp học cho môn này trong học kỳ và năm học đã chọn", 404);
-        }
 
         let TongSiSo = 0;
         let TongSoLuongDat = 0;
@@ -77,9 +52,10 @@ export const createReport = async (req, res) => {
 
         for (const cls of classes) {
             const [scoreData] = await db.sequelize.query(
-                `SELECT COUNT(cs.MaHS) AS SoLuongDat
+                `SELECT COUNT(DISTINCT cs.MaHS) AS SoLuongDat
                  FROM BANGDIEMMON b
                  JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = b.MaBangDiemMon
+                 JOIN QUATRINHHOC q ON q.MaHS = cs.MaHS AND q.MaLop = b.MaLop AND q.MaHocKy = b.MaHocKy
                  WHERE b.MaLop = :MaLop
                    AND b.MaMonHoc = :MaMonHoc
                    AND b.MaHocKy = :MaHocKy
@@ -94,7 +70,7 @@ export const createReport = async (req, res) => {
             TongSiSo += SiSo;
             TongSoLuongDat += SoLuongDat;
 
-            details.push({ MaLop: cls.MaLop, SiSo, SoLuongDat, TiLeDat });
+            details.push({ MaLop: cls.MaLop, TenLop: cls.TenLop, SiSo, SoLuongDat, TiLeDat });
         }
 
         await db.sequelize.transaction(async (t) => {

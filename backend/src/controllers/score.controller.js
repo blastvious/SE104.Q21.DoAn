@@ -12,8 +12,13 @@ const tinhDiemTBMon = (danhSachDiem) => {
 };
 
 // Sinh ma
-const CreateMa = async (model, truongMa, prefix) => {
-  const last = await model.findOne({ order: [[truongMa, "DESC"]] });
+const CreateMa = async (model, truongMa, prefix, transaction = null) => {
+  const options = { order: [[truongMa, "DESC"]] };
+  if (transaction) {
+    options.transaction = transaction;
+    options.lock = true;
+  }
+  const last = await model.findOne(options);
   let stt = 1;
   if (last) {
     const lastNumber = parseInt(last[truongMa].replace(/\D/g, ""));
@@ -66,12 +71,16 @@ export const getScore = async (req, res) => {
       return res.status(400).json({ message: `Điểm phải <= ${diemToiDa}` });
     }
 
-    // findOrCreate BANGDIEMMON
-    const [bangDiemMon] = await db.BANGDIEMMON.findOrCreate({
-      where: { MaLop, MaMonHoc, MaHocKy },
-      defaults: {
-        MaBangDiemMon: await CreateMa(db.BANGDIEMMON, "MaBangDiemMon", "BDM"),
-      },
+    // findOrCreate BANGDIEMMON (dùng transaction để tránh race condition)
+    const bangDiemMon = await db.sequelize.transaction(async (t) => {
+      const [record] = await db.BANGDIEMMON.findOrCreate({
+        where: { MaLop, MaMonHoc, MaHocKy },
+        defaults: {
+          MaBangDiemMon: await CreateMa(db.BANGDIEMMON, "MaBangDiemMon", "BDM", t),
+        },
+        transaction: t,
+      });
+      return record;
     });
 
     // findOrCreate CT_BANGDIEMMON_HS
@@ -162,19 +171,15 @@ export const bulkImportScores = async (req, res) => {
       }
     }
 
-    const [bangDiemMon] = await db.BANGDIEMMON.findOrCreate({
-      where: {
-        MaLop,
-        MaMonHoc,
-        MaHocKy,
-      },
-      defaults: {
-        MaBangDiemMon: await CreateMa(
-          db.BANGDIEMMON,
-          "MaBangDiemMon",
-          "BDM"
-        ),
-      },
+    const bangDiemMon = await db.sequelize.transaction(async (t) => {
+      const [record] = await db.BANGDIEMMON.findOrCreate({
+        where: { MaLop, MaMonHoc, MaHocKy },
+        defaults: {
+          MaBangDiemMon: await CreateMa(db.BANGDIEMMON, "MaBangDiemMon", "BDM", t),
+        },
+        transaction: t,
+      });
+      return record;
     });
 
     const result = [];

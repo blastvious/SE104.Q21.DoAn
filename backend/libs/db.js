@@ -114,7 +114,20 @@ export const connectDB = async () => {
         console.log('Connect Database QLHS successfully (MSSQL).');
         
         
-        await sequelize.sync(); 
+        await sequelize.sync();
+
+        // Tạo unique index cho BANGDIEMMON nếu chưa có
+        try {
+            await sequelize.query(`
+                IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_BANGDIEMMON_Lop_Mon_Ky')
+                BEGIN
+                    CREATE UNIQUE INDEX UQ_BANGDIEMMON_Lop_Mon_Ky ON BANGDIEMMON (MaLop, MaMonHoc, MaHocKy);
+                END
+            `);
+        } catch (err) {
+            console.warn('Could not create index on BANGDIEMMON:', err.message);
+        }
+
         console.log('All the table has been synchronized and is now clean.');
     } catch (error) {
         console.error('Database connection failed', error.message);
