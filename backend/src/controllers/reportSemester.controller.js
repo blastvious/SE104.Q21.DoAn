@@ -53,18 +53,17 @@ export const reportSemester = async (req, res) => {
         for (const lop of dsLop) {
             const [datRows] = await db.sequelize.query(
                 `SELECT COUNT(*) AS SoLuongDat
-                 FROM (
-                     SELECT ct.MaHS,
-                            SUM(ct.DiemTBMon * mh.HeSo) / SUM(mh.HeSo) AS DiemTBHocKy
-                     FROM CT_BANGDIEMMON_HS ct
-                     JOIN BANGDIEMMON bdm ON ct.MaBangDiemMon = bdm.MaBangDiemMon
-                     JOIN MONHOC mh       ON bdm.MaMonHoc     = mh.MaMonHoc
-                     JOIN QUATRINHHOC q   ON q.MaHS = ct.MaHS AND q.MaLop = bdm.MaLop AND q.MaHocKy = bdm.MaHocKy
-                     WHERE bdm.MaLop   = :MaLop
-                       AND bdm.MaHocKy = :MaHocKy
-                     GROUP BY ct.MaHS
-                     HAVING SUM(ct.DiemTBMon * mh.HeSo) / SUM(mh.HeSo) >= :DiemDat
-                 ) AS sub`,
+                FROM (
+                    SELECT ct.MaHS,
+                        SUM(ct.DiemTBMon * mh.HeSo) / SUM(mh.HeSo) AS DiemTBHocKy
+                    FROM CT_BANGDIEMMON_HS ct
+                    JOIN BANGDIEMMON bdm ON ct.MaBangDiemMon = bdm.MaBangDiemMon
+                    JOIN MONHOC mh       ON bdm.MaMonHoc     = mh.MaMonHoc
+                    WHERE bdm.MaLop   = :MaLop
+                    AND bdm.MaHocKy = :MaHocKy
+                    GROUP BY ct.MaHS
+                    HAVING SUM(ct.DiemTBMon * mh.HeSo) / SUM(mh.HeSo) >= :DiemDat
+                ) AS sub`,
                 { replacements: { MaLop: lop.MaLop, MaHocKy, DiemDat } }
             );
             

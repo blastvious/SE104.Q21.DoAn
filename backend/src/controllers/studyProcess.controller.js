@@ -98,26 +98,36 @@ export const enrollStudent = async (req, res) => {
 export const getClassList = async (req, res) => {
   try {
     const { MaLop, MaHocKy } = req.query;
-
-    const list = await db.QUATRINHHOC.findAll({
+ 
+    // Ưu tiên lấy từ QUATRINHHOC (danh sách phân lớp chính thức)
+    let list = await db.QUATRINHHOC.findAll({
       where: { MaLop, MaHocKy },
       include: [
         {
           model: db.HOCSINH,
-          attributes: [
-            "MaHS",
-            "HoTen",
-            "GioiTinh",
-            "NgaySinh",
-            "DiaChi",
-            "Email",
-            "SoDienThoai",
-          ],
+          attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"],
         },
       ],
       order: [[db.sequelize.col("HOCSINH.MaHS"), "ASC"]],
     });
-
+ 
+    if (list.length === 0) {
+    // Tìm học kỳ khác có dữ liệu cho lớp này
+      const [otherSemRows] = await db.sequelize.query(
+          `SELECT DISTINCT qth.MaLop, qth.MaHocKy
+          FROM QUATRINHHOC qth
+          WHERE qth.MaLop = :MaLop AND qth.MaHocKy != :MaHocKy`,
+          { replacements: { MaLop, MaHocKy } }
+      );
+      if (otherSemRows.length > 0) {
+          list = await db.QUATRINHHOC.findAll({
+              where: { MaLop, MaHocKy: otherSemRows[0].MaHocKy },
+              include: [{ model: db.HOCSINH, attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"] }],
+              order: [[db.sequelize.col("HOCSINH.MaHS"), "ASC"]],
+          });
+      }
+    }
+  
     res.json(list);
   } catch (error) {
     console.error(error);

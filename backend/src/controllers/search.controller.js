@@ -147,17 +147,22 @@ export const getStudentHistory = async (req, res) => {
 
         // Lấy danh sách học kỳ
         const [rows] = await db.sequelize.query(
-            `SELECT
-                qth.MaLop,
-                l.TenLop,
-                qth.MaHocKy,
-                hk.TenHocKy,
-                l.TenNamHoc
-             FROM QUATRINHHOC qth
-             JOIN LOP l    ON l.MaLop    = qth.MaLop
-             JOIN HOCKY hk ON hk.MaHocKy = qth.MaHocKy
-             WHERE qth.MaHS = :maHS
-             ORDER BY l.TenNamHoc DESC, hk.MaHocKy ASC`,
+            `SELECT qth.MaLop, l.TenLop, qth.MaHocKy, hk.TenHocKy, l.TenNamHoc
+            FROM QUATRINHHOC qth
+            JOIN LOP l    ON l.MaLop    = qth.MaLop
+            JOIN HOCKY hk ON hk.MaHocKy = qth.MaHocKy
+            WHERE qth.MaHS = :maHS
+            UNION
+            SELECT bdm.MaLop, l.TenLop, bdm.MaHocKy, hk.TenHocKy, l.TenNamHoc
+            FROM BANGDIEMMON bdm
+            JOIN LOP l    ON l.MaLop    = bdm.MaLop
+            JOIN HOCKY hk ON hk.MaHocKy = bdm.MaHocKy
+            JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = bdm.MaBangDiemMon AND cs.MaHS = :maHS
+            WHERE NOT EXISTS (
+                SELECT 1 FROM QUATRINHHOC qth2
+                WHERE qth2.MaHS = :maHS AND qth2.MaHocKy = bdm.MaHocKy
+            )
+            ORDER BY TenNamHoc DESC, MaHocKy ASC`,
             { replacements: { maHS } }
         );
 
