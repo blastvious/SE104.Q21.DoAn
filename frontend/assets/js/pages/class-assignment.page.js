@@ -788,12 +788,32 @@ async function exportClassListPDF() {
     document.body.appendChild(wrapper);
 
     await new Promise(r => setTimeout(r, 200));
-    const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: "#fff" });
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#fff",
+      width: 794,
+      windowWidth: 794,
+    });
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF("p", "mm", "a4");
-    const w = 190, h2 = (canvas.height * w) / canvas.width;
-    pdf.addImage(imgData, "JPEG", 10, 10, w, h2);
+    const pdf = new jsPDF("portrait", "mm", "a4");
+    const pdfW = 190;
+    const pdfH = (canvas.height * pdfW) / canvas.width;
+
+    let heightLeft = pdfH;
+    let position = 8;
+
+    pdf.addImage(imgData, "JPEG", 10, position, pdfW, pdfH);
+    heightLeft -= 277;
+
+    while (heightLeft > 0) {
+      position = heightLeft - pdfH + 8;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 10, position, pdfW, pdfH);
+      heightLeft -= 277;
+    }
+
     pdf.save(`DanhSachLop_${tenLop}_${tenNamHoc}.pdf`);
     document.body.removeChild(wrapper);
 
