@@ -252,6 +252,7 @@ function bindEvents() {
           if (searchRow) searchRow.style.display = "";
           if (card) card.classList.remove("is-collapsed");
       }
+      loadAssigned(); 
   };
 }
 
@@ -378,33 +379,59 @@ function renderUnassigned(data) {
 ========================================= */
 function renderAssigned(data) {
   const tbody = document.getElementById("assignedTable");
+  const isCollapsed = document.querySelector(".assignment-grid")?.classList.contains("has-collapsed");
 
   if (!data.length) {
     tbody.innerHTML = `<tr><td colspan="4">Chưa có học sinh</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = data
-    .map(
-      (s) => `
-    <tr>
-        <td><input type="checkbox" class="assigned-checkbox" data-id="${s.MaHS}"></td>
-        <td>${s.MaHS}</td>
-        <td>${s.HOCSINH?.HoTen || ""}</td>
-        <td>${formatDate(s.HOCSINH?.NgaySinh)}</td>
-        <td>${s.HOCSINH?.GioiTinh || ""}</td>
-        <td>${s.HOCSINH?.DiaChi || "--"}</td>
-        <td>${s.HOCSINH?.Email || "--"}</td>
-        <td>${s.HOCSINH?.SoDienThoai || "--"}</td>
-        <td>
-            <button class="action-btn edit" data-id="${s.MaHS}">
-                <i class="fas fa-pen"></i>
-            </button>
-        </td>
-    </tr>
-    `,
-    )
-    .join("");
+  const thead = tbody.closest("table").querySelector("thead tr");
+  thead.innerHTML = isCollapsed ? `
+      <th><input type="checkbox" id="checkAllAssigned"></th>
+      <th>Mã HS</th>
+      <th>Họ Tên</th>
+      <th>Ngày Sinh</th>
+      <th>Giới Tính</th>
+      <th>Địa Chỉ</th>
+      <th>Email</th>
+      <th>SĐT</th>
+      <th style="text-align:center">Thao tác</th>
+  ` : `
+      <th><input type="checkbox" id="checkAllAssigned"></th>
+      <th>Mã HS</th>
+      <th>Họ Tên</th>
+      <th>Ngày Sinh</th>
+      <th>Giới Tính</th>
+      <th style="text-align:center">Thao tác</th>
+  `;
+
+  tbody.innerHTML = data.map(s => {
+    const base = `
+      <td><input type="checkbox" class="assigned-checkbox" data-id="${s.MaHS}"></td>
+      <td>${s.MaHS}</td>
+      <td>${s.HOCSINH?.HoTen || ""}</td>
+      <td>${formatDate(s.HOCSINH?.NgaySinh)}</td>
+      <td>${s.HOCSINH?.GioiTinh || ""}</td>
+  `;
+    const extra = isCollapsed ? `
+      <td>${s.HOCSINH?.DiaChi || "--"}</td>
+      <td>${s.HOCSINH?.Email || "--"}</td>
+      <td>${s.HOCSINH?.SoDienThoai || "--"}</td>
+      <td>
+        <button class="action-btn edit" data-id="${s.MaHS}">
+          <i class="fas fa-pen"></i>
+        </button>
+      </td>
+    ` : `
+      <td>
+        <button class="action-btn edit" data-id="${s.MaHS}">
+          <i class="fas fa-pen"></i>
+        </button>
+      </td>
+    `;
+    return `<tr>${base}${extra}</tr>`;
+    }).join("");
 
   document.querySelectorAll(".action-btn.edit").forEach((btn) => {
     btn.onclick = () => openTransferModal(btn.dataset.id);

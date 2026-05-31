@@ -306,10 +306,3 @@
 .assignment-grid.has-collapsed {
     grid-template-columns: 1fr;
 }
-
-.assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table-card {
-    overflow-x: auto;
-}
-.assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table {
-    min-width: 800px; 
-}
