@@ -31,21 +31,17 @@
     <div class="assignment-grid">
 
         <div class="assignment-card">
+            <button id="toggleUnassignedBtn" class="collapse-btn" title="Thu nhỏ">&minus;</button>
             <div class="assign-header">
                 <div class="unassigned-header-left">
-                    <div class="title-row">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <button id="toggleUnassignedBtn" class="collapse-btn">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <h3 class="section-title">Học sinh chưa xếp lớp</h3>
-                        </div>
+                    <h3 class="section-title">Học sinh chưa xếp lớp</h3>
+                    <div class="unassigned-search-row">
+                        <span id="selectedCount">Đã chọn: 0</span>
                         <div class="assignment-search">
                             <i class="fas fa-search"></i>
                             <input type="text" id="searchUnassigned" placeholder="Tìm học sinh..." />
                         </div>
                     </div>
-                    <span id="selectedCount">Đã chọn: 0</span>
                 </div>
             </div>
             <div id="unassignedContent" class="collapse-content">

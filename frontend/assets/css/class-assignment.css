@@ -44,6 +44,45 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    position: relative;
+}
+
+.assignment-card:first-child {
+    position: relative;
+}
+
+.assignment-card:first-child.is-collapsed {
+    padding: 4px 20px;
+    gap: 0;
+    justify-content: center;
+}
+
+.assignment-card:first-child.is-collapsed .section-title {
+    margin-bottom: 0;
+}
+
+.assignment-card:first-child .collapse-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 1;
+}
+
+.assignment-card:first-child .unassigned-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.assignment-card:first-child .unassigned-search-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.assignment-card:first-child .assignment-search {
+    width: 320px;
 }
 
 .assign-header {
@@ -234,16 +273,25 @@
 }
 
 .collapse-btn {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface-section);
-    color: var(--text-heading);
+    background: none;
+    border: none;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; flex-shrink: 0;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--text-table);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    flex-shrink: 0;
 }
-.collapse-btn:hover { background: #e2e8f0; }
+.collapse-btn:hover {
+    background: var(--surface-section-hover);
+    color: var(--text-heading);
+}
 
 .collapse-content {
     overflow: hidden;

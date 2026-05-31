@@ -235,16 +235,22 @@ function bindEvents() {
   document.getElementById("toggleUnassignedBtn").onclick = () => {
       unassignedCollapsed = !unassignedCollapsed;
       const content = document.getElementById("unassignedContent");
-      const icon = document.querySelector("#toggleUnassignedBtn i");
+      const btn = document.getElementById("toggleUnassignedBtn");
       const grid = document.querySelector(".assignment-grid");
+      const searchRow = document.querySelector(".unassigned-search-row");
+      const card = document.querySelector(".assignment-card:first-child");
       if (unassignedCollapsed) {
           content.classList.add("collapsed");
-          icon.className = "fas fa-plus";
+          btn.textContent = "+";
           grid.classList.add("has-collapsed");
+          if (searchRow) searchRow.style.display = "none";
+          if (card) card.classList.add("is-collapsed");
       } else {
           content.classList.remove("collapsed");
-          icon.className = "fas fa-minus";
+          btn.textContent = "\u2212";
           grid.classList.remove("has-collapsed");
+          if (searchRow) searchRow.style.display = "";
+          if (card) card.classList.remove("is-collapsed");
       }
   };
 }
