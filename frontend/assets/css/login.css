@@ -149,40 +149,12 @@ img {
   color: var(--white-color);
 }
 
-.login__check, 
-.login__check-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.login__check {
-  margin-bottom: 1.5rem;
-  font-size: var(--small-font-size);
-}
-
-.login__check-box {
-  column-gap: .5rem;
-}
-
-.login__check-input {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--white-color);
-  cursor: pointer;
-}
-
-.login__check-label {
-  cursor: pointer;
-}
-
-.login__forgot {
+.login__forgot-text {
+  text-align: left;
+  font-size: 0.75rem;
   color: var(--blue-light);
-}
-
-.login__forgot:hover {
-  text-decoration: underline;
-  color: var(--white-color);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
 }
 
 .login__button {
@@ -224,7 +196,7 @@ img {
     justify-content: center;
   }
   .login__form {
-    width: 420px;
+    width: 476px;
     padding-inline: 2.5rem;
   }
   /* Cập nhật khoảng cách của logo trên màn hình lớn */
