@@ -252,13 +252,8 @@ export const bulkCreateStudents =
 
             if (!response.ok) {
 
-                const errorMsg =
-                    result.details
-                        ? result.details.join("\n")
-                        : result.message;
-
                 throw new Error(
-                    errorMsg ||
+                    result.message ||
                     "Dữ liệu file Excel không hợp lệ!"
                 );
 

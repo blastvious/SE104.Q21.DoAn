@@ -1,5 +1,6 @@
+import Joi from 'joi';
 import db from "../../libs/db.js"
-import { Op, where } from "sequelize"
+import { Op } from "sequelize"
 
 const tinhTuoi = (ngaySinh) => {
   const sinh = new Date(ngaySinh);
@@ -179,18 +180,17 @@ export const bulkCreateStudents = async (req, res) => {
             attributes: ['HoTen', 'NgaySinh', 'DiaChi', 'Email', 'SoDienThoai']
         });
 
-        const existingEmails = new Set(existingStudents.map(s => s.Email).filter(Boolean));
-        const existingPhones = new Set(existingStudents.map(s => s.SoDienThoai).filter(Boolean));
+        const existingEmails = new Set(existingStudents.map(s => (s.Email || "").trim()).filter(Boolean));
+        const existingPhones = new Set(existingStudents.map(s => (s.SoDienThoai || "").trim()).filter(Boolean));
         const existingNameDobAddr = new Set(
             existingStudents.map(s => {
                 const dob = s.NgaySinh instanceof Date
                     ? s.NgaySinh.toISOString().slice(0, 10)
                     : String(s.NgaySinh);
-                return `${s.HoTen}|${dob}|${s.DiaChi}`;
+                return `${(s.HoTen || "").trim()}|${dob}|${(s.DiaChi || "").trim()}`;
             })
         );
 
-        // Đọc tham số tuổi
         const [tuoiThieuRows] = await db.sequelize.query(
           `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'TuoiToiThieu'`
         );
@@ -201,30 +201,67 @@ export const bulkCreateStudents = async (req, res) => {
         const tuoiToiDa = parseInt(tuoiDaRows[0]?.GiaTri);
         const kiemTraTuoi = !isNaN(tuoiToiThieu) || !isNaN(tuoiToiDa);
 
+        const rowSchema = Joi.object({
+            HoTen: Joi.string().min(2).max(100).required(),
+            GioiTinh: Joi.string().valid("Nam", "Nữ").required(),
+            NgaySinh: Joi.date().less("now").required(),
+            DiaChi: Joi.string().max(200).required(),
+            Email: Joi.string().email().max(100).required(),
+            SoDienThoai: Joi.string()
+                .pattern(/^(0[3|5|7|8|9][0-9]{8})$/)
+                .message('Số điện thoại không đúng định dạng VN (phải 10 số, bắt đầu 03/05/07/08/09)')
+                .required()
+        });
+
         const uniqueStudentsToInsert = [];
         const seen = new Set();
-        let biLoaiTuoi = 0;
+        const errors = [];
 
-        for (const s of studentData) {
+        for (let idx = 0; idx < studentData.length; idx++) {
+            const s = studentData[idx];
+            s.HoTen = (s.HoTen || "").trim();
+            s.DiaChi = (s.DiaChi || "").trim();
+            s.Email = (s.Email || "").trim();
+            s.SoDienThoai = (s.SoDienThoai || "").trim();
+
+            // 1. Validate từng dòng
+            const { error: valErr } = rowSchema.validate(s, { abortEarly: false });
+            if (valErr) {
+                errors.push({
+                    row: idx + 2,
+                    reason: valErr.details.map(d => d.message).join("; ")
+                });
+                continue;
+            }
+
+            // 2. Kiểm tra trùng
             const dob = s.NgaySinh instanceof Date
                 ? s.NgaySinh.toISOString().slice(0, 10)
                 : String(s.NgaySinh);
             const key = `${s.HoTen}|${dob}|${s.DiaChi}`;
 
-            const isDuplicate =
-                (s.Email && existingEmails.has(s.Email)) ||
-                (s.SoDienThoai && existingPhones.has(s.SoDienThoai)) ||
-                existingNameDobAddr.has(key) ||
-                seen.has(key);
+            const trungEmail = s.Email && existingEmails.has(s.Email);
+            const trungSdt = s.SoDienThoai && existingPhones.has(s.SoDienThoai);
+            const trungHoSo = existingNameDobAddr.has(key) || seen.has(key);
 
-            if (isDuplicate) continue;
+            if (trungEmail || trungSdt || trungHoSo) {
+                let lyDo = "Trùng dữ liệu với học sinh đã có";
+                if (trungEmail) lyDo = "Email đã tồn tại";
+                else if (trungSdt) lyDo = "Số điện thoại đã tồn tại";
+                else if (trungHoSo) lyDo = "Họ tên + Ngày sinh + Địa chỉ đã tồn tại";
+                errors.push({ row: idx + 2, reason: lyDo });
+                continue;
+            }
 
-            // Kiểm tra tuổi
+            // 3. Kiểm tra tuổi
             if (kiemTraTuoi && s.NgaySinh) {
               const tuoi = tinhTuoi(s.NgaySinh);
               if ((!isNaN(tuoiToiThieu) && tuoi < tuoiToiThieu) ||
                   (!isNaN(tuoiToiDa) && tuoi > tuoiToiDa)) {
-                biLoaiTuoi++;
+                errors.push({
+                    row: idx + 2,
+                    reason: `Tuổi (${tuoi}) không nằm trong khoảng cho phép (${tuoiToiThieu || "?"} - ${tuoiToiDa || "?"})`
+                });
                 continue;
               }
             }
@@ -233,41 +270,37 @@ export const bulkCreateStudents = async (req, res) => {
             uniqueStudentsToInsert.push(s);
         }
 
-        let msg = "";
-        if (biLoaiTuoi > 0) msg = ` (bỏ qua ${biLoaiTuoi} học sinh không đúng độ tuổi)`;
-
-        if (uniqueStudentsToInsert.length === 0) {
-            return res.status(400).json({ message: "Tất cả học sinh đều đã tồn tại hoặc không đúng độ tuổi" + msg });
-        }
-
-        const lastStudent = await db.HOCSINH.findOne({
-            where: { MaHS: { [Op.like]: `${khoa}%` } },
-            order: [["MaHS", "DESC"]]
-        });
-
-        let currentStt = lastStudent ? parseInt(lastStudent.MaHS.slice(4)) + 1 : 1;
-
-        const studentsWithIds = uniqueStudentsToInsert.map((s, index) => {
-            const padded = String(currentStt + index).padStart(4, '0');
-            return { ...s, MaHS: `${khoa}${padded}` };
-        });
-
-        const t = await db.sequelize.transaction();
-        try {
-            const result = await db.HOCSINH.bulkCreate(studentsWithIds, { transaction: t });
-            await t.commit();
-            const daBoQua = studentData.length - result.length;
-            let successMsg = `Thành công: Đã thêm ${result.length} học sinh.`;
-            if (daBoQua > 0) successMsg += ` Bỏ qua ${daBoQua} bản ghi (trùng lặp/không đúng độ tuổi).`;
-            res.status(201).json({
-                message: successMsg,
-                data: result
+        let inserted = [];
+        if (uniqueStudentsToInsert.length > 0) {
+            const lastStudent = await db.HOCSINH.findOne({
+                where: { MaHS: { [Op.like]: `${khoa}%` } },
+                order: [["MaHS", "DESC"]]
             });
-        } catch (err) {
-            await t.rollback();
-            throw err;
+            let currentStt = lastStudent ? parseInt(lastStudent.MaHS.slice(4)) + 1 : 1;
+
+            const studentsWithIds = uniqueStudentsToInsert.map((s, index) => {
+                const padded = String(currentStt + index).padStart(4, '0');
+                return { ...s, MaHS: `${khoa}${padded}` };
+            });
+
+            const t = await db.sequelize.transaction();
+            try {
+                inserted = await db.HOCSINH.bulkCreate(studentsWithIds, { transaction: t });
+                await t.commit();
+            } catch (err) {
+                await t.rollback();
+                throw err;
+            }
         }
+
+        const successMsg = `Đã thêm ${inserted.length} học sinh.`;
+        res.status(inserted.length > 0 ? 201 : 200).json({
+            message: successMsg,
+            data: inserted,
+            errors: errors
+        });
     } catch (error) {
+        console.error("bulkCreateStudents error:", error);
         res.status(500).json({ message: "Lỗi hệ thống khi thêm hàng loạt" });
     }
 };

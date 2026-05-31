@@ -1,3 +1,20 @@
+<style>
+    .btn-download-template {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2563eb;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        margin-bottom: 12px;
+    }
+</style>
 <div class="qlsv-content-wrapper">
     <div class="page-header">
         <h2>Tiếp Nhận Học Sinh</h2>
@@ -105,6 +122,10 @@
                     <span>File Excel phải đúng định dạng. Học sinh trùng mã sẽ được bỏ qua tự động.</span>
                 </div>
                 <div class="file-import-section">
+                    <button type="button" class="btn-download-template" id="btnDownloadTemplate">
+                        <i class="fas fa-download"></i>
+                        Bước 1: Tải file Excel mẫu
+                    </button>
                     <div class="file-drop-area" id="fileDropArea">
                         <input type="file" id="excelFile" accept=".xlsx,.xls">
                         <i class="fas fa-cloud-upload-alt"></i>

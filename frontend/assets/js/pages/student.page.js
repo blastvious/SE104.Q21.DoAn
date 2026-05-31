@@ -456,6 +456,7 @@ function cleanPhoneNumber(val) {
   if (s.startsWith("'")) s = s.slice(1);
   s = s.replace(/\D/g, "");
   if (s.startsWith("84") && s.length > 9) s = "0" + s.slice(2);
+  if (s.length === 9 && /^[3|5|7|8|9]/.test(s)) s = "0" + s;
   return s;
 }
 
@@ -531,6 +532,9 @@ function setupExcelImport() {
   if (cancelBtn) cancelBtn.onclick = closeModal;
   window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
+  const downloadBtn = document.getElementById("btnDownloadTemplate");
+  if (downloadBtn) downloadBtn.onclick = downloadStudentTemplate;
+
   document.addEventListener("change", (e) => {
     if (e.target === fileInput) {
       const file = fileInput.files?.[0];
@@ -571,12 +575,33 @@ async function processExcelFile(file) {
         throw new Error("File Excel rỗng");
       }
 
+      const headerMap = {
+        "Họ Tên": "HoTen",
+        "Ngày Sinh": "NgaySinh",
+        "Giới Tính": "GioiTinh",
+        "Địa Chỉ": "DiaChi",
+        "Số Điện Thoại": "SoDienThoai"
+      };
+
+      jsonData = jsonData.map(row => {
+        const mapped = {};
+        for (const [key, val] of Object.entries(row)) {
+          const v = typeof val === "string" ? val.trim() : val;
+          mapped[headerMap[key] || key] = v;
+        }
+        if (mapped.HoTen) mapped.HoTen = mapped.HoTen.trim();
+        if (mapped.DiaChi) mapped.DiaChi = mapped.DiaChi.trim();
+        return mapped;
+      });
+
       jsonData = jsonData.map((row) => {
         const item = { ...row };
         item.NgaySinh = cleanDate(item.NgaySinh);
         item.SoDienThoai = cleanPhoneNumber(item.SoDienThoai);
         return item;
       });
+
+      jsonData = jsonData.filter(row => row.HoTen && row.HoTen !== "");
 
       const chunks = [];
       for (let i = 0; i < jsonData.length; i += CHUNK_SIZE) {
@@ -586,8 +611,11 @@ async function processExcelFile(file) {
       showImportProgress(jsonData.length);
 
       let totalInserted = 0;
+      let lastErrorMsg = "";
 
       const today = new Date().toISOString().slice(0, 10);
+
+      const allErrors = [];
 
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
@@ -601,33 +629,37 @@ async function processExcelFile(file) {
           inserted.forEach(s => {
             if (s.MaHS) setStudentAdmission(s.MaHS, today);
           });
+          if (result?.errors?.length) {
+            allErrors.push(...result.errors);
+          }
         } catch (chunkError) {
           const msg = chunkError.message || "";
-          if (msg.includes("đều đã tồn tại")) {
-            // skip chunk — all duplicates
-          } else {
-            hideImportProgress();
-            Toast.error("Lỗi Import (lô " + (i + 1) + "): " + msg);
-            fileInput.value = "";
-            if (fileDisplay) fileDisplay.style.display = "none";
-            await renderTable();
-            return;
-          }
+          if (!lastErrorMsg) lastErrorMsg = msg;
         }
       }
 
       hideImportProgress();
 
-      const skipped = jsonData.length - totalInserted;
-      if (totalInserted > 0) {
-        Toast.success(`✅ Import thành công: thêm ${totalInserted} học sinh, bỏ qua ${skipped} bản ghi trùng.`);
-      } else {
-        Toast.warning("⚠️ Tất cả học sinh trong file đều đã tồn tại.");
-      }
-
       await renderTable();
       fileInput.value = "";
       if (fileDisplay) fileDisplay.style.display = "none";
+
+      if (totalInserted > 0) {
+        let msg = `✅ Đã thêm ${totalInserted} học sinh.`;
+        if (allErrors.length > 0) {
+          msg += ` Bỏ qua ${allErrors.length} dòng lỗi.`;
+          const detail = allErrors.slice(0, 5).map(e => `Dòng ${e.row}: ${e.reason}`).join("<br>");
+          Toast.warning(msg + `<br><br>` + detail + (allErrors.length > 5 ? `<br>...và ${allErrors.length - 5} lỗi khác` : ""));
+        } else {
+          Toast.success(msg);
+        }
+      } else if (allErrors.length > 0) {
+        const detail = allErrors.slice(0, 5).map(e => `Dòng ${e.row}: ${e.reason}`).join("<br>");
+        const tail = allErrors.length > 5 ? `<br>...và ${allErrors.length - 5} lỗi khác` : "";
+        Toast.warning(`⚠️ Không có học sinh nào được thêm.<br><br>${detail}${tail}`);
+      } else {
+        Toast.warning(lastErrorMsg || "⚠️ Không có học sinh nào được thêm.");
+      }
     } catch (error) {
       hideImportProgress();
       fileInput.value = "";
@@ -653,4 +685,23 @@ function resetForm() {
   document.getElementById("studentForm").reset();
   const fp = document.getElementById("NgaySinh")._flatpickr;
   if (fp) fp.clear();
+}
+
+/* =========================================
+   DOWNLOAD EXCEL TEMPLATE
+========================================= */
+function downloadStudentTemplate() {
+  if (typeof XLSX === "undefined") return;
+
+  const headerRow = ["Họ Tên", "Ngày Sinh", "Giới Tính", "Địa Chỉ", "Email", "Số Điện Thoại"];
+  const rows = [headerRow];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"] = [
+    { wch: 28 }, { wch: 14 }, { wch: 10 },
+    { wch: 24 }, { wch: 28 }, { wch: 14 }
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Học sinh");
+  XLSX.writeFile(wb, "MauNhap_HocSinh.xlsx");
 }

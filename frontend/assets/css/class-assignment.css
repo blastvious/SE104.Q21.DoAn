@@ -152,6 +152,7 @@
     padding: 4px 20px;
     gap: 0;
     justify-content: center;
+    overflow: visible;
 }
 
 .assignment-card:first-child.is-collapsed .section-title {
@@ -178,9 +179,19 @@
 
 .assignment-card:last-child.is-collapsed .section-title {
     margin-bottom: 0;
+    margin-top: -6px;
+}
+
+.assignment-card:first-child.is-collapsed .assign-header {
+    position: relative;
+    top: -10px;
 }
 
 .assignment-card:last-child.is-collapsed .assign-sub-header {
+    display: none !important;
+}
+
+.assignment-card:last-child.is-collapsed #promoteBtn {
     display: none;
 }
 
