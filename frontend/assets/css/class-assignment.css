@@ -259,10 +259,9 @@
     grid-template-columns: 1fr;
 }
 
-/* Khi grid chia đôi, bảng đã xếp lớp scroll ngang */
 .assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table-card {
     overflow-x: auto;
 }
 .assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table {
-    min-width: 800px; /* đủ rộng để chứa hết cột */
+    min-width: 800px; 
 }
