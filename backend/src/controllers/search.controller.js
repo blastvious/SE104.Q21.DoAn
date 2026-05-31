@@ -296,34 +296,36 @@ export const getStudentScore = async (req, res) => {
             `SELECT
                 m.TenMonHoc,
                 m.HeSo,
+                lhkt.MaLoaiHinhKT,
                 lhkt.TenLoaiHinhKT,
+                lhkt.HeSo      AS HeSoLoaiHinhKT,
                 ct_lhkt.Lan,
                 ct_lhkt.Diem,
                 cs.DiemTBMon
-             FROM BANGDIEMMON bdm
-             JOIN CT_BANGDIEMMON_HS cs      ON cs.MaBangDiemMon  = bdm.MaBangDiemMon
-             JOIN MONHOC m                  ON m.MaMonHoc         = bdm.MaMonHoc
-             JOIN CT_BANGDIEMMON_LHKT ct_lhkt ON ct_lhkt.MaCTBDMHS  = cs.MaCTBDMHS
-             JOIN LOAIHINHKT lhkt           ON lhkt.MaLoaiHinhKT  = ct_lhkt.MaLoaiHinhKT
-             WHERE bdm.MaLop    = :maLop
-               AND bdm.MaHocKy  = :maHocKy
-               AND cs.MaHS      = :maHS
-             ORDER BY m.TenMonHoc`,
+            FROM BANGDIEMMON bdm
+            JOIN CT_BANGDIEMMON_HS cs      ON cs.MaBangDiemMon  = bdm.MaBangDiemMon
+            JOIN MONHOC m                  ON m.MaMonHoc         = bdm.MaMonHoc
+            JOIN CT_BANGDIEMMON_LHKT ct_lhkt ON ct_lhkt.MaCTBDMHS  = cs.MaCTBDMHS
+            JOIN LOAIHINHKT lhkt           ON lhkt.MaLoaiHinhKT  = ct_lhkt.MaLoaiHinhKT
+            WHERE bdm.MaLop    = :maLop
+            AND bdm.MaHocKy  = :maHocKy
+            AND cs.MaHS      = :maHS
+            ORDER BY m.TenMonHoc, lhkt.HeSo, lhkt.MaLoaiHinhKT, ct_lhkt.Lan`,
             { replacements: { maHS, maLop, maHocKy } }
         );
  
         // 3. Xử lý logic Pivot bằng Javascript để gom các dòng điểm thành cấu trúc môn học
         const monHocMap = {};
-        const allColumns = []; // Thu thập tất cả tên cột theo thứ tự xuất hiện
+        const allColumns = [];
+        const allColumnMeta = [];
 
         scoreRows.forEach(row => {
-            const { TenMonHoc, HeSo, TenLoaiHinhKT, Lan, Diem, DiemTBMon } = row;
-
-            // Tạo key cột: nếu Lần > 1 thì thêm số (vd: "Miệng 2")
+            const { TenMonHoc, HeSo, TenLoaiHinhKT, MaLoaiHinhKT, HeSoLoaiHinhKT, Lan, Diem, DiemTBMon } = row;
             const colKey = Lan && Lan > 1 ? `${TenLoaiHinhKT} ${Lan}` : TenLoaiHinhKT;
 
             if (!allColumns.includes(colKey)) {
                 allColumns.push(colKey);
+                allColumnMeta.push({ colKey, MaLoaiHinhKT, HeSo: HeSoLoaiHinhKT, Lan: Lan || 1 });
             }
 
             if (!monHocMap[TenMonHoc]) {
@@ -335,11 +337,18 @@ export const getStudentScore = async (req, res) => {
             }
         });
 
-        // Chuyển Map thành mảng để trả về cho Frontend
+        const sortedColKeys = allColumnMeta
+            .sort((a, b) => a.HeSo - b.HeSo || a.Lan - b.Lan)
+            .map(m => m.colKey);
+
+        allColumns.splice(0, allColumns.length,
+            ...allColumnMeta
+                .sort((a, b) => a.HeSo - b.HeSo || a.MaLoaiHinhKT.localeCompare(b.MaLoaiHinhKT) || a.Lan - b.Lan)
+                .map(m => m.colKey)
+        );
         const chiTietDiem = Object.values(monHocMap);
 
         // 4. Tính ĐTB Học Kỳ trực tiếp từ DiemTBMon các môn
-        // Không dùng DiemTBHocKy trong QUATRINHHOC vì chỉ cập nhật khi chạy semesterSummary
         const monCoĐiem = chiTietDiem.filter(m => m.DiemTBMon != null && parseFloat(m.DiemTBMon) > 0);
         const diemTBHocKy = monCoĐiem.length > 0
             ? Math.round(
@@ -353,9 +362,9 @@ export const getStudentScore = async (req, res) => {
             data: {
                 thongTinHocKy: {
                     ...(qthRows[0] || {}),
-                    DiemTBHocKy: diemTBHocKy   // override giá trị 0 từ DB
+                    DiemTBHocKy: diemTBHocKy   
                 },
-                columns: allColumns,   // danh sách cột động để frontend render header
+                columns: allColumns,   
                 chiTietDiem
             }
         });
