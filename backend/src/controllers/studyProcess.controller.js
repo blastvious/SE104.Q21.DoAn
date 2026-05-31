@@ -544,12 +544,10 @@ export const getAssignedStudents = async (req, res) => {
         MaHocKy,
         ...(MaLop ? { MaLop } : {}),
       },
-      include: [
-        {
-          model: db.HOCSINH,
-          attributes: ["MaHS", "HoTen", "GioiTinh"],
-        },
-      ],
+      include: [{
+        model: db.HOCSINH,
+        attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"],
+      }],
     });
 
     res.json(list);

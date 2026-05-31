@@ -232,3 +232,37 @@
     }
 
 }
+
+.collapse-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface-section);
+    color: var(--text-heading);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+}
+.collapse-btn:hover { background: #e2e8f0; }
+
+.collapse-content {
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+.collapse-content.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    padding: 0; margin: 0;
+}
+
+.assignment-grid.has-collapsed {
+    grid-template-columns: 1fr;
+}
+
+/* Khi grid chia đôi, bảng đã xếp lớp scroll ngang */
+.assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table-card {
+    overflow-x: auto;
+}
+.assignment-grid:not(.has-collapsed) .assignment-card:last-child .qlsv-table {
+    min-width: 800px; /* đủ rộng để chứa hết cột */
+}

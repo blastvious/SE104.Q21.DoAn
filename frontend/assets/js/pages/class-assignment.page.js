@@ -230,6 +230,23 @@ function bindEvents() {
   document
   .getElementById("searchUnassigned")
   .addEventListener("input", handleSearchUnassigned);
+  
+  let unassignedCollapsed = false;
+  document.getElementById("toggleUnassignedBtn").onclick = () => {
+      unassignedCollapsed = !unassignedCollapsed;
+      const content = document.getElementById("unassignedContent");
+      const icon = document.querySelector("#toggleUnassignedBtn i");
+      const grid = document.querySelector(".assignment-grid");
+      if (unassignedCollapsed) {
+          content.classList.add("collapsed");
+          icon.className = "fas fa-plus";
+          grid.classList.add("has-collapsed");
+      } else {
+          content.classList.remove("collapsed");
+          icon.className = "fas fa-minus";
+          grid.classList.remove("has-collapsed");
+      }
+  };
 }
 
 function closeModal() {
@@ -364,21 +381,22 @@ function renderAssigned(data) {
   tbody.innerHTML = data
     .map(
       (s) => `
-<tr>
-  <td>
-    <input type="checkbox"
-      class="assigned-checkbox"
-      data-id="${s.MaHS}">
-  </td>
-  <td>${s.MaHS}</td>
-      <td>${s.HOCSINH?.HoTen || ""}</td>
-      <td>
-        <button class="action-btn edit" data-id="${s.MaHS}">
-          <i class="fas fa-pen"></i>
-        </button>
-      </td>
+    <tr>
+        <td><input type="checkbox" class="assigned-checkbox" data-id="${s.MaHS}"></td>
+        <td>${s.MaHS}</td>
+        <td>${s.HOCSINH?.HoTen || ""}</td>
+        <td>${formatDate(s.HOCSINH?.NgaySinh)}</td>
+        <td>${s.HOCSINH?.GioiTinh || ""}</td>
+        <td>${s.HOCSINH?.DiaChi || "--"}</td>
+        <td>${s.HOCSINH?.Email || "--"}</td>
+        <td>${s.HOCSINH?.SoDienThoai || "--"}</td>
+        <td>
+            <button class="action-btn edit" data-id="${s.MaHS}">
+                <i class="fas fa-pen"></i>
+            </button>
+        </td>
     </tr>
-  `,
+    `,
     )
     .join("");
 
