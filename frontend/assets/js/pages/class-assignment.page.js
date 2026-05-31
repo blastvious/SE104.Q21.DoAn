@@ -22,9 +22,14 @@ let filteredUnassignedStudents = [];
    INIT
 ========================================= */
 export const init = async () => {
-  await loadFilters();
-  bindFilterEvents();
-  bindEvents();
+  try {
+    await loadFilters();
+    togglePromoteButton();
+    bindFilterEvents();
+    bindEvents();
+  } catch (err) {
+    console.error("class-assignment init error:", err);
+  }
 };
 
 /* =========================================
@@ -166,6 +171,7 @@ function bindFilterEvents() {
 
   updateAssignButton();
   updatePromoteButton();
+  togglePromoteButton();
 
   await loadUnassigned();
   await loadAssigned();
@@ -183,6 +189,7 @@ function bindFilterEvents() {
   // GRADE CHANGE
   gradeSelect.addEventListener("change", async () => {
     renderClassOptions();
+    togglePromoteButton();
     await reload();
   });
 
@@ -194,30 +201,26 @@ function bindFilterEvents() {
    EVENTS
 ========================================= */
 function bindEvents() {
-  document.getElementById("checkAllUnassigned").onchange = (e) => {
-    const checked = e.target.checked;
+  document.addEventListener("change", (e) => {
+    if (e.target.id === "checkAllUnassigned") {
+      const checked = e.target.checked;
+      document.querySelectorAll(".student-checkbox").forEach((cb) => {
+        cb.checked = checked;
+        toggleStudent(cb.dataset.id, checked);
+      });
+      updateAssignButton();
+    }
 
-    document.querySelectorAll(".student-checkbox").forEach((cb) => {
-      cb.checked = checked;
-      toggleStudent(cb.dataset.id, checked);
-    });
-
-    updateAssignButton();
-  };
-
-  // NEW
-  document.getElementById("checkAllAssigned").onchange = (e) => {
-    const checked = e.target.checked;
-
-    document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
-      cb.checked = checked;
-
-      if (checked) selectedAssignedStudents.add(cb.dataset.id);
-      else selectedAssignedStudents.delete(cb.dataset.id);
-    });
-
-    updatePromoteButton();
-  };
+    if (e.target.id === "checkAllAssigned") {
+      const checked = e.target.checked;
+      document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
+        cb.checked = checked;
+        if (checked) selectedAssignedStudents.add(cb.dataset.id);
+        else selectedAssignedStudents.delete(cb.dataset.id);
+      });
+      updatePromoteButton();
+    }
+  });
 
   document.getElementById("promoteBtn").onclick = handlePromote;
 
@@ -225,6 +228,10 @@ function bindEvents() {
 
   document.getElementById("closeTransferModal").onclick = closeModal;
   document.getElementById("cancelTransferBtn").onclick = closeModal;
+
+  document.getElementById("closePromoteModal").onclick = closePromoteModal;
+  document.getElementById("cancelPromoteBtn").onclick = closePromoteModal;
+  document.getElementById("promoteForm").onsubmit = handlePromoteSubmit;
 
   document.getElementById("transferForm").onsubmit = handleTransfer;
   document
@@ -288,7 +295,7 @@ async function loadUnassigned() {
   const tbody = document.getElementById("unassignedTable");
 
   if (!MaHocKy || !grade) {
-    tbody.innerHTML = `<tr><td colspan="5">Vui lòng chọn khối</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3">Vui lòng chọn khối</td></tr>`;
     return;
   }
 
@@ -314,13 +321,13 @@ async function loadAssigned() {
   const capacityEl = document.getElementById("classCapacity");
 
   if (!MaHocKy) {
-    tbody.innerHTML = `<tr><td colspan="5">Vui lòng chọn học kỳ</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Vui lòng chọn học kỳ</td></tr>`;
     if (capacityEl) capacityEl.style.display = "none";
     return;
   }
 
   if (!MaLop) {
-    tbody.innerHTML = `<tr><td colspan="5">Chọn lớp để xem học sinh</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4">Chọn lớp để xem học sinh</td></tr>`;
     if (capacityEl) capacityEl.style.display = "none";
     return;
   }
@@ -342,7 +349,7 @@ function renderUnassigned(data) {
   const tbody = document.getElementById("unassignedTable");
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="5">Không có học sinh</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3">Không có học sinh</td></tr>`;
     return;
   }
 
@@ -357,8 +364,6 @@ function renderUnassigned(data) {
       </td>
       <td>${s.MaHS}</td>
       <td>${s.HoTen}</td>
-      <td>${formatDate(s.NgaySinh)}</td>
-      <td>${s.GioiTinh}</td>
     </tr>
   `,
     )
@@ -370,6 +375,7 @@ function renderUnassigned(data) {
     cb.onchange = (e) => {
       toggleStudent(cb.dataset.id, e.target.checked);
       updateAssignButton();
+      syncCheckAllUnassigned();
     };
   });
 }
@@ -382,7 +388,7 @@ function renderAssigned(data) {
   const isCollapsed = document.querySelector(".assignment-grid")?.classList.contains("has-collapsed");
 
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="4">Chưa có học sinh</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${isCollapsed ? 9 : 4}">Chưa có học sinh</td></tr>`;
     return;
   }
 
@@ -401,8 +407,6 @@ function renderAssigned(data) {
       <th><input type="checkbox" id="checkAllAssigned"></th>
       <th>Mã HS</th>
       <th>Họ Tên</th>
-      <th>Ngày Sinh</th>
-      <th>Giới Tính</th>
       <th style="text-align:center">Thao tác</th>
   `;
 
@@ -411,10 +415,13 @@ function renderAssigned(data) {
       <td><input type="checkbox" class="assigned-checkbox" data-id="${s.MaHS}"></td>
       <td>${s.MaHS}</td>
       <td>${s.HOCSINH?.HoTen || ""}</td>
+  `;
+    const fullInfo = `
       <td>${formatDate(s.HOCSINH?.NgaySinh)}</td>
       <td>${s.HOCSINH?.GioiTinh || ""}</td>
   `;
     const extra = isCollapsed ? `
+      ${fullInfo}
       <td>${s.HOCSINH?.DiaChi || "--"}</td>
       <td>${s.HOCSINH?.Email || "--"}</td>
       <td>${s.HOCSINH?.SoDienThoai || "--"}</td>
@@ -444,6 +451,7 @@ function renderAssigned(data) {
       else selectedAssignedStudents.delete(cb.dataset.id);
 
       updatePromoteButton();
+      syncCheckAllAssigned();
     };
   });
 }
@@ -504,6 +512,24 @@ function updatePromoteButton() {
   const btn = document.getElementById("promoteBtn");
 
   btn.disabled = selectedAssignedStudents.size === 0;
+}
+
+function togglePromoteButton() {
+  const grade = document.getElementById("filterKhoi").value;
+  const btn = document.getElementById("promoteBtn");
+  btn.style.display = grade === "KL03" ? "none" : "";
+}
+
+function syncCheckAllUnassigned() {
+  const checkboxes = document.querySelectorAll(".student-checkbox");
+  const allChecked = checkboxes.length > 0 && [...checkboxes].every((cb) => cb.checked);
+  document.getElementById("checkAllUnassigned").checked = allChecked;
+}
+
+function syncCheckAllAssigned() {
+  const checkboxes = document.querySelectorAll(".assigned-checkbox");
+  const allChecked = checkboxes.length > 0 && [...checkboxes].every((cb) => cb.checked);
+  document.getElementById("checkAllAssigned").checked = allChecked;
 }
 
 function updateAssignButton() {
@@ -620,25 +646,110 @@ function formatDate(dateStr) {
 async function handlePromote() {
   if (selectedAssignedStudents.size === 0) return;
 
-  const ok = await showConfirm(
-    `Bạn có muốn lên lớp ${selectedAssignedStudents.size} học sinh không?`,
-  );
-
-  if (!ok) return;
-
   const MaLopCu = document.getElementById("assignClassSelect").value;
-
   const MaHocKyCu = document.getElementById("filterHocKy").value;
+  const currentClass = allClasses.find((c) => c.MaLop === MaLopCu);
 
-  const nextClass = getNextClass(MaLopCu);
+  if (!currentClass) return;
 
-  if (!nextClass) {
-    Toast.error("Không tìm thấy lớp kế tiếp");
+  const available = getPromotableClasses(currentClass);
+
+  if (available.length === 0) {
+    Toast.error("Không có lớp kế tiếp trong năm học sau");
     return;
   }
 
-  const MaLopMoi = nextClass.MaLop;
-  const MaHocKyMoi = MaHocKyCu;
+  // kiểm tra học sinh đã được lên lớp chưa
+  try {
+    const allAssigned = await getAssignedStudents(MaHocKyCu);
+    const nextYearClassIds = new Set(available.map((c) => c.MaLop));
+
+    const alreadyPromoted = [];
+    for (const maHS of selectedAssignedStudents) {
+      const found = allAssigned.find(
+        (s) => nextYearClassIds.has(s.MaLop) && s.MaHS === maHS,
+      );
+      if (found) {
+        alreadyPromoted.push({ maHS: found.MaHS, hoTen: found.HOCSINH?.HoTen || found.MaHS });
+      }
+    }
+
+    if (alreadyPromoted.length === selectedAssignedStudents.size) {
+      Toast.error("Học sinh đã được lên lớp!");
+      return;
+    }
+
+    if (alreadyPromoted.length > 0) {
+      const nameList = alreadyPromoted.map((s) => `${s.hoTen} (${s.maHS})`).join("\n");
+      const ok = await showConfirm(
+        `Các học sinh sau đã được lên lớp:\n${nameList}\n\nBạn có muốn lên lớp cho các học sinh còn lại không?`,
+      );
+      if (!ok) return;
+      // bỏ học sinh đã lên lớp khỏi danh sách chọn
+      alreadyPromoted.forEach((s) => selectedAssignedStudents.delete(s.maHS));
+      if (selectedAssignedStudents.size === 0) return;
+    }
+  } catch (_) {
+    // bỏ qua lỗi
+  }
+
+  openPromoteModal(available, currentClass, MaHocKyCu);
+}
+
+function getPromotableClasses(currentClass) {
+  let nextKhoi = null;
+  if (currentClass.MaKhoiLop === "KL01") nextKhoi = "KL02";
+  else if (currentClass.MaKhoiLop === "KL02") nextKhoi = "KL03";
+  else return [];
+
+  const [start, end] = currentClass.TenNamHoc.split("-");
+  const nextYear = `${parseInt(start) + 1}-${parseInt(end) + 1}`;
+
+  return allClasses.filter(
+    (c) => c.MaKhoiLop === nextKhoi && c.TenNamHoc === nextYear,
+  );
+}
+
+function openPromoteModal(available, currentClass, MaHocKyCu) {
+  const modal = document.getElementById("promoteModal");
+  const select = document.getElementById("promoteClassSelect");
+  const info = document.getElementById("promoteInfo");
+
+  info.textContent = `Lớp hiện tại: ${currentClass.TenLop} (${currentClass.TenNamHoc}) — Chọn lớp muốn lên cho ${selectedAssignedStudents.size} học sinh`;
+
+  select.innerHTML =
+    '<option value="">--Chọn lớp--</option>' +
+    available
+      .map(
+        (c) => `
+      <option value="${c.MaLop}">
+        ${c.TenLop} (${c.TenNamHoc})
+      </option>
+    `,
+      )
+      .join("");
+
+  modal.dataset.maHocKyCu = MaHocKyCu;
+  modal.dataset.maLopCu = currentClass.MaLop;
+  modal.style.display = "block";
+}
+
+function closePromoteModal() {
+  document.getElementById("promoteModal").style.display = "none";
+}
+
+async function handlePromoteSubmit(e) {
+  e.preventDefault();
+
+  const modal = document.getElementById("promoteModal");
+  const MaLopCu = modal.dataset.maLopCu;
+  const MaHocKyCu = modal.dataset.maHocKyCu;
+  const MaLopMoi = document.getElementById("promoteClassSelect").value;
+
+  if (!MaLopMoi) {
+    Toast.warning("Vui lòng chọn lớp muốn lên");
+    return;
+  }
 
   try {
     await promoteStudents({
@@ -646,55 +757,14 @@ async function handlePromote() {
       MaLopCu,
       MaHocKyCu,
       MaLopMoi,
-      MaHocKyMoi,
+      MaHocKyMoi: MaHocKyCu,
     });
 
     Toast.success("Lên lớp thành công!");
-
+    closePromoteModal();
     selectedAssignedStudents.clear();
-
     await reloadAll();
   } catch (err) {
     Toast.error(err.message);
   }
-}
-
-function getNextClass(currentClassId) {
-  const currentClass = allClasses.find((c) => c.MaLop === currentClassId);
-
-  if (!currentClass) return null;
-
-  // Ví dụ:
-  // KL01 -> KL02
-  // KL02 -> KL03
-
-  let nextKhoi = null;
-
-  if (currentClass.MaKhoiLop === "KL01") nextKhoi = "KL02";
-  else if (currentClass.MaKhoiLop === "KL02") nextKhoi = "KL03";
-  else return null; // lớp 12 không lên nữa
-
-  // năm học tiếp theo
-  const [start, end] = currentClass.TenNamHoc.split("-");
-
-  const nextYear = `${parseInt(start) + 1}-${parseInt(end) + 1}`;
-
-  // ví dụ:
-  // 10A1 -> 11A1
-  // 11A1 -> 12A1
-
-  let nextTenLop = currentClass.TenLop;
-
-  if (currentClass.MaKhoiLop === "KL01") {
-    nextTenLop = currentClass.TenLop.replace(/^10/, "11");
-  } else if (currentClass.MaKhoiLop === "KL02") {
-    nextTenLop = currentClass.TenLop.replace(/^11/, "12");
-  }
-
-  return allClasses.find(
-    (c) =>
-      c.MaKhoiLop === nextKhoi &&
-      c.TenNamHoc === nextYear &&
-      c.TenLop === nextTenLop,
-  );
 }

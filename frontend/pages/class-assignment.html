@@ -52,8 +52,6 @@
                                 <th><input type="checkbox" id="checkAllUnassigned"></th>
                                 <th>Mã HS</th>
                                 <th>Họ Tên</th>
-                                <th>Ngày Sinh</th>
-                                <th>Giới Tính</th>
                             </tr>
                         </thead>
                         <tbody id="unassignedTable"></tbody>
@@ -86,8 +84,6 @@
                             <th><input type="checkbox" id="checkAllAssigned"></th>
                             <th>Mã HS</th>
                             <th>Họ Tên</th>
-                            <th>Ngày Sinh</th>
-                            <th>Giới Tính</th>
                             <th>Địa Chỉ</th>
                             <th>Email</th>
                             <th>SĐT</th>
@@ -125,6 +121,32 @@
                 </button>
             </div>
 
+        </form>
+    </div>
+</div>
+<div id="promoteModal" class="qlsv-modal">
+    <div class="qlsv-modal-content">
+        <div class="modal-header">
+            <h3>Lên lớp học sinh</h3>
+            <span class="close-modal" id="closePromoteModal">&times;</span>
+        </div>
+
+        <form id="promoteForm" class="modal-form">
+            <p style="margin:0 0 12px;font-size:0.9rem;color:var(--text-muted);" id="promoteInfo"></p>
+
+            <div class="form-group">
+                <label>Chọn lớp muốn lên</label>
+                <select id="promoteClassSelect" class="qlsv-select"></select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" id="cancelPromoteBtn">
+                    Hủy
+                </button>
+                <button type="submit" class="qlsv-btn qlsv-btn--primary">
+                    Xác nhận
+                </button>
+            </div>
         </form>
     </div>
 </div>
