@@ -108,7 +108,19 @@ export const getClassList = async (req, res) => {
           attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"],
         },
       ],
-      order: [[db.sequelize.col("HOCSINH.MaHS"), "ASC"]],
+      order: [
+        [
+          db.sequelize.literal(`
+            CASE 
+              WHEN CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) > 0 
+              THEN RIGHT(RTRIM([HOCSINH].[HoTen]), CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) - 1)
+              ELSE [HOCSINH].[HoTen]
+            END COLLATE Vietnamese_CI_AS
+          `),
+          'ASC'
+        ],
+        [db.sequelize.literal('[HOCSINH].[HoTen] COLLATE Vietnamese_CI_AS'), 'ASC']
+      ],
     });
  
     if (list.length === 0) {
@@ -123,7 +135,19 @@ export const getClassList = async (req, res) => {
           list = await db.QUATRINHHOC.findAll({
               where: { MaLop, MaHocKy: otherSemRows[0].MaHocKy },
               include: [{ model: db.HOCSINH, attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"] }],
-              order: [[db.sequelize.col("HOCSINH.MaHS"), "ASC"]],
+              order: [
+                [
+                  db.sequelize.literal(`
+                    CASE 
+                      WHEN CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) > 0 
+                      THEN RIGHT(RTRIM([HOCSINH].[HoTen]), CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) - 1)
+                      ELSE [HOCSINH].[HoTen]
+                    END COLLATE Vietnamese_CI_AS
+                  `),
+                  'ASC'
+                ],
+                [db.sequelize.literal('[HOCSINH].[HoTen] COLLATE Vietnamese_CI_AS'), 'ASC']
+              ],
           });
       }
     }
@@ -520,7 +544,19 @@ export const getUnassignedStudents = async (req, res) => {
                     )`),
         },
       },
-      order: [["MaHS", "ASC"]],
+      order: [
+        [
+          db.sequelize.literal(`
+            CASE 
+              WHEN CHARINDEX(' ', REVERSE(RTRIM([HoTen]))) > 0 
+              THEN RIGHT(RTRIM([HoTen]), CHARINDEX(' ', REVERSE(RTRIM([HoTen]))) - 1)
+              ELSE [HoTen]
+            END COLLATE Vietnamese_CI_AS
+          `),
+          'ASC'
+        ],
+        [db.sequelize.literal('[HoTen] COLLATE Vietnamese_CI_AS'), 'ASC']
+      ],
     });
 
     res.json(list);
@@ -548,6 +584,19 @@ export const getAssignedStudents = async (req, res) => {
         model: db.HOCSINH,
         attributes: ["MaHS", "HoTen", "GioiTinh", "NgaySinh", "DiaChi", "Email", "SoDienThoai"],
       }],
+      order: [
+        [
+          db.sequelize.literal(`
+            CASE 
+              WHEN CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) > 0 
+              THEN RIGHT(RTRIM([HOCSINH].[HoTen]), CHARINDEX(' ', REVERSE(RTRIM([HOCSINH].[HoTen]))) - 1)
+              ELSE [HOCSINH].[HoTen]
+            END COLLATE Vietnamese_CI_AS
+          `),
+          'ASC'
+        ],
+        [db.sequelize.literal('[HOCSINH].[HoTen] COLLATE Vietnamese_CI_AS'), 'ASC']
+      ],
     });
 
     res.json(list);
@@ -791,6 +840,52 @@ export const promoteStudents = async (req, res) => {
     res.json({
       message: "Promote students success",
     });
+  } catch (error) {
+    handleCatch(res, error);
+  }
+};
+
+export const unassignStudent = async (req, res) => {
+  try {
+    const { MaHS, MaHocKy, MaLop } = req.body;
+
+    if (!MaHS || !MaHocKy || !MaLop) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể hủy xếp lớp cho năm học đã kết thúc" });
+    }
+
+    await db.sequelize.transaction(async (t) => {
+      const record = await db.QUATRINHHOC.findOne({
+        where: { MaHS, MaHocKy, MaLop },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+      if (!record) {
+        throwHttp("Không tìm thấy học sinh trong lớp này", 404);
+      }
+
+      await db.QUATRINHHOC.destroy({
+        where: { MaHS, MaHocKy, MaLop },
+        transaction: t,
+      });
+
+      const finalCount = await db.QUATRINHHOC.count({
+        where: { MaLop, MaHocKy },
+        transaction: t,
+      });
+      const cls = await db.LOP.findByPk(MaLop, { transaction: t, lock: t.LOCK.UPDATE });
+      if (cls) await cls.update({ SiSo: finalCount }, { transaction: t });
+    });
+
+    res.json({ message: "Hủy xếp lớp thành công" });
   } catch (error) {
     handleCatch(res, error);
   }

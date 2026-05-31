@@ -5,6 +5,35 @@
         <p>Xếp học sinh vào lớp theo năm học</p>
     </div>
 
+    <div class="guide-card is-collapsed">
+        <div class="guide-card-header">
+            <i class="fas fa-info-circle"></i> Hướng dẫn thao tác
+            <button id="toggleGuideBtn" class="collapse-btn" title="Thu nhỏ/Mở rộng">+</button>
+        </div>
+        <div class="guide-card-body collapse-content collapsed">
+            <div class="guide-item">
+                <span class="guide-step"><i class="fas fa-check-circle"></i></span>
+                <span class="guide-text"><strong>Xếp học sinh vào lớp:</strong> Chọn lớp ở dropdown Lớp → Chọn học sinh muốn xếp vào lớp → Bấm <strong>Ghi danh sách lớp</strong></span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-step"><i class="fas fa-file-pdf"></i></span>
+                <span class="guide-text"><strong>Xuất danh sách lớp:</strong> Chọn lớp ở dropdown Lớp → Bấm <strong>Xuất danh sách lớp</strong></span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-step"><i class="fas fa-exchange-alt"></i></span>
+                <span class="guide-text"><strong>Chuyển lớp:</strong> Bấm icon <i class="fas fa-exchange-alt"></i> tại dòng học sinh muốn chuyển lớp ở bảng <em>Đã xếp lớp</em></span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-step"><i class="fas fa-arrow-up"></i></span>
+                <span class="guide-text"><strong>Lên lớp:</strong> Chọn học sinh ở bảng <em>Đã xếp lớp</em> → Bấm <strong>Lên lớp</strong> → Chọn lớp mới</span>
+            </div>
+            <div class="guide-item">
+                <span class="guide-step"><i class="fas fa-minus"></i></span>
+                <span class="guide-text"><strong>Thu nhỏ/Mở rộng:</strong> Bấm nút góc trên bên phải mỗi bảng</span>
+            </div>
+        </div>
+    </div>
+
     <div class="filter-group" style="justify-content:center;">
         <div class="filter-item">
             <label>Năm học:</label>
@@ -23,15 +52,18 @@
                 <option value="12">Khối 12</option>
             </select>
         </div>
-        <button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled>
-            <i class="fas fa-save"></i> Lưu danh sách lớp
-        </button>
+<button class="qlsv-btn qlsv-btn--primary" id="assignBtn" disabled title="Xếp học sinh vào lớp">
+    <i class="fas fa-check"></i> Ghi danh sách lớp
+</button>
+<button class="qlsv-btn qlsv-btn--outline" id="exportClassListBtn" disabled title="Xuất danh sách lớp PDF">
+    <i class="fas fa-file-pdf"></i> Xuất danh sách lớp
+</button>
     </div>
 
-    <div class="assignment-grid">
+<div class="assignment-grid">
 
         <div class="assignment-card">
-            <button id="toggleUnassignedBtn" class="collapse-btn" title="Thu nhỏ">&minus;</button>
+            <button id="toggleUnassignedBtn" class="collapse-btn" title="Thu nhỏ/Mở rộng">&minus;</button>
             <div class="assign-header">
                 <div class="unassigned-header-left">
                     <h3 class="section-title">Học sinh chưa xếp lớp</h3>
@@ -61,14 +93,17 @@
         </div>
 
         <div class="assignment-card">
-            <div class="assign-header" style="flex-wrap:nowrap;">
+            <button id="toggleAssignedBtn" class="collapse-btn" title="Thu nhỏ/Mở rộng">&minus;</button>
+            <div class="assign-header" style="justify-content:space-between;padding-right:48px;">
                 <h3 class="section-title">Học sinh đã xếp lớp</h3>
+<button class="qlsv-btn qlsv-btn--primary" id="promoteBtn" title="Lên lớp cho học sinh đã chọn">
+    <i class="fas fa-arrow-up"></i> Lên lớp
+</button>
+            </div>
+            <div class="assign-sub-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px 8px;">
                 <div style="display:flex;align-items:center;gap:12px;">
-                    <button class="qlsv-btn qlsv-btn--primary" id="promoteBtn">
-                        <i class="fas fa-arrow-up"></i> Lên lớp
-                    </button>
-                    <div class="filter-item" style="flex-direction:row;align-items:center;gap:8px;">
-                        <label style="font-size:0.82rem;white-space:nowrap;">Lớp:</label>
+                    <div class="filter-item" style="flex-direction:row;align-items:center;gap:8px;margin:0;">
+                        <label style="white-space:nowrap;">Lớp:</label>
                         <select id="assignClassSelect" class="qlsv-select" disabled></select>
                     </div>
                     <div id="classCapacity" style="display:none;font-size:13px;color:#334155;">
@@ -76,22 +111,25 @@
                         Sĩ số: <strong id="capacityCurrent">0</strong>
                     </div>
                 </div>
+                <span id="assignedSelectedCount">Đã chọn: 0</span>
             </div>
-            <div class="qlsv-table-card">
-                <table class="qlsv-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="checkAllAssigned"></th>
-                            <th>Mã HS</th>
-                            <th>Họ Tên</th>
-                            <th>Địa Chỉ</th>
-                            <th>Email</th>
-                            <th>SĐT</th>
-                            <th style="text-align:center">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="assignedTable"></tbody>
-                </table>
+            <div id="assignedContent" class="collapse-content">
+                <div class="qlsv-table-card">
+                    <table class="qlsv-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="checkAllAssigned"></th>
+                                <th>Mã HS</th>
+                                <th>Họ Tên</th>
+                                <th>Địa Chỉ</th>
+                                <th>Email</th>
+                                <th>SĐT</th>
+                                <th style="text-align:center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignedTable"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -127,7 +165,7 @@
 <div id="promoteModal" class="qlsv-modal">
     <div class="qlsv-modal-content">
         <div class="modal-header">
-            <h3>Lên lớp học sinh</h3>
+            <h3>Chọn lớp muốn lên cho học sinh</h3>
             <span class="close-modal" id="closePromoteModal">&times;</span>
         </div>
 
@@ -135,7 +173,6 @@
             <p style="margin:0 0 12px;font-size:0.9rem;color:var(--text-muted);" id="promoteInfo"></p>
 
             <div class="form-group">
-                <label>Chọn lớp muốn lên</label>
                 <select id="promoteClassSelect" class="qlsv-select"></select>
             </div>
 

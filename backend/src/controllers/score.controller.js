@@ -45,14 +45,14 @@ export const getScore = async (req, res) => {
       return res.status(400).json({ message: "Missing requied fields!" });
     }
 
-    // Kiểm tra năm học đã kết thúc chưa
     const [yearCheck] = await db.sequelize.query(`
       SELECT 1 FROM LOP l
       JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
-      WHERE l.MaLop = :MaLop AND nh.NgayKetThuc < CAST(GETDATE() AS DATE)
+      WHERE l.MaLop = :MaLop
+        AND (nh.NgayBatDau > CAST(GETDATE() AS DATE) OR nh.NgayKetThuc < CAST(GETDATE() AS DATE))
     `, { replacements: { MaLop } });
     if (yearCheck.length > 0) {
-      return res.status(403).json({ message: "Không thể nhập điểm cho năm học đã kết thúc" });
+      return res.status(403).json({ message: "Không thể nhập điểm cho năm học chưa diễn ra hoặc đã kết thúc" });
     }
 
     // Kiểm tra điểm trong khoảng cho phép
@@ -150,6 +150,16 @@ export const bulkImportScores = async (req, res) => {
       return res.status(400).json({
         message: "Missing required fields!",
       });
+    }
+
+    const [yearCheck] = await db.sequelize.query(`
+      SELECT 1 FROM LOP l
+      JOIN NAMHOC nh ON nh.TenNamHoc = l.TenNamHoc
+      WHERE l.MaLop = :MaLop
+        AND (nh.NgayBatDau > CAST(GETDATE() AS DATE) OR nh.NgayKetThuc < CAST(GETDATE() AS DATE))
+    `, { replacements: { MaLop } });
+    if (yearCheck.length > 0) {
+      return res.status(403).json({ message: "Không thể nhập điểm cho năm học chưa diễn ra hoặc đã kết thúc" });
     }
 
     // Kiểm tra tất cả điểm trong khoảng cho phép

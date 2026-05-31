@@ -4,6 +4,7 @@ import {
   assignStudentsBatch,
   transferClass,
   promoteStudents,
+  unassignStudent,
 } from "../service/studyProcess.service.js";
 
 import { settingsService } from "../service/settings.service.js";
@@ -223,6 +224,44 @@ function bindEvents() {
   });
 
   document.getElementById("promoteBtn").onclick = handlePromote;
+  document.getElementById("exportClassListBtn").onclick = exportClassListPDF;
+
+  let guideCollapsed = true;
+  document.getElementById("toggleGuideBtn").onclick = () => {
+      guideCollapsed = !guideCollapsed;
+      const body = document.querySelector(".guide-card-body");
+      const card = document.querySelector(".guide-card");
+      const btn = document.getElementById("toggleGuideBtn");
+      if (guideCollapsed) {
+          body.classList.add("collapsed");
+          card.classList.add("is-collapsed");
+          btn.textContent = "+";
+      } else {
+          body.classList.remove("collapsed");
+          card.classList.remove("is-collapsed");
+          btn.textContent = "\u2212";
+      }
+  };
+
+  let assignedCollapsed = false;
+  document.getElementById("toggleAssignedBtn").onclick = () => {
+      assignedCollapsed = !assignedCollapsed;
+      const content = document.getElementById("assignedContent");
+      const btn = document.getElementById("toggleAssignedBtn");
+      const grid = document.querySelector(".assignment-grid");
+      const card = document.querySelector(".assignment-card:last-child");
+      if (assignedCollapsed) {
+          content.classList.add("collapsed");
+          btn.textContent = "+";
+          grid.classList.add("has-collapsed");
+          if (card) card.classList.add("is-collapsed");
+      } else {
+          content.classList.remove("collapsed");
+          btn.textContent = "\u2212";
+          grid.classList.remove("has-collapsed");
+          if (card) card.classList.remove("is-collapsed");
+      }
+  };
 
   document.getElementById("assignBtn").onclick = handleAssign;
 
@@ -426,14 +465,20 @@ function renderAssigned(data) {
       <td>${s.HOCSINH?.Email || "--"}</td>
       <td>${s.HOCSINH?.SoDienThoai || "--"}</td>
       <td>
-        <button class="action-btn edit" data-id="${s.MaHS}">
-          <i class="fas fa-pen"></i>
+        <button class="action-btn edit" data-id="${s.MaHS}" title="Chuyển lớp">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button class="action-btn delete" data-id="${s.MaHS}" title="Hủy xếp lớp" style="color:#ef4444;">
+          <i class="fas fa-times"></i>
         </button>
       </td>
     ` : `
       <td>
-        <button class="action-btn edit" data-id="${s.MaHS}">
-          <i class="fas fa-pen"></i>
+        <button class="action-btn edit" data-id="${s.MaHS}" title="Chuyển lớp">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button class="action-btn delete" data-id="${s.MaHS}" title="Hủy xếp lớp" style="color:#ef4444;">
+          <i class="fas fa-times"></i>
         </button>
       </td>
     `;
@@ -442,6 +487,9 @@ function renderAssigned(data) {
 
   document.querySelectorAll(".action-btn.edit").forEach((btn) => {
     btn.onclick = () => openTransferModal(btn.dataset.id);
+  });
+  document.querySelectorAll(".action-btn.delete").forEach((btn) => {
+    btn.onclick = () => handleUnassign(btn.dataset.id);
   });
   document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
     cb.checked = selectedAssignedStudents.has(cb.dataset.id);
@@ -510,8 +558,13 @@ function toggleStudent(id, checked) {
 
 function updatePromoteButton() {
   const btn = document.getElementById("promoteBtn");
+  const yearSelected = document.getElementById("filterNamHoc").value;
+  const classSelected = document.getElementById("assignClassSelect").value;
 
-  btn.disabled = selectedAssignedStudents.size === 0;
+  btn.disabled = selectedAssignedStudents.size === 0 || !classSelected || !yearSelected;
+
+  const el = document.getElementById("assignedSelectedCount");
+  if (el) el.textContent = "Đã chọn: " + selectedAssignedStudents.size;
 }
 
 function togglePromoteButton() {
@@ -538,6 +591,13 @@ function updateAssignButton() {
 
   btn.disabled = !(selectedStudents.size > 0 && classSelected);
   updateSelectedCount();
+  updateExportButton();
+}
+
+function updateExportButton() {
+  const btn = document.getElementById("exportClassListBtn");
+  const classSelected = document.getElementById("assignClassSelect").value;
+  btn.disabled = !classSelected;
 }
 
 function updateSelectedCount() {
@@ -551,11 +611,13 @@ function updateSelectedCount() {
 async function handleAssign() {
   const MaLop = document.getElementById("assignClassSelect").value;
   const MaHocKy = document.getElementById("filterHocKy").value;
+  let tenLop = document.getElementById("assignClassSelect").selectedOptions[0].textContent;
+  tenLop = tenLop.replace(/^Lớp\s*/i, "");
 
   if (!MaLop || !MaHocKy || selectedStudents.size === 0) return;
 
   const ok = await showConfirm(
-    `Bạn có muốn xếp ${selectedStudents.size} học sinh không?`,
+    `Bạn có chắc chắn muốn thêm ${selectedStudents.size} học sinh vào lớp <span style="white-space:nowrap">${tenLop}</span> không?`,
   );
 
   if (!ok) return;
@@ -588,7 +650,7 @@ function showConfirm(message) {
     const ok = document.getElementById("confirmOk");
     const cancel = document.getElementById("confirmCancel");
 
-    msg.innerText = message;
+    msg.innerHTML = message;
     modal.style.display = "flex";
 
     ok.onclick = () => {
@@ -631,6 +693,136 @@ async function handleTransfer(e) {
 
     closeModal();
     await loadAssigned();
+  } catch (err) {
+    Toast.error(err.message);
+  }
+}
+
+/* =========================================
+   EXPORT CLASS LIST PDF
+========================================= */
+async function exportClassListPDF() {
+  const MaLop = document.getElementById("assignClassSelect").value;
+  const MaHocKy = document.getElementById("filterHocKy")?.value;
+  if (!MaLop || !MaHocKy) return;
+
+  const btn = document.getElementById("exportClassListBtn");
+  try {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xuất...';
+
+    const data = await getAssignedStudents(MaHocKy, MaLop);
+    if (!data.length) {
+      Toast.warning("Lớp chưa có học sinh");
+      return;
+    }
+
+    const cls = allClasses.find(c => c.MaLop === MaLop);
+    const tenLop = cls?.TenLop || MaLop;
+    const tenNamHoc = cls?.TenNamHoc || "";
+
+    const d = new Date();
+    const today = `Ngày ${d.getDate()} tháng ${d.getMonth() + 1} năm ${d.getFullYear()}`;
+
+    const rows = data.map((s, i) => {
+      const hs = s.HOCSINH || {};
+      return `<tr>
+        <td style="text-align:center;border:1px solid #000;padding:5px">${i + 1}</td>
+        <td style="text-align:center;border:1px solid #000;padding:5px">${s.MaHS}</td>
+        <td style="border:1px solid #000;padding:5px">${hs.HoTen || ""}</td>
+        <td style="text-align:center;border:1px solid #000;padding:5px">${formatDate(hs.NgaySinh)}</td>
+        <td style="text-align:center;border:1px solid #000;padding:5px">${hs.GioiTinh || ""}</td>
+        <td style="border:1px solid #000;padding:5px">${hs.DiaChi || "--"}</td>
+        <td style="border:1px solid #000;padding:5px">${hs.Email || "--"}</td>
+        <td style="text-align:center;border:1px solid #000;padding:5px">${hs.SoDienThoai || "--"}</td>
+      </tr>`;
+    }).join("");
+
+    const pdfHtml = `
+      <div style="width:794px;background:#fff;color:#000;padding:40px;font-family:'Times New Roman',serif;font-size:14px;line-height:1.6;box-sizing:border-box">
+        <table style="width:100%;border:none;border-collapse:collapse;margin-bottom:20px">
+          <tr>
+            <td style="width:40%;text-align:center;border:none;vertical-align:top">
+              <div style="font-weight:bold">TRƯỜNG THPT VinSchool</div>
+            </td>
+            <td style="width:60%;text-align:center;border:none;vertical-align:top">
+              <div style="font-weight:bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+              <div style="font-weight:bold;border-bottom:1px solid #000;display:inline-block;padding-bottom:2px;margin-top:4px">Độc lập - Tự do - Hạnh phúc</div>
+              <div style="font-style:italic;margin-top:6px">${today}</div>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align:center;margin:20px 0 24px">
+          <div style="font-size:22px;font-weight:bold;text-transform:uppercase">DANH SÁCH LỚP</div>
+          <div style="margin-top:8px">Lớp <b>${tenLop}</b> – Năm học <b>${tenNamHoc}</b></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:#e8d5f5">
+              <th style="border:1px solid #000;padding:6px;text-align:center">STT</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Mã HS</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Họ Tên</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Ngày Sinh</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Giới Tính</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Địa Chỉ</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">Email</th>
+              <th style="border:1px solid #000;padding:6px;text-align:center">SĐT</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <table style="width:100%;border:none;border-collapse:collapse;margin-top:40px">
+          <tr>
+            <td style="width:60%;border:none"></td>
+            <td style="width:40%;text-align:center;border:none;vertical-align:top">
+              <div style="font-weight:bold">Xác nhận của nhà trường</div>
+              <div style="margin-top:50px;font-style:italic">(Ký, đóng dấu)</div>
+            </td>
+          </tr>
+        </table>
+      </div>`;
+
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "position:absolute;left:-9999px;top:0";
+    wrapper.innerHTML = pdfHtml;
+    document.body.appendChild(wrapper);
+
+    await new Promise(r => setTimeout(r, 200));
+    const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const w = 190, h2 = (canvas.height * w) / canvas.width;
+    pdf.addImage(imgData, "JPEG", 10, 10, w, h2);
+    pdf.save(`DanhSachLop_${tenLop}_${tenNamHoc}.pdf`);
+    document.body.removeChild(wrapper);
+
+    Toast.success("Xuất danh sách lớp thành công!");
+  } catch (err) {
+    console.error("exportClassListPDF error:", err);
+    Toast.error("Lỗi xuất PDF: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-file-pdf"></i> Xuất danh sách lớp';
+  }
+}
+
+/* =========================================
+   HANDLE UNASSIGN
+========================================= */
+async function handleUnassign(maHS) {
+  const MaLop = document.getElementById("assignClassSelect").value;
+  const MaHocKy = document.getElementById("filterHocKy")?.value;
+  if (!MaLop || !MaHocKy) return;
+
+  const ok = await showConfirm(`Bạn có muốn hủy xếp lớp cho học sinh này?`);
+  if (!ok) return;
+
+  try {
+    await unassignStudent({ MaHS: maHS, MaHocKy, MaLop });
+    Toast.success("Hủy xếp lớp thành công");
+    await loadAssigned();
+    await loadUnassigned();
   } catch (err) {
     Toast.error(err.message);
   }

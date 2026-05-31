@@ -5,6 +5,10 @@
     animation: fadeIn 0.4s ease;
 }
 
+.class-assignment-page .filter-group .filter-item {
+    flex-direction: row;
+}
+
 
 .section-title {
     font-size: 1.1rem;
@@ -19,6 +23,99 @@
     overflow: hidden;
     box-shadow: var(--shadow-card);
     border: 1px solid var(--border);
+}
+
+.guide-card {
+    background: var(--surface-card);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    position: relative;
+}
+
+.guide-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-heading);
+    background: var(--surface-section);
+    border-bottom: 1px solid var(--border);
+}
+
+.guide-card.is-collapsed .guide-card-header {
+    border-bottom: none;
+}
+
+.guide-card.is-collapsed .guide-card-body {
+    display: none;
+}
+
+.guide-card .collapse-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--text-table);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+
+.guide-card .collapse-btn:hover {
+    background: var(--surface-section-hover);
+    color: var(--text-heading);
+}
+
+.guide-card-header i:first-child {
+    color: #2563eb;
+    font-size: 1.1rem;
+}
+
+.guide-card-body {
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.guide-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-muted, #666);
+}
+
+.guide-step {
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #2563eb;
+    font-size: 0.95rem;
+}
+
+.guide-text {
+    line-height: 1.5;
+}
+
+.guide-text strong {
+    color: var(--text-heading);
+}
+
+.guide-text em {
+    font-style: italic;
+    color: var(--text-table);
 }
 
 .actions {
@@ -64,6 +161,37 @@
 .assignment-card:first-child .collapse-btn {
     position: absolute;
     top: 14px;
+    right: 14px;
+    z-index: 1;
+}
+
+.assignment-card:last-child {
+    position: relative;
+}
+
+.assignment-card:last-child.is-collapsed {
+    padding: 4px 20px;
+    gap: 0;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.assignment-card:last-child.is-collapsed .section-title {
+    margin-bottom: 0;
+}
+
+.assignment-card:last-child.is-collapsed .assign-sub-header {
+    display: none;
+}
+
+.assignment-card:last-child.is-collapsed .collapse-btn {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.assignment-card:last-child .collapse-btn {
+    position: absolute;
+    top: 20px;
     right: 14px;
     z-index: 1;
 }

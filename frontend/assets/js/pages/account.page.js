@@ -59,22 +59,28 @@ async function loadAllUsers() {
         users.forEach(user => {
             const tr = document.createElement("tr");
             tr.setAttribute("data-id", user.Id);
+            const role = user.RoleName;
             tr.innerHTML = `
                 <td>${user.Id}</td>
                 <td>${user.Username}</td>
                 <td>
-                    <select class="role-select qlsv-select">
-                        <option value="Admin" ${user.RoleName === 'Admin' ? 'selected' : ''}>Admin</option>
-                        <option value="Manager" ${user.RoleName === 'Manager' ? 'selected' : ''}>Manager</option>
-                        <option value="User" ${user.RoleName === 'User' ? 'selected' : ''}>User</option>
+                    <select class="role-select qlsv-select" data-original="${role}">
+                        <option value="Admin" ${role === 'Admin' ? 'selected' : ''}>Admin</option>
+                        <option value="Manager" ${role === 'Manager' ? 'selected' : ''}>Manager</option>
+                        <option value="User" ${role === 'User' ? 'selected' : ''}>User</option>
                     </select>
                 </td>
                 <td>
-                    <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-check"></i></button>
+                    <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-save"></i></button>
                     ${can(window.currentUser, "delete") ? `<button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
                 </td>
             `;
             tbody.appendChild(tr);
+
+            const select = tr.querySelector(".role-select");
+            select.onchange = () => {
+                tr.classList.toggle("row-unsaved", select.value !== select.dataset.original);
+            };
         });
 
         bindTableActions();
@@ -120,12 +126,14 @@ function bindTableActions() {
         button.onclick = async (e) => {
             const row = e.target.closest("tr");
             const userId = row.getAttribute("data-id");
-            const selectedRole = row.querySelector(".role-select").value;
+            const select = row.querySelector(".role-select");
+            const selectedRole = select.value;
 
             const isSuccess = await updateUserRole(userId, selectedRole);
             if (isSuccess) {
                 Toast.success("Cập nhật vai trò thành công!");
-                await loadAllUsers();
+                select.dataset.original = selectedRole;
+                row.classList.remove("row-unsaved");
             } else {
                 Toast.error("Cập nhật thất bại.");
             }

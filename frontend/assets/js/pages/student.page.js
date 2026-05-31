@@ -133,6 +133,14 @@ function setupAdmissionFilter() {
    INIT
 ========================================= */
 export async function init() {
+  ["studentModal", "importExcelModal", "importProgressModal"].forEach(id => {
+    const el = document.querySelector(`body > #${id}`);
+    if (el) el.remove();
+  });
+  document.body.appendChild(document.getElementById("studentModal"));
+  document.body.appendChild(document.getElementById("importExcelModal"));
+  document.body.appendChild(document.getElementById("importProgressModal"));
+
   setupModal();
 
   setupForm();

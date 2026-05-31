@@ -177,6 +177,28 @@ export const semesterSummary = async (payload) => {
 };
 
 /* =========================================
+   UNASSIGN STUDENT (Hủy xếp lớp)
+   Endpoint: POST /study-process/unassign
+========================================= */
+export const unassignStudent = async (payload) => {
+    try {
+        const res = await fetch(`${API_URL}/unassign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || "Lỗi khi hủy xếp lớp");
+        }
+        return data;
+    } catch (err) {
+        console.error("unassignStudent error:", err);
+        throw err;
+    }
+};
+
+/* =========================================
    PROMOTE STUDENTS
 ========================================= */
 export const promoteStudents = async (payload) => {

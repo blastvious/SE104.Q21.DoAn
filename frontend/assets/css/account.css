@@ -192,6 +192,10 @@
     gap: 12px;
 }
 
+.row-unsaved {
+    background: #fef9c3 !important;
+}
+
 .section-title {
     font-size: 1.1rem;
     font-weight: 700;

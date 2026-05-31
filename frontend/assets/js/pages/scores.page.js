@@ -754,7 +754,11 @@ function downloadExcelTemplate() {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Điểm");
-    XLSX.writeFile(wb, "mau_diem.xlsx");
+    const tenLop = state.classes.find(c => c.MaLop === state.filters.classId)?.TenLop || state.filters.classId;
+    const tenHK = state.semesters.find(s => s.MaHocKy === state.filters.semester)?.TenHocKy || state.filters.semester;
+    const tenMon = state.subjects.find(s => s.MaMonHoc === state.filters.subject)?.TenMonHoc || state.filters.subject;
+    const fileName = `NhapDiem_${tenLop}_${state.filters.year}_${tenHK}_${tenMon}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 }
 
 // ======================
@@ -1229,6 +1233,9 @@ function bindSave() {
 
         } catch (err) {
             Toast.error("Lỗi lưu điểm: " + err.message);
+            if (err.message.includes("chưa diễn ra") || err.message.includes("kết thúc")) {
+                await loadScores();
+            }
         } finally {
             if (btnSave) {
                 btnSave.disabled  = false;

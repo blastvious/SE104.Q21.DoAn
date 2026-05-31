@@ -7,6 +7,10 @@ let cachedStudents = [];
 export async function init() {
     setupEventListeners();
 
+    const existing = document.querySelector("body > #modalOverlay");
+    if (existing) existing.remove();
+    document.body.appendChild(document.getElementById("modalOverlay"));
+
     window.onSearchInput = onSearchInput;
     window.selectAC      = selectAC;
     window.doSearch      = doSearch;

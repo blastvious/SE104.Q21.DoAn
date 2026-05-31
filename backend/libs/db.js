@@ -14,6 +14,7 @@ import ScoreDetailmodel from '../models/professional_requirements/ScoreDetail.mo
 import TypeTestDetailmodels from '../models/professional_requirements/TypeTestDetail.models.js';
 
 
+
 dotenv.config();
 
 // Khởi tạo instance Sequelize
@@ -126,6 +127,43 @@ export const connectDB = async () => {
             `);
         } catch (err) {
             console.warn('Could not create index on BANGDIEMMON:', err.message);
+        }
+
+        // Tạo bảng BAOCAOTONGKETMON và CT_BAOCAOTONGKETMON nếu chưa có
+        try {
+            await sequelize.query(`
+                IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'BAOCAOTONGKETMON')
+                BEGIN
+                    CREATE TABLE BAOCAOTONGKETMON (
+                        MaBCTKMon NVARCHAR(10) NOT NULL PRIMARY KEY,
+                        TenNamHoc NVARCHAR(10) NOT NULL,
+                        MaMonHoc NVARCHAR(10) NOT NULL,
+                        MaHocKy NVARCHAR(10) NOT NULL,
+                        TongSiSo INT NOT NULL DEFAULT 0,
+                        TongSoLuongDat INT NOT NULL DEFAULT 0
+                    );
+                END
+            `);
+        } catch (err) {
+            console.warn('Could not create BAOCAOTONGKETMON table:', err.message);
+        }
+
+        try {
+            await sequelize.query(`
+                IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CT_BAOCAOTONGKETMON')
+                BEGIN
+                    CREATE TABLE CT_BAOCAOTONGKETMON (
+                        MaBCTKMon NVARCHAR(10) NOT NULL,
+                        MaLop NVARCHAR(10) NOT NULL,
+                        SiSo INT NOT NULL DEFAULT 0,
+                        SoLuongDat INT NOT NULL DEFAULT 0,
+                        TiLeDat DECIMAL(5,2) NOT NULL DEFAULT 0.0,
+                        PRIMARY KEY (MaBCTKMon, MaLop)
+                    );
+                END
+            `);
+        } catch (err) {
+            console.warn('Could not create CT_BAOCAOTONGKETMON table:', err.message);
         }
 
         console.log('All the table has been synchronized and is now clean.');
