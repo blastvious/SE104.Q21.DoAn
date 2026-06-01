@@ -51,18 +51,27 @@ export const createReport = async (req, res) => {
         const details = [];
 
         for (const cls of classes) {
-            const [scoreData] = await db.sequelize.query(
-                `SELECT COUNT(DISTINCT cs.MaHS) AS SoLuongDat
-                 FROM BANGDIEMMON b
-                 JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = b.MaBangDiemMon
-                 JOIN QUATRINHHOC q ON q.MaHS = cs.MaHS AND q.MaLop = b.MaLop AND q.MaHocKy = b.MaHocKy
-                 WHERE b.MaLop = :MaLop
-                   AND b.MaMonHoc = :MaMonHoc
-                   AND b.MaHocKy = :MaHocKy
-                   AND cs.DiemTBMon >= :DiemDatMon`,
-                { replacements: { MaLop: cls.MaLop, MaMonHoc, MaHocKy, DiemDatMon } }
+            const [siSoData] = await db.sequelize.query(
+                `SELECT COUNT(DISTINCT cs.MaHS) AS SiSo
+                FROM BANGDIEMMON b
+                JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = b.MaBangDiemMon
+                WHERE b.MaLop = :MaLop
+                AND b.MaMonHoc = :MaMonHoc
+                AND b.MaHocKy = :MaHocKy`,
+                { replacements: { MaLop: cls.MaLop, MaMonHoc, MaHocKy } }
             );
 
+            const [scoreData] = await db.sequelize.query(
+                `SELECT COUNT(DISTINCT cs.MaHS) AS SoLuongDat
+                FROM BANGDIEMMON b
+                JOIN CT_BANGDIEMMON_HS cs ON cs.MaBangDiemMon = b.MaBangDiemMon
+                WHERE b.MaLop = :MaLop
+                AND b.MaMonHoc = :MaMonHoc
+                AND b.MaHocKy = :MaHocKy
+                AND cs.DiemTBMon >= :DiemDatMon`,
+                { replacements: { MaLop: cls.MaLop, MaMonHoc, MaHocKy, DiemDatMon } }
+            );
+            
             const SoLuongDat = scoreData.length > 0 ? parseInt(scoreData[0].SoLuongDat) : 0;
             const SiSo = cls.SiSo;
             const TiLeDat = SiSo > 0 ? parseFloat(((SoLuongDat * 100.0) / SiSo).toFixed(2)) : 0;
