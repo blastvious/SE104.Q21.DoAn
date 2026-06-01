@@ -208,7 +208,7 @@ function openEditModal(tableId, tr) {
             </div>
             <div class="form-group">
                 <label>Sĩ số</label>
-                <input type="number" id="editSiSo" value="${cells[0].dataset.siso || 0}" min="0">
+                <input type="number" id="editSiSo" value="${cells[0].dataset.siso || 0}" min="0" readonly style="background:#f0f0f0;">
             </div>
         `;
         editingContext = { tableId, id: ma };
@@ -229,7 +229,7 @@ async function saveEdit() {
         } else if (tableId === 'table-class') {
             const ten = document.getElementById('editTenLop').value;
             const siSo = parseInt(document.getElementById('editSiSo').value) || 0;
-            await settingsService.updateClass(id, { TenLop: ten, SiSo: siSo });
+            // await settingsService.updateClass(id, { TenLop: ten, SiSo: siSo });
         }
         const editMsgs = { 'table-year': 'Cập nhật năm học thành công', 'table-class': 'Cập nhật lớp thành công' };
         Toast.success(editMsgs[tableId] || "Cập nhật thành công");
