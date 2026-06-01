@@ -10,6 +10,7 @@ const Subjectmodel = (sequelize) => {
         TenMonHoc: {
             type: DataTypes.STRING(50),
             allowNull: false,
+            unique: true,
         },
         HeSo: {
             type: DataTypes.FLOAT,

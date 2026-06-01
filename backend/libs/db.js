@@ -117,6 +117,30 @@ export const connectDB = async () => {
         
         await sequelize.sync();
 
+        // Tạo unique constraint cho MONHOC.TenMonHoc nếu chưa có
+        try {
+            await sequelize.query(`
+                IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_MONHOC_TenMonHoc')
+                BEGIN
+                    CREATE UNIQUE INDEX UQ_MONHOC_TenMonHoc ON MONHOC (TenMonHoc);
+                END
+            `);
+        } catch (err) {
+            console.warn('Could not create unique index on MONHOC:', err.message);
+        }
+
+        // Tạo unique constraint cho LOAIHINHKT.TenLoaiHinhKT nếu chưa có
+        try {
+            await sequelize.query(`
+                IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_LOAIHINHKT_TenLoaiHinhKT')
+                BEGIN
+                    CREATE UNIQUE INDEX UQ_LOAIHINHKT_TenLoaiHinhKT ON LOAIHINHKT (TenLoaiHinhKT);
+                END
+            `);
+        } catch (err) {
+            console.warn('Could not create unique index on LOAIHINHKT:', err.message);
+        }
+
         // Tạo unique index cho BANGDIEMMON nếu chưa có
         try {
             await sequelize.query(`
