@@ -589,7 +589,7 @@ function updateAssignButton() {
   const btn = document.getElementById("assignBtn");
   const classSelected = document.getElementById("assignClassSelect").value;
 
-  btn.disabled = !(selectedStudents.size > 0 && classSelected);
+  btn.disabled = !classSelected;
   updateSelectedCount();
   updateExportButton();
 }
@@ -614,10 +614,20 @@ async function handleAssign() {
   let tenLop = document.getElementById("assignClassSelect").selectedOptions[0].textContent;
   tenLop = tenLop.replace(/^Lớp\s*/i, "");
 
-  if (!MaLop || !MaHocKy || selectedStudents.size === 0) return;
+  if (!MaLop || !MaHocKy) return;
+
+  let students;
+  if (selectedStudents.size > 0) {
+    students = [...selectedStudents];
+  } else {
+    const shuffled = [...unassignedStudents].sort(() => Math.random() - 0.5);
+    students = shuffled.slice(0, 40).map(s => s.MaHS);
+  }
+
+  if (students.length === 0) return;
 
   const ok = await showConfirm(
-    `Bạn có chắc chắn muốn thêm ${selectedStudents.size} học sinh vào lớp <span style="white-space:nowrap">${tenLop}</span> không?`,
+    `Bạn có chắc chắn muốn thêm ${students.length} học sinh vào lớp <span style="white-space:nowrap">${tenLop}</span> không?`,
   );
 
   if (!ok) return;
@@ -630,7 +640,7 @@ async function handleAssign() {
     await assignStudentsBatch({
       MaHocKy,
       MaLop,
-      students: [...selectedStudents],
+      students,
     });
 
     Toast.success("Xếp lớp thành công!");
