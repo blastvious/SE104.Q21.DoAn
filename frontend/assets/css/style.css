@@ -110,6 +110,18 @@ table td {
     transform: translateY(-1px);
 }
 
+.qlsv-btn--danger {
+    background: #dc2626;
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.qlsv-btn--danger:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
 /* Modal Background */
 .qlsv-modal {
     display: none;

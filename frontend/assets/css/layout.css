@@ -450,6 +450,16 @@ body.dark-mode .qlsv-btn--outline:hover {
     color: #7faec4;
 }
 
+body.dark-mode .qlsv-btn--danger {
+    background: #ef4444;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+body.dark-mode .qlsv-btn--danger:hover {
+    background: #dc2626;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
 .header {
     background: var(--header-bg);
     padding: 0 28px;

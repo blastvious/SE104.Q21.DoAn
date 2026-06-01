@@ -183,13 +183,33 @@ export const deleteSubject = async (req, res) => {
       });
     }
 
-    const scoreCount = await db.BANGDIEMMON.count({
-      where: { MaMonHoc: id }
+    const scoreBoards = await db.BANGDIEMMON.findAll({
+      where: { MaMonHoc: id },
+      include: [
+        { model: db.LOP, attributes: ['TenLop'] },
+        { model: db.HOCKY, attributes: ['TenHocKy'] }
+      ],
+      attributes: ['MaBangDiemMon']
     });
 
-    if (scoreCount > 0) {
+    if (scoreBoards.length > 0) {
+      const details = scoreBoards.slice(0, 3).map(s =>
+        `"${s.LOP?.TenLop || '?'}" - ${s.HOCKY?.TenHocKy || '?'}`
+      ).join(', ');
+      const suffix = scoreBoards.length > 3 ? ` và ${scoreBoards.length - 3} bảng khác` : '';
       return res.status(409).json({
-        message: `Không thể xóa môn học "${subject.TenMonHoc}" vì đã có ${scoreCount} bảng điểm liên quan`
+        message: `Không thể xóa môn học "${subject.TenMonHoc}" vì đã có ${scoreBoards.length} bảng điểm: ${details}${suffix}`
+      });
+    }
+
+    const [reportRows] = await db.sequelize.query(
+      `SELECT COUNT(*) AS cnt FROM BAOCAOTONGKETMON WHERE MaMonHoc = N'${id}'`,
+      { type: db.Sequelize.QueryTypes.SELECT }
+    );
+
+    if (reportRows[0]?.cnt > 0) {
+      return res.status(409).json({
+        message: `Không thể xóa môn học "${subject.TenMonHoc}" vì đã có báo cáo tổng kết liên quan`
       });
     }
 
