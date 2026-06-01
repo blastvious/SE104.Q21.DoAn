@@ -160,7 +160,7 @@ export async function init() {
 
 function setupDatePicker() {
   flatpickr("#NgaySinh", {
-    dateFormat: "Y-m-d",
+    dateFormat: "d/m/Y",
     allowInput: true,
     locale: { firstDayOfWeek: 1 },
   });
@@ -395,7 +395,10 @@ function bindActionButtons() {
       document.getElementById("GioiTinh").value = this.dataset.gioitinh;
 
       const fp = document.getElementById("NgaySinh")._flatpickr;
-      if (fp) fp.setDate(this.dataset.ngaysinh);
+      if (fp) {
+        const parts = this.dataset.ngaysinh.split("-");
+        fp.setDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+      }
 
       document.getElementById("DiaChi").value = this.dataset.diachi;
 
