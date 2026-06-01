@@ -5,6 +5,7 @@ import {
   transferClass,
   promoteStudents,
   unassignStudent,
+  checkPromote,
 } from "../service/studyProcess.service.js";
 
 import { settingsService } from "../service/settings.service.js";
@@ -561,7 +562,7 @@ function updatePromoteButton() {
   const yearSelected = document.getElementById("filterNamHoc").value;
   const classSelected = document.getElementById("assignClassSelect").value;
 
-  btn.disabled = selectedAssignedStudents.size === 0 || !classSelected || !yearSelected;
+  btn.disabled = !classSelected || !yearSelected;
 
   const el = document.getElementById("assignedSelectedCount");
   if (el) el.textContent = "Đã chọn: " + selectedAssignedStudents.size;
@@ -856,8 +857,6 @@ function formatDate(dateStr) {
 }
 
 async function handlePromote() {
-  if (selectedAssignedStudents.size === 0) return;
-
   const MaLopCu = document.getElementById("assignClassSelect").value;
   const MaHocKyCu = document.getElementById("filterHocKy").value;
   const currentClass = allClasses.find((c) => c.MaLop === MaLopCu);
@@ -870,6 +869,14 @@ async function handlePromote() {
     Toast.error("Không có lớp kế tiếp trong năm học sau");
     return;
   }
+
+  // Auto collect ALL students from assigned table
+  selectedAssignedStudents.clear();
+  document.querySelectorAll(".assigned-checkbox").forEach((cb) => {
+    selectedAssignedStudents.add(cb.dataset.id);
+  });
+
+  if (selectedAssignedStudents.size === 0) return;
 
   // kiểm tra học sinh đã được lên lớp chưa
   try {
@@ -897,12 +904,33 @@ async function handlePromote() {
         `Các học sinh sau đã được lên lớp:\n${nameList}\n\nBạn có muốn lên lớp cho các học sinh còn lại không?`,
       );
       if (!ok) return;
-      // bỏ học sinh đã lên lớp khỏi danh sách chọn
       alreadyPromoted.forEach((s) => selectedAssignedStudents.delete(s.maHS));
       if (selectedAssignedStudents.size === 0) return;
     }
   } catch (_) {
     // bỏ qua lỗi
+  }
+
+  // Kiểm tra điểm trung bình
+  try {
+    const result = await checkPromote(MaLopCu);
+    if (result.failingCount > 0) {
+      const ok = await showConfirm(
+        `Có <strong>${result.failingCount}</strong> học sinh chưa đạt (DiemTB < ${result.diemDat}).<br>Bạn có chắc chắn muốn lên lớp cho những học sinh này không?`,
+      );
+      if (!ok) {
+        const set = new Set(result.failingStudents);
+        [...selectedAssignedStudents].forEach((maHS) => {
+          if (set.has(maHS)) selectedAssignedStudents.delete(maHS);
+        });
+        if (selectedAssignedStudents.size === 0) {
+          Toast.info("Không có học sinh đạt để lên lớp");
+          return;
+        }
+      }
+    }
+  } catch (_) {
+    // bỏ qua lỗi, cho phép promote tiếp
   }
 
   openPromoteModal(available, currentClass, MaHocKyCu);

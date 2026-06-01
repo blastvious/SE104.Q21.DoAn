@@ -199,6 +199,23 @@ export const unassignStudent = async (payload) => {
 };
 
 /* =========================================
+   CHECK PROMOTE (DiemTB)
+========================================= */
+export const checkPromote = async (MaLop) => {
+    try {
+        const res = await fetch(`${API_URL}/check-promote?MaLop=${encodeURIComponent(MaLop)}`);
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || "Lỗi kiểm tra điểm");
+        }
+        return data;
+    } catch (err) {
+        console.error("checkPromote error:", err);
+        throw err;
+    }
+};
+
+/* =========================================
    PROMOTE STUDENTS
 ========================================= */
 export const promoteStudents = async (payload) => {
