@@ -11,20 +11,26 @@ const tinhDiemTBMon = (danhSachDiem) => {
   return Math.round((tongDiem / tongHeSo) * 10) / 10;
 };
 
-// Sinh ma
+// Sinh ma - dùng MAX(CAST(...AS INT)) để tránh lỗi sort string ("CTBDM999" > "CTBDM1000")
 const CreateMa = async (model, truongMa, prefix, transaction = null) => {
-  const options = { order: [[truongMa, "DESC"]] };
-  if (transaction) {
-    options.transaction = transaction;
-    options.lock = true;
-  }
-  const last = await model.findOne(options);
-  let stt = 1;
-  if (last) {
-    const lastNumber = parseInt(last[truongMa].replace(/\D/g, ""));
-    stt = lastNumber + 1;
-  }
+  const tableName = model.getTableName();
+  const prefixLen = prefix.length + 1; // SUBSTRING bắt đầu từ 1
+  const query = `SELECT MAX(CAST(SUBSTRING(${truongMa}, ${prefixLen}, LEN(${truongMa})) AS INT)) AS MaxStt FROM ${tableName}`;
+  const options = { type: db.sequelize.QueryTypes.SELECT };
+  if (transaction) options.transaction = transaction;
+  const [row] = await db.sequelize.query(query, options);
+  const stt = (row?.MaxStt ?? 0) + 1;
   return `${prefix}${String(stt).padStart(3, "0")}`;
+};
+
+// Sinh nhiều ma liên tiếp an toàn (dùng cho bulk insert)
+const CreateMaBulk = async (model, truongMa, prefix, count) => {
+  const tableName = model.getTableName();
+  const prefixLen = prefix.length + 1;
+  const query = `SELECT MAX(CAST(SUBSTRING(${truongMa}, ${prefixLen}, LEN(${truongMa})) AS INT)) AS MaxStt FROM ${tableName}`;
+  const [row] = await db.sequelize.query(query, { type: db.sequelize.QueryTypes.SELECT });
+  const startStt = (row?.MaxStt ?? 0) + 1;
+  return Array.from({ length: count }, (_, i) => `${prefix}${String(startStt + i).padStart(3, "0")}`);
 };
 
 // -- SINGLE ENTRY --
@@ -84,15 +90,16 @@ export const getScore = async (req, res) => {
     });
 
     // findOrCreate CT_BANGDIEMMON_HS
-    const [ctBangDiemMonHS] = await db.CT_BANGDIEMMON_HS.findOrCreate({
-      where: {
-        MaBangDiemMon: bangDiemMon.MaBangDiemMon,
-        MaHS,
-      },
-      defaults: {
-        MaCTBDMHS: await CreateMa(db.CT_BANGDIEMMON_HS, "MaCTBDMHS", "CTBDM"),
-        DiemTBMon: 0,
-      },
+    const [ctBangDiemHS] = await db.sequelize.transaction(async (t) => {
+        const [record, created] = await db.CT_BANGDIEMMON_HS.findOrCreate({
+            where: { MaBangDiemMon: bangDiemMon.MaBangDiemMon, MaHS },
+            defaults: {
+                MaCTBDMHS: await CreateMa(db.CT_BANGDIEMMON_HS, "MaCTBDMHS", "CTBDM", t),
+                DiemTBMon: 0,
+            },
+            transaction: t,
+        });
+        return [record, created];
     });
 
     // findOrCreate CT_BANGDIEMMON_LHKT
@@ -194,64 +201,73 @@ export const bulkImportScores = async (req, res) => {
 
     const result = [];
 
-    for (const { MaHS, Diem } of danhSachDiem) {
-      const [ctBangDiemHS] =
-        await db.CT_BANGDIEMMON_HS.findOrCreate({
-          where: {
+    // 1. Xác định những HS nào chưa có CT_BANGDIEMMON_HS
+    const maHSList = danhSachDiem.map(d => d.MaHS);
+
+    const existing = await db.CT_BANGDIEMMON_HS.findAll({
+      where: {
+        MaBangDiemMon: bangDiemMon.MaBangDiemMon,
+        MaHS: { [Op.in]: maHSList },
+      },
+    });
+    const existingSet = new Set(existing.map(e => e.MaHS));
+    const newHSList = maHSList.filter(ma => !existingSet.has(ma));
+
+    // 2. Sinh ID cho tất cả HS mới (dùng MAX số để tránh lỗi sort string)
+    const idMap = {};
+    if (newHSList.length > 0) {
+      const newIds = await CreateMaBulk(db.CT_BANGDIEMMON_HS, "MaCTBDMHS", "CTBDM", newHSList.length);
+      newHSList.forEach((maHS, i) => {
+        idMap[maHS] = newIds[i];
+      });
+    }
+
+    // 3. Bulk insert tất cả HS mới trong 1 transaction
+    if (newHSList.length > 0) {
+      await db.sequelize.transaction(async (t) => {
+        await db.CT_BANGDIEMMON_HS.bulkCreate(
+          newHSList.map(maHS => ({
+            MaCTBDMHS: idMap[maHS],
             MaBangDiemMon: bangDiemMon.MaBangDiemMon,
-            MaHS,
-          },
-          defaults: {
-            MaCTBDMHS: await CreateMa(
-              db.CT_BANGDIEMMON_HS,
-              "MaCTBDMHS",
-              "CTBDM"
-            ),
+            MaHS: maHS,
             DiemTBMon: 0,
-          },
-        });
+          })),
+          { transaction: t }
+        );
+      });
+    }
+
+    // 4. Build map MaHS → record (existing + mới tạo)
+    const allCT = await db.CT_BANGDIEMMON_HS.findAll({
+      where: {
+        MaBangDiemMon: bangDiemMon.MaBangDiemMon,
+        MaHS: { [Op.in]: maHSList },
+      },
+    });
+    const ctMap = new Map(allCT.map(ct => [ct.MaHS, ct]));
+
+    // 5. Xử lý điểm
+    for (const { MaHS, Diem } of danhSachDiem) {
+      const ctBangDiemHS = ctMap.get(MaHS);
+      if (!ctBangDiemHS) continue;
 
       let status;
-
       if (Diem == null) {
         await db.CT_BANGDIEMMON_LHKT.destroy({
-          where: {
-            MaCTBDMHS: ctBangDiemHS.MaCTBDMHS,
-            MaLoaiHinhKT,
-            Lan,
-          },
+          where: { MaCTBDMHS: ctBangDiemHS.MaCTBDMHS, MaLoaiHinhKT, Lan },
         });
         status = "deleted";
       } else {
-        const [score, created] =
-          await db.CT_BANGDIEMMON_LHKT.findOrCreate({
-            where: {
-              MaCTBDMHS: ctBangDiemHS.MaCTBDMHS,
-              MaLoaiHinhKT,
-              Lan,
-            },
-            defaults: {
-              Diem: Number(Diem)
-            },
-          });
-
-        if (!created) {
-          await score.update({
-            Diem: Number(Diem)
-          });
-        }
+        const [score, created] = await db.CT_BANGDIEMMON_LHKT.findOrCreate({
+          where: { MaCTBDMHS: ctBangDiemHS.MaCTBDMHS, MaLoaiHinhKT, Lan },
+          defaults: { Diem: Number(Diem) },
+        });
+        if (!created) await score.update({ Diem: Number(Diem) });
         status = created ? "created" : "updated";
       }
 
-      await updateDiemTBMon(
-        ctBangDiemHS.MaCTBDMHS
-      );
-
-      result.push({
-        MaHS,
-        Diem,
-        status,
-      });
+      await updateDiemTBMon(ctBangDiemHS.MaCTBDMHS);
+      result.push({ MaHS, Diem, status });
     }
 
     await updateDiemTBHocKy(MaLop, MaHocKy);
