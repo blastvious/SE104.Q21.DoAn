@@ -160,7 +160,7 @@ export async function init() {
 
 function setupDatePicker() {
   flatpickr("#NgaySinh", {
-    dateFormat: "d/m/Y",
+    dateFormat: "Y-m-d",
     allowInput: true,
     locale: { firstDayOfWeek: 1 },
   });
