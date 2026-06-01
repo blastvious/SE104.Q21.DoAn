@@ -29,3 +29,6 @@ dist-ssr
 *.sln
 *.sw?
 .understand-anything/
+backend/explore-db.cjs
+backend/explore-db2.cjs
+backend/check-missing.js
