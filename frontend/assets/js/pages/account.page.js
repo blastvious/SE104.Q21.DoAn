@@ -71,8 +71,13 @@ async function loadAllUsers() {
                     </select>
                 </td>
                 <td>
-                    <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-save"></i></button>
-                    ${can(window.currentUser, "delete") ? `<button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+                    ${user.Id === window.currentUser.id
+                        ? `<span class="current-user-badge">Đang sử dụng</span>`
+                        : `
+                            <button class="action-btn edit save-role-btn" title="Lưu"><i class="fas fa-save"></i></button>
+                            ${can(window.currentUser, "delete") ? `<button class="action-btn delete delete-user-btn" title="Xóa"><i class="fas fa-trash"></i></button>` : ''}
+                          `
+                    }
                 </td>
             `;
             tbody.appendChild(tr);

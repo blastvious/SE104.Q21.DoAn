@@ -101,6 +101,10 @@ export const updateUser = async (req, res) => {
         const { id } = req.params;
         const { RoleName } = req.body;
 
+        if (Number(id) === req.user.id) {
+            return res.status(403).json({ message: "Không thể thay đổi quyền của chính mình" });
+        }
+
         const user = await db.PHANQUYEN.findByPk(id);
 
         if (!user) {
@@ -118,6 +122,10 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (Number(id) === req.user.id) {
+            return res.status(403).json({ message: "Không thể xóa tài khoản của chính mình" });
+        }
 
         const user = await db.PHANQUYEN.findByPk(id);
 
