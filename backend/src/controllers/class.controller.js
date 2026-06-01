@@ -76,6 +76,17 @@ export const createYear = async (req, res) => {
             return res.status(409).json({ message: "Year already exists" });
         }
 
+        const overlapping = await db.NAMHOC.count({
+            where: {
+                NgayBatDau: { [Op.lte]: endDate },
+                NgayKetThuc: { [Op.gte]: startDate }
+            }
+        });
+
+        if (overlapping > 0) {
+            return res.status(409).json({ message: "Khoảng thời gian của năm học bị trùng với năm học khác" });
+        }
+
         const newYear = await db.NAMHOC.create({
             TenNamHoc,
             NgayBatDau,
@@ -370,8 +381,37 @@ export const updateYear = async (req, res) => {
         const { TenNamHoc } = req.params;
         const { NgayBatDau, NgayKetThuc } = req.body;
         if (!NgayBatDau || !NgayKetThuc) return res.status(400).json({ message: "Missing required fields" });
+
+        const startDate = parseDateOnly(NgayBatDau);
+        const endDate = parseDateOnly(NgayKetThuc);
+        if (!startDate || !endDate) return res.status(400).json({ message: "Invalid date format" });
+
+        if (startDate >= endDate) return res.status(400).json({ message: "Start date must be before end date" });
+
+        const yearMatch = TenNamHoc.match(/^(\d{4})-(\d{4})$/);
+        if (!yearMatch) return res.status(400).json({ message: "School year must use format YYYY-YYYY" });
+
+        const schoolStartYear = Number(yearMatch[1]);
+        const schoolEndYear = Number(yearMatch[2]);
+        if (startDate.getUTCFullYear() !== schoolStartYear || endDate.getUTCFullYear() !== schoolEndYear) {
+            return res.status(400).json({ message: "Date range must match school year" });
+        }
+
         const year = await db.NAMHOC.findByPk(TenNamHoc);
         if (!year) return res.status(404).json({ message: "Năm học không tồn tại" });
+
+        const overlapping = await db.NAMHOC.count({
+            where: {
+                TenNamHoc: { [Op.ne]: TenNamHoc },
+                NgayBatDau: { [Op.lte]: endDate },
+                NgayKetThuc: { [Op.gte]: startDate }
+            }
+        });
+
+        if (overlapping > 0) {
+            return res.status(409).json({ message: "Khoảng thời gian của năm học bị trùng với năm học khác" });
+        }
+
         await year.update({ NgayBatDau, NgayKetThuc });
         res.json(year);
     } catch (error) {
