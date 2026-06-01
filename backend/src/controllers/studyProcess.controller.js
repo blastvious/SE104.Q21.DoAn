@@ -705,43 +705,6 @@ export const semesterSummaryAll = async (req, res) => {
   }
 };
 
-export const checkPromote = async (req, res) => {
-  try {
-    const { MaLop } = req.query;
-
-    if (!MaLop) {
-      return res.status(400).json({ message: "Missing MaLop" });
-    }
-
-    const [paramRows] = await db.sequelize.query(
-      `SELECT GiaTri FROM THAMSO WHERE TenThamSo = 'DiemDat'`
-    );
-    const diemDat = paramRows.length > 0 ? parseFloat(paramRows[0].GiaTri) : 5.0;
-
-    const [rows] = await db.sequelize.query(`
-      SELECT MaHS,
-        MAX(CASE WHEN MaHocKy = 'HK001' THEN DiemTBHocKy END) AS diemHK1,
-        MAX(CASE WHEN MaHocKy = 'HK002' THEN DiemTBHocKy END) AS diemHK2
-      FROM QUATRINHHOC
-      WHERE MaLop = '${MaLop}' AND MaHocKy IN ('HK001', 'HK002')
-      GROUP BY MaHS
-    `);
-
-    const failingStudents = rows.filter(
-      (r) => (r.diemHK1 != null && r.diemHK1 < diemDat) || (r.diemHK2 != null && r.diemHK2 < diemDat)
-    );
-
-    res.json({
-      total: rows.length,
-      failingCount: failingStudents.length,
-      failingStudents: failingStudents.map((r) => r.MaHS),
-      diemDat,
-    });
-  } catch (error) {
-    handleCatch(res, error);
-  }
-};
-
 export const promoteStudents = async (req, res) => {
   try {
     const { students, MaLopCu, MaHocKyCu, MaLopMoi, MaHocKyMoi } = req.body;
