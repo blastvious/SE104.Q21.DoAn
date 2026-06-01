@@ -399,6 +399,30 @@ export const deleteStudent = async (req, res) => {
 
         }
 
+        const classAssignmentCount = await db.QUATRINHHOC.count({
+            where: { MaHS: id }
+        });
+
+        if (classAssignmentCount > 0) {
+
+            return res.status(400).json({
+                message: "Không thể xóa học sinh này vì đã được xếp lớp"
+            });
+
+        }
+
+        const scoreCount = await db.CT_BANGDIEMMON_HS.count({
+            where: { MaHS: id }
+        });
+
+        if (scoreCount > 0) {
+
+            return res.status(400).json({
+                message: "Không thể xóa học sinh này vì đã có điểm"
+            });
+
+        }
+
         await student.destroy();
 
         res.json({
